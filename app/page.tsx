@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function Home() {
+export default function HomePage() {
   const router = useRouter();
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
@@ -11,78 +11,98 @@ export default function Home() {
   function handleJoin(e: React.FormEvent) {
     e.preventDefault();
     const cleaned = pin.trim();
-    if (cleaned.length < 4) {
-      setError("Masukkan kode game yang valid");
+    if (cleaned.length !== 6) {
+      setError("Kode game terdiri dari 6 angka");
       return;
     }
     router.push(`/play/${cleaned}`);
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-4"
-      style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)" }}>
-
-      {/* Logo */}
-      <div className="text-center mb-12 bounce-in">
-        <h1 className="text-7xl font-black tracking-tight mb-2"
-          style={{ color: "#fff", textShadow: "0 0 40px rgba(139,92,246,0.8)" }}>
-          Kuis<span style={{ color: "#a78bfa" }}>!</span>
-        </h1>
-        <p className="text-purple-300 text-lg font-medium">Game Kuis Multiplayer Real-time</p>
+    <main
+      className="min-h-screen flex flex-col items-center justify-center p-5"
+      style={{ background: "linear-gradient(160deg, #0f0f1a 0%, #1a0533 50%, #0a1628 100%)" }}
+    >
+      {/* Decorative orbs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-10"
+          style={{ background: "radial-gradient(circle, #7c3aed, transparent)", filter: "blur(60px)" }} />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full opacity-10"
+          style={{ background: "radial-gradient(circle, #3b82f6, transparent)", filter: "blur(60px)" }} />
       </div>
 
-      {/* Join Game */}
-      <div className="w-full max-w-md slide-up">
-        <form onSubmit={handleJoin}
-          className="rounded-3xl p-8 shadow-2xl"
-          style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)" }}>
+      {/* Logo */}
+      <div className="text-center mb-10 fade-in relative">
+        <h1 className="text-8xl font-black tracking-tight select-none"
+          style={{ WebkitTextStroke: "2px rgba(167,139,250,0.3)" }}>
+          <span className="text-white">Kuis</span>
+          <span style={{ color: "#a78bfa" }}>!</span>
+        </h1>
+        <p className="text-purple-300 text-lg font-semibold mt-1 tracking-wide">
+          Game Kuis Multiplayer Real-time
+        </p>
+      </div>
 
-          <h2 className="text-2xl font-bold text-white text-center mb-6">Bergabung ke Game</h2>
+      {/* Main card */}
+      <div className="w-full max-w-sm fade-in" style={{ animationDelay: "0.1s" }}>
+        <form
+          onSubmit={handleJoin}
+          className="glass rounded-3xl p-8 shadow-2xl"
+        >
+          <h2 className="text-white text-xl font-bold text-center mb-5">
+            Masukkan Kode Game
+          </h2>
 
           <input
             type="text"
+            inputMode="numeric"
             value={pin}
-            onChange={(e) => { setPin(e.target.value.replace(/\D/g, "")); setError(""); }}
-            placeholder="Masukkan kode game"
+            onChange={(e) => { setPin(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }}
+            placeholder="● ● ● ● ● ●"
             maxLength={6}
-            className="w-full text-center text-3xl font-black tracking-widest rounded-2xl px-6 py-5 mb-4 outline-none text-white"
-            style={{ background: "rgba(255,255,255,0.15)", border: "2px solid rgba(255,255,255,0.2)" }}
-            onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }}
-            onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.2)"; }}
+            className="input-dark w-full text-center text-4xl font-black tracking-[0.3em] rounded-2xl px-4 py-5 mb-3"
           />
 
           {error && (
-            <p className="text-red-400 text-center text-sm mb-4 font-medium">{error}</p>
+            <p className="text-red-400 text-center text-sm mb-3 font-medium">{error}</p>
           )}
 
-          <button type="submit"
-            className="w-full py-4 rounded-2xl text-xl font-black text-white cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
-            style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}>
-            MASUK
+          <button
+            type="submit"
+            className="btn-primary w-full py-4 text-xl rounded-2xl"
+          >
+            MASUK →
           </button>
         </form>
 
-        {/* Host section */}
-        <div className="mt-6 text-center">
-          <p className="text-gray-400 text-sm mb-4">Ingin membuat kuis?</p>
-          <div className="flex gap-4">
-            <button
-              onClick={() => router.push("/create")}
-              className="flex-1 py-4 rounded-2xl text-base font-bold text-white cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
-              style={{ background: "linear-gradient(135deg, #059669, #10b981)" }}>
-              Buat Kuis Baru
-            </button>
-            <button
-              onClick={() => router.push("/host")}
-              className="flex-1 py-4 rounded-2xl text-base font-bold text-white cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
-              style={{ background: "linear-gradient(135deg, #1d4ed8, #3b82f6)" }}>
-              Pakai Demo Kuis
-            </button>
-          </div>
+        {/* Divider */}
+        <div className="flex items-center gap-4 my-5 px-2">
+          <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.12)" }} />
+          <span className="text-gray-500 text-sm font-medium">atau</span>
+          <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.12)" }} />
+        </div>
+
+        {/* Host buttons */}
+        <div className="space-y-3">
+          <button
+            onClick={() => router.push("/create")}
+            className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all hover:scale-103 active:scale-97"
+            style={{ background: "linear-gradient(135deg, #059669, #10b981)", boxShadow: "0 4px 20px rgba(16,185,129,0.3)" }}
+          >
+            ✏️  Buat Kuis Sendiri
+          </button>
+          <button
+            onClick={() => router.push("/host")}
+            className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all hover:scale-103 active:scale-97"
+            style={{ background: "linear-gradient(135deg, #1d4ed8, #3b82f6)", boxShadow: "0 4px 20px rgba(59,130,246,0.3)" }}
+          >
+            🎮  Pakai Demo Kuis (10 soal)
+          </button>
         </div>
       </div>
 
-      <p className="mt-12 text-gray-500 text-sm">
+      {/* Footer */}
+      <p className="mt-10 text-gray-600 text-xs fade-in" style={{ animationDelay: "0.3s" }}>
         Dibuat dengan Next.js &amp; Socket.io
       </p>
     </main>
