@@ -3,49 +3,69 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { getSocket } from "@/lib/socket";
+import type { QuestionType } from "@/lib/types";
 
 interface QuestionForm {
+  type: QuestionType;
   question: string;
-  options: [string, string, string, string];
+  options: string[];
   correctIndex: number;
   timeLimit: number;
 }
 
-const emptyQ = (): QuestionForm => ({
-  question: "",
-  options: ["", "", "", ""],
-  correctIndex: 0,
-  timeLimit: 20,
-});
+function emptyQ(type: QuestionType = "mc"): QuestionForm {
+  if (type === "tf") return { type, question: "", options: ["Benar", "Salah"], correctIndex: 0, timeLimit: 20 };
+  if (type === "poll") return { type, question: "", options: ["", ""], correctIndex: -1, timeLimit: 30 };
+  return { type, question: "", options: ["", "", "", ""], correctIndex: 0, timeLimit: 20 };
+}
 
-const OPT_COLORS = ["#ef4444", "#3b82f6", "#22c55e", "#eab308"];
-const OPT_SHAPES = ["▲", "◆", "●", "■"];
+const MC_COLORS = ["#DC2626","#2563EB","#16A34A","#CA8A04"];
+const TF_COLORS = ["#059669","#DC2626"];
 const TIME_OPTIONS = [10, 20, 30, 60];
+const TYPE_CONFIG: Record<QuestionType, { label: string; desc: string }> = {
+  mc:   { label: "Pilihan Ganda", desc: "4 opsi · 1 jawaban benar" },
+  tf:   { label: "Benar / Salah", desc: "2 opsi · 1 jawaban benar" },
+  poll: { label: "Pendapat",      desc: "Opsi bebas · Tidak ada jawaban benar" },
+};
 
 export default function CreatePage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
-  const [questions, setQuestions] = useState<QuestionForm[]>([emptyQ()]);
+  const [questions, setQuestions] = useState<QuestionForm[]>([emptyQ("mc")]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   function setQ(idx: number, patch: Partial<QuestionForm>) {
-    setQuestions((prev) => prev.map((q, i) => (i === idx ? { ...q, ...patch } : q)));
+    setQuestions((prev) => prev.map((q, i) => i === idx ? { ...q, ...patch } : q));
+  }
+
+  function changeType(idx: number, type: QuestionType) {
+    setQuestions((prev) => prev.map((q, i) => i === idx ? emptyQ(type) : q));
   }
 
   function setOpt(qIdx: number, optIdx: number, val: string) {
-    setQuestions((prev) =>
-      prev.map((q, i) => {
-        if (i !== qIdx) return q;
-        const options = [...q.options] as [string, string, string, string];
-        options[optIdx] = val;
-        return { ...q, options };
-      })
-    );
+    setQuestions((prev) => prev.map((q, i) => {
+      if (i !== qIdx) return q;
+      const options = [...q.options];
+      options[optIdx] = val;
+      return { ...q, options };
+    }));
+  }
+
+  function addPollOption(idx: number) {
+    const q = questions[idx];
+    if (q.options.length >= 4) return;
+    setQ(idx, { options: [...q.options, ""] });
+  }
+
+  function removePollOption(qIdx: number, optIdx: number) {
+    const q = questions[qIdx];
+    if (q.options.length <= 2) return;
+    setQ(qIdx, { options: q.options.filter((_, i) => i !== optIdx) });
   }
 
   function addQuestion() {
-    setQuestions((prev) => [...prev, emptyQ()]);
+    setQuestions((prev) => [...prev, emptyQ("mc")]);
     setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 50);
   }
 
@@ -59,8 +79,8 @@ export default function CreatePage() {
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       if (!q.question.trim()) return `Pertanyaan ${i + 1} masih kosong`;
-      for (let j = 0; j < 4; j++) {
-        if (!q.options[j].trim()) return `Opsi ${j + 1} di pertanyaan ${i + 1} masih kosong`;
+      for (let j = 0; j < q.options.length; j++) {
+        if (q.type !== "tf" && !q.options[j].trim()) return `Opsi ${j + 1} di pertanyaan ${i + 1} masih kosong`;
       }
     }
     return null;
@@ -73,13 +93,13 @@ export default function CreatePage() {
     setLoading(true);
 
     const socket = getSocket();
-
     function doCreate() {
       socket.emit(
         "host:createCustom",
         {
           title: title.trim(),
           questions: questions.map((q) => ({
+            type: q.type,
             question: q.question.trim(),
             options: q.options.map((o) => o.trim()),
             correctIndex: q.correctIndex,
@@ -93,168 +113,193 @@ export default function CreatePage() {
         }
       );
     }
-
     if (socket.connected) doCreate();
     else socket.once("connect", doCreate);
   }
 
   return (
-    <main
-      className="min-h-screen pb-32"
-      style={{ background: "linear-gradient(160deg, #0f0f1a 0%, #1a0533 100%)" }}
-    >
-      {/* Header */}
-      <div className="sticky top-0 z-10 px-5 py-4 flex items-center gap-4"
-        style={{ background: "rgba(15,15,26,0.9)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-        <button
-          onClick={() => router.push("/")}
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all text-xl"
-        >
+    <main className="min-h-screen pb-32" style={{ background: "var(--bg)" }}>
+      {/* Sticky header */}
+      <div className="row px-5 py-4" style={{
+        background: "var(--surface)", borderBottom: "1px solid var(--border)",
+        position: "sticky", top: 0, zIndex: 10,
+      }}>
+        <button onClick={() => router.push("/")} className="btn btn-ghost" style={{ marginRight: "1rem", padding: "0.5rem 0.75rem" }}>
           ←
         </button>
         <div>
-          <h1 className="text-white font-black text-xl">Buat Kuis</h1>
-          <p className="text-gray-500 text-xs">{questions.length} pertanyaan</p>
+          <h1 className="t-h3">Buat Kuis</h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>{questions.length} pertanyaan</p>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 pt-6 space-y-5">
-        {/* Title card */}
-        <div className="glass rounded-2xl p-5 fade-in">
-          <label className="block text-purple-300 text-xs font-bold uppercase tracking-widest mb-2">
-            Judul Kuis
-          </label>
+      <div className="col px-4 pt-6" style={{ maxWidth: 680, margin: "0 auto", gap: "1rem" }}>
+        {/* Title */}
+        <div className="card a-fadeup" style={{ padding: "1.25rem 1.5rem" }}>
+          <label className="t-label mb-2" style={{ display: "block" }}>Judul Kuis</label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Contoh: Kuis Sejarah Indonesia"
-            className="input-dark w-full px-4 py-3 rounded-xl text-lg font-semibold"
+            className="input"
+            style={{ fontSize: "1.05rem", fontWeight: 600 }}
           />
         </div>
 
         {/* Questions */}
-        {questions.map((q, qi) => (
-          <div key={qi} className="glass rounded-2xl p-5 fade-in" style={{ animationDelay: `${qi * 0.05}s` }}>
-            {/* Question header */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black text-white"
-                  style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}>
-                  {qi + 1}
-                </span>
-                <span className="text-purple-300 text-sm font-bold uppercase tracking-wider">Pertanyaan</span>
-              </div>
-              {questions.length > 1 && (
-                <button
-                  onClick={() => removeQuestion(qi)}
-                  className="text-xs text-red-400 hover:text-red-300 font-semibold px-3 py-1 rounded-lg hover:bg-red-500/10 transition-all"
-                >
-                  Hapus
-                </button>
-              )}
-            </div>
-
-            {/* Question text */}
-            <textarea
-              value={q.question}
-              onChange={(e) => setQ(qi, { question: e.target.value })}
-              placeholder="Tulis pertanyaan di sini..."
-              rows={2}
-              className="input-dark w-full px-4 py-3 rounded-xl text-base resize-none mb-4"
-            />
-
-            {/* Options grid */}
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {q.options.map((opt, oi) => (
-                <div key={oi} className="relative">
-                  {/* Color bar */}
-                  <div
-                    className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl"
-                    style={{ background: OPT_COLORS[oi] }}
-                  />
-                  <input
-                    value={opt}
-                    onChange={(e) => setOpt(qi, oi, e.target.value)}
-                    placeholder={`Opsi ${oi + 1}`}
-                    className="input-dark w-full pl-5 pr-12 py-3 rounded-xl text-sm"
-                    style={{
-                      borderColor: q.correctIndex === oi ? OPT_COLORS[oi] : "rgba(255,255,255,0.15)",
-                      background: q.correctIndex === oi ? `${OPT_COLORS[oi]}22` : "rgba(255,255,255,0.08)",
-                    }}
-                  />
-                  {/* Shape badge */}
-                  <span
-                    className="absolute left-2 top-1/2 -translate-y-1/2 text-sm"
-                    style={{ color: OPT_COLORS[oi] }}
-                  >
-                    {OPT_SHAPES[oi]}
-                  </span>
-                  {/* Correct toggle */}
-                  <button
-                    onClick={() => setQ(qi, { correctIndex: oi })}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-sm font-black transition-all"
-                    style={{
-                      background: q.correctIndex === oi ? OPT_COLORS[oi] : "rgba(255,255,255,0.1)",
-                      color: "#fff",
-                    }}
-                    title="Tandai sebagai jawaban benar"
-                  >
-                    {q.correctIndex === oi ? "✓" : "·"}
-                  </button>
+        {questions.map((q, qi) => {
+          const isTF = q.type === "tf";
+          const isPoll = q.type === "poll";
+          return (
+            <div key={qi} className="card a-fadeup" style={{ padding: "1.25rem 1.5rem", animationDelay: `${qi * 0.04}s` }}>
+              {/* Question header */}
+              <div className="row mb-4" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                <div className="row" style={{ gap: "0.6rem" }}>
+                  <div className="center" style={{ width: 28, height: 28, borderRadius: 8, background: "var(--accent)", color: "#fff", fontSize: "0.8rem", fontWeight: 900 }}>
+                    {qi + 1}
+                  </div>
+                  <span className="t-label">Pertanyaan</span>
                 </div>
-              ))}
-            </div>
+                {questions.length > 1 && (
+                  <button onClick={() => removeQuestion(qi)} className="btn btn-ghost" style={{ padding: "0.25rem 0.6rem", fontSize: "0.78rem", color: "#F87171" }}>
+                    Hapus
+                  </button>
+                )}
+              </div>
 
-            {/* Time limit */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-gray-400 text-xs font-semibold mr-1">⏱ Waktu:</span>
-              {TIME_OPTIONS.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setQ(qi, { timeLimit: t })}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-                  style={{
-                    background: q.timeLimit === t ? "#7c3aed" : "rgba(255,255,255,0.08)",
-                    color: q.timeLimit === t ? "#fff" : "#9ca3af",
-                    border: q.timeLimit === t ? "none" : "1px solid rgba(255,255,255,0.1)",
-                  }}
-                >
-                  {t}s
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+              {/* Type selector */}
+              <div className="row mb-1" style={{ gap: "0.4rem", flexWrap: "wrap" }}>
+                {(Object.keys(TYPE_CONFIG) as QuestionType[]).map((t) => (
+                  <button key={t} onClick={() => changeType(qi, t)} className="btn" style={{
+                    padding: "0.3rem 0.75rem", fontSize: "0.78rem", fontWeight: 700,
+                    background: q.type === t ? "var(--accent)" : "var(--surface-2)",
+                    color: q.type === t ? "#fff" : "var(--text-dim)",
+                    border: q.type === t ? "none" : "1px solid var(--border)",
+                    borderRadius: 8,
+                  }}>
+                    {TYPE_CONFIG[t].label}
+                  </button>
+                ))}
+              </div>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.72rem", marginBottom: "1rem" }}>
+                {TYPE_CONFIG[q.type].desc}
+              </p>
 
-        {/* Add question */}
-        <button
-          onClick={addQuestion}
-          className="w-full py-4 rounded-2xl text-white font-bold text-sm transition-all hover:bg-white/10 active:scale-98"
-          style={{ border: "2px dashed rgba(167,139,250,0.3)", background: "rgba(167,139,250,0.05)" }}
-        >
+              {/* Question text */}
+              <textarea
+                value={q.question}
+                onChange={(e) => setQ(qi, { question: e.target.value })}
+                placeholder="Tulis pertanyaan di sini..."
+                rows={2}
+                className="input mb-4"
+                style={{ resize: "none" }}
+              />
+
+              {/* Options */}
+              {isTF ? (
+                <div className="row mb-4" style={{ gap: "0.65rem" }}>
+                  {["Benar", "Salah"].map((label, oi) => (
+                    <button key={oi} onClick={() => setQ(qi, { correctIndex: oi })} className="btn flex-1" style={{
+                      padding: "0.875rem", fontWeight: 700, fontSize: "0.9rem",
+                      background: q.correctIndex === oi ? TF_COLORS[oi] : "var(--surface-2)",
+                      color: q.correctIndex === oi ? "#fff" : "var(--text-dim)",
+                      border: q.correctIndex === oi ? "none" : "1px solid var(--border)",
+                    }}>
+                      {label} {q.correctIndex === oi ? "✓" : ""}
+                    </button>
+                  ))}
+                </div>
+              ) : isPoll ? (
+                <div className="col mb-4" style={{ gap: "0.45rem" }}>
+                  {q.options.map((opt, oi) => (
+                    <div key={oi} className="row" style={{ gap: "0.5rem" }}>
+                      <div style={{ width: 4, borderRadius: 2, background: MC_COLORS[oi % 4], alignSelf: "stretch", flexShrink: 0 }} />
+                      <input
+                        value={opt}
+                        onChange={(e) => setOpt(qi, oi, e.target.value)}
+                        placeholder={`Opsi ${oi + 1}`}
+                        className="input flex-1"
+                        style={{ fontSize: "0.9rem" }}
+                      />
+                      {q.options.length > 2 && (
+                        <button onClick={() => removePollOption(qi, oi)} className="btn btn-ghost" style={{ padding: "0.45rem 0.6rem", color: "#F87171" }}>×</button>
+                      )}
+                    </div>
+                  ))}
+                  {q.options.length < 4 && (
+                    <button onClick={() => addPollOption(qi)} className="btn btn-ghost" style={{ fontSize: "0.78rem", padding: "0.45rem 0.875rem", alignSelf: "flex-start" }}>
+                      + Tambah opsi
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "1rem" }}>
+                  {q.options.map((opt, oi) => (
+                    <div key={oi} style={{ position: "relative", display: "flex", gap: "0.5rem" }}>
+                      <div style={{ width: 4, borderRadius: 2, background: MC_COLORS[oi], alignSelf: "stretch", flexShrink: 0 }} />
+                      <input
+                        value={opt}
+                        onChange={(e) => setOpt(qi, oi, e.target.value)}
+                        placeholder={`Opsi ${oi + 1}`}
+                        className="input flex-1"
+                        style={{
+                          fontSize: "0.875rem", paddingRight: "2.25rem",
+                          borderColor: q.correctIndex === oi ? MC_COLORS[oi] : "var(--border)",
+                          background: q.correctIndex === oi ? `${MC_COLORS[oi]}18` : "var(--surface-2)",
+                        }}
+                      />
+                      <button onClick={() => setQ(qi, { correctIndex: oi })} style={{
+                        position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)",
+                        width: 22, height: 22, borderRadius: "50%", border: "none", cursor: "pointer",
+                        background: q.correctIndex === oi ? MC_COLORS[oi] : "var(--surface-3)",
+                        color: "#fff", fontSize: "0.65rem", fontWeight: 900,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        {q.correctIndex === oi ? "✓" : "·"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Time limit */}
+              <div className="row" style={{ gap: "0.4rem", flexWrap: "wrap" }}>
+                <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 700 }}>Waktu:</span>
+                {TIME_OPTIONS.map((t) => (
+                  <button key={t} onClick={() => setQ(qi, { timeLimit: t })} className="btn" style={{
+                    padding: "0.28rem 0.7rem", fontSize: "0.75rem", fontWeight: 700, borderRadius: 8,
+                    background: q.timeLimit === t ? "var(--accent)" : "var(--surface-2)",
+                    color: q.timeLimit === t ? "#fff" : "var(--text-muted)",
+                    border: q.timeLimit === t ? "none" : "1px solid var(--border)",
+                  }}>
+                    {t}s
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Add question button */}
+        <button onClick={addQuestion} className="btn btn-ghost" style={{
+          width: "100%", padding: "1rem",
+          border: "2px dashed var(--border-hi)", borderRadius: 16, fontSize: "0.875rem",
+        }}>
           + Tambah Pertanyaan
         </button>
 
         {error && (
-          <div className="rounded-2xl px-5 py-4"
-            style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)" }}>
-            <p className="text-red-400 font-semibold text-sm text-center">⚠️ {error}</p>
+          <div className="card" style={{ padding: "0.875rem 1.125rem", background: "rgba(220,38,38,0.1)", borderColor: "rgba(220,38,38,0.3)" }}>
+            <p style={{ color: "#F87171", fontSize: "0.875rem", fontWeight: 600 }}>{error}</p>
           </div>
         )}
       </div>
 
-      {/* Sticky footer */}
-      <div
-        className="fixed bottom-0 left-0 right-0 px-4 py-4"
-        style={{ background: "linear-gradient(to top, #0f0f1a 70%, transparent)" }}
-      >
-        <div className="max-w-2xl mx-auto">
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="btn-primary w-full py-5 text-lg rounded-2xl disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {loading ? "Membuat game..." : `🚀  Buat Game — ${questions.length} Pertanyaan`}
+      {/* Sticky submit footer */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "1rem", background: "linear-gradient(to top, var(--bg) 70%, transparent)" }}>
+        <div style={{ maxWidth: 680, margin: "0 auto" }}>
+          <button onClick={handleSubmit} disabled={loading} className="btn btn-primary btn-xl" style={{ width: "100%", opacity: loading ? 0.6 : 1 }}>
+            {loading ? "Membuat game..." : `Buat Game — ${questions.length} Pertanyaan`}
           </button>
         </div>
       </div>

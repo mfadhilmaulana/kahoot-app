@@ -4,66 +4,45 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { getSocket } from "@/lib/socket";
 import type { Socket } from "socket.io-client";
+import type { QuestionPayload, ResultsPayload, LBEntry } from "@/lib/types";
 
-// ── Types ──────────────────────────────────────────────────────────────────────
-interface Player { id: string; name: string; }
-interface LBEntry { rank: number; name: string; score: number; lastScore: number; id: string; }
-interface QuestionPayload {
-  index: number; total: number; question: string;
-  options: string[]; timeLimit: number; isLast: boolean;
-}
-interface ResultsPayload {
-  correctIndex: number; counts: number[]; leaderboard: LBEntry[];
-  isLast: boolean; question: string; options: string[];
-}
+interface PlayerInfo { id: string; name: string; }
 
-type Phase = "lobby" | "question" | "review" | "ended";
-
-// ── Constants ──────────────────────────────────────────────────────────────────
-const OPT_COLORS = ["#ef4444", "#3b82f6", "#22c55e", "#eab308"];
-const OPT_SHAPES = ["▲", "◆", "●", "■"];
-const BG = "linear-gradient(160deg, #0f0f1a 0%, #1a0533 100%)";
-
-const AVATAR_COLORS = ["#ef4444","#f97316","#eab308","#22c55e","#3b82f6","#8b5cf6","#ec4899","#14b8a6"];
+const AVATAR_COLORS = ["#EF4444","#F97316","#EAB308","#22C55E","#3B82F6","#8B5CF6","#EC4899","#14B8A6"];
 function avatarColor(name: string) {
   let h = 0;
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff;
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
 }
 
-// ── Circular countdown timer ───────────────────────────────────────────────────
 function CircleTimer({ timeLeft, timeLimit }: { timeLeft: number; timeLimit: number }) {
-  const r = 44;
-  const circ = 2 * Math.PI * r;
+  const r = 44, circ = 2 * Math.PI * r;
   const pct = timeLeft / timeLimit;
-  const offset = circ * (1 - pct);
-  const color = pct > 0.5 ? "#22c55e" : pct > 0.25 ? "#eab308" : "#ef4444";
+  const color = pct > 0.5 ? "#22C55E" : pct > 0.25 ? "#EAB308" : "#EF4444";
   return (
-    <div className="relative w-28 h-28 flex-shrink-0">
-      <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
-        <circle cx="50" cy="50" r={r} fill="none" stroke={color} strokeWidth="8"
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 0.9s linear, stroke 0.4s" }}
-        />
+    <div style={{ position: "relative", width: 96, height: 96, flexShrink: 0 }}>
+      <svg style={{ width: "100%", height: "100%", transform: "rotate(-90deg)" }} viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r={r} fill="none" stroke="var(--border-hi)" strokeWidth="7" />
+        <circle cx="50" cy="50" r={r} fill="none" stroke={color} strokeWidth="7"
+          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)}
+          style={{ transition: "stroke-dashoffset 0.9s linear, stroke 0.4s" }} />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-3xl font-black text-white">{timeLeft}</span>
+      <div className="center" style={{ position: "absolute", inset: 0 }}>
+        <span style={{ fontSize: "1.75rem", fontWeight: 900, color: "var(--text)" }}>{timeLeft}</span>
       </div>
     </div>
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
+type Phase = "lobby" | "question" | "review" | "ended";
+
 export default function HostGamePage() {
   const { pin } = useParams<{ pin: string }>();
   const router = useRouter();
   const socketRef = useRef<Socket | null>(null);
 
   const [phase, setPhase] = useState<Phase>("lobby");
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<PlayerInfo[]>([]);
   const [question, setQuestion] = useState<QuestionPayload | null>(null);
   const [results, setResults] = useState<ResultsPayload | null>(null);
   const [answerCount, setAnswerCount] = useState(0);
@@ -76,10 +55,10 @@ export default function HostGamePage() {
     const socket = getSocket();
     socketRef.current = socket;
 
-    function onPlayerJoined({ players: p }: { players: Player[] }) { setPlayers(p); }
-    function onPlayerLeft({ players: p }: { players: Player[] }) { setPlayers(p); }
+    const onPlayerJoined = ({ players: p }: { players: PlayerInfo[] }) => setPlayers(p);
+    const onPlayerLeft = ({ players: p }: { players: PlayerInfo[] }) => setPlayers(p);
 
-    function onQuestion(payload: QuestionPayload) {
+    const onQuestion = (payload: QuestionPayload) => {
       setPhase("question");
       setQuestion(payload);
       setResults(null);
@@ -89,23 +68,23 @@ export default function HostGamePage() {
       timerRef.current = setInterval(() => {
         setTimeLeft((t) => { if (t <= 1) { clearInterval(timerRef.current!); return 0; } return t - 1; });
       }, 1000);
-    }
+    };
 
-    function onAnswerCount({ answered }: { answered: number }) { setAnswerCount(answered); }
+    const onAnswerCount = ({ answered }: { answered: number }) => setAnswerCount(answered);
 
-    function onResults(payload: ResultsPayload) {
+    const onResults = (payload: ResultsPayload) => {
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
       setPhase("review");
       setResults(payload);
-    }
+    };
 
-    function onEnded({ leaderboard }: { leaderboard: LBEntry[] }) {
+    const onEnded = ({ leaderboard }: { leaderboard: LBEntry[] }) => {
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
       setFinalLB(leaderboard);
       setPhase("ended");
-    }
+    };
 
-    function onHostLeft() { router.replace("/"); }
+    const onHostLeft = () => router.replace("/");
 
     socket.on("game:playerJoined", onPlayerJoined);
     socket.on("game:playerLeft", onPlayerLeft);
@@ -127,9 +106,8 @@ export default function HostGamePage() {
     };
   }, [router]);
 
-  const emit = (ev: string, data: object, cb?: (r: object) => void) => {
+  const emit = (ev: string, data: object, cb?: (r: object) => void) =>
     socketRef.current?.emit(ev, data, cb);
-  };
 
   function handleStart() {
     setStartError("");
@@ -139,139 +117,149 @@ export default function HostGamePage() {
     });
   }
 
-  // ── LOBBY ─────────────────────────────────────────────────────────────────
+  // ── LOBBY ──────────────────────────────────────────────────────────────────────
   if (phase === "lobby") {
     return (
-      <main className="min-h-screen flex flex-col" style={{ background: BG }}>
-        {/* Pin banner */}
-        <div className="text-center pt-10 pb-6 px-4">
-          <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">Kode Game</p>
-          <div
-            className="inline-block px-10 py-5 rounded-3xl mb-4"
-            style={{ background: "rgba(167,139,250,0.12)", border: "2px solid rgba(167,139,250,0.35)" }}
-          >
-            <span className="text-7xl font-black tracking-[0.2em] text-white">{pin}</span>
+      <main className="min-h-screen col" style={{ background: "var(--bg)" }}>
+        <div className="text-center" style={{ paddingTop: "3rem", paddingBottom: "2rem" }}>
+          <p className="t-label mb-3">Kode Game</p>
+          <div className="card-hi center" style={{ display: "inline-flex", padding: "1.25rem 3rem", marginBottom: "1rem" }}>
+            <span style={{ fontSize: "4rem", fontWeight: 900, letterSpacing: "0.2em", color: "var(--text)", fontFamily: "monospace" }}>
+              {pin}
+            </span>
           </div>
-          <p className="text-gray-400 text-sm">
-            Buka <span className="text-purple-300 font-semibold">localhost:3000</span> dan masukkan kode ini
+          <p style={{ color: "var(--text-dim)", fontSize: "0.875rem" }}>
+            Buka <span style={{ color: "var(--accent-hi)", fontWeight: 600 }}>localhost:3000</span> dan masukkan kode ini
           </p>
         </div>
 
-        {/* Players area */}
-        <div className="flex-1 px-5 max-w-4xl mx-auto w-full">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white font-bold text-lg">
-              Pemain bergabung
-              <span className="ml-2 text-purple-400 text-2xl font-black">{players.length}</span>
-            </h2>
-            {startError && (
-              <p className="text-red-400 text-sm font-medium">⚠️ {startError}</p>
-            )}
+        <div className="flex-1 px-5" style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
+          <div className="row mb-4" style={{ justifyContent: "space-between", alignItems: "center" }}>
+            <div className="row" style={{ gap: "0.5rem" }}>
+              <span className="t-h3">Pemain</span>
+              <span style={{ fontSize: "1.5rem", fontWeight: 900, color: "var(--accent)" }}>{players.length}</span>
+            </div>
+            {startError && <p style={{ color: "#F87171", fontSize: "0.82rem", fontWeight: 600 }}>{startError}</p>}
           </div>
 
           {players.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 gap-4">
-              <div className="flex gap-2">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="w-3 h-3 rounded-full"
-                    style={{ background: "#a78bfa", animation: `pulse-dot 1.2s ease ${i * 0.2}s infinite` }} />
+            <div className="center col py-24" style={{ gap: "1rem" }}>
+              <div className="row" style={{ gap: "0.5rem" }}>
+                {[0,1,2].map((i) => (
+                  <div key={i} style={{
+                    width: 10, height: 10, borderRadius: "50%",
+                    background: "var(--accent)",
+                    animation: `dotPulse 1.2s ease ${i * 0.2}s infinite`,
+                  }} />
                 ))}
               </div>
-              <p className="text-gray-500 text-base">Menunggu pemain bergabung...</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>Menunggu pemain bergabung...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(168px, 1fr))", gap: "0.65rem" }}>
               {players.map((p, i) => (
-                <div key={p.id}
-                  className="rounded-2xl px-3 py-3 flex items-center gap-2 fade-in"
-                  style={{
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    animationDelay: `${i * 0.04}s`,
+                <div key={p.id} className="card a-slidein" style={{
+                  padding: "0.6rem 0.85rem",
+                  display: "flex", alignItems: "center", gap: "0.6rem",
+                  animationDelay: `${i * 0.04}s`,
+                }}>
+                  <div className="center" style={{
+                    width: 30, height: 30, borderRadius: "50%",
+                    background: avatarColor(p.name), color: "#fff",
+                    fontSize: "0.78rem", fontWeight: 900, flexShrink: 0,
                   }}>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-black flex-shrink-0"
-                    style={{ background: avatarColor(p.name) }}>
                     {p.name[0].toUpperCase()}
                   </div>
-                  <span className="text-white font-semibold text-sm truncate">{p.name}</span>
+                  <span style={{ color: "var(--text)", fontWeight: 600, fontSize: "0.875rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {p.name}
+                  </span>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Start */}
-        <div className="p-5 max-w-4xl mx-auto w-full">
+        <div className="px-5 pb-6" style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
           <button
             onClick={handleStart}
             disabled={players.length === 0}
-            className="w-full py-5 rounded-2xl text-2xl font-black text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{
-              background: players.length > 0
-                ? "linear-gradient(135deg, #7c3aed, #a855f7)"
-                : "rgba(255,255,255,0.1)",
-              boxShadow: players.length > 0 ? "0 8px 30px rgba(124,58,237,0.4)" : "none",
-            }}
+            className="btn btn-primary btn-xl"
+            style={{ width: "100%" }}
           >
-            {players.length === 0 ? "Menunggu pemain..." : "Mulai Game! 🚀"}
+            {players.length === 0 ? "Menunggu pemain..." : "Mulai Game"}
           </button>
         </div>
       </main>
     );
   }
 
-  // ── QUESTION ─────────────────────────────────────────────────────────────
+  // ── QUESTION ──────────────────────────────────────────────────────────────────
   if (phase === "question" && question) {
     const timerPct = timeLeft / question.timeLimit;
-    const timerColor = timerPct > 0.5 ? "#22c55e" : timerPct > 0.25 ? "#eab308" : "#ef4444";
+    const timerColor = timerPct > 0.5 ? "#22C55E" : timerPct > 0.25 ? "#EAB308" : "#EF4444";
+    const isTF = question.type === "tf";
+    const isPoll = question.type === "poll";
+
     return (
-      <main className="min-h-screen flex flex-col" style={{ background: BG }}>
-        {/* Top bar */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-2">
-          <div className="text-gray-400 text-sm font-semibold">
-            Pertanyaan <span className="text-white font-black">{question.index + 1}</span> / {question.total}
+      <main className="min-h-screen col" style={{ background: "var(--bg)" }}>
+        <div className="row px-6 pt-5 pb-2" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <p className="t-label">
+              {question.index + 1} / {question.total}
+              {question.category && ` · ${question.category}`}
+            </p>
+            {isPoll && (
+              <span className="badge mt-1" style={{ background: "var(--accent-dim)", color: "var(--accent-hi)" }}>
+                Pendapat
+              </span>
+            )}
           </div>
           <CircleTimer timeLeft={timeLeft} timeLimit={question.timeLimit} />
-          <div className="text-right">
-            <p className="text-gray-400 text-xs">Menjawab</p>
-            <p className="text-white font-black text-xl">{answerCount}<span className="text-gray-500 font-normal text-sm">/{players.length}</span></p>
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div className="h-1.5 mx-6 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
-          <div className="h-full rounded-full transition-all duration-1000"
-            style={{ width: `${timerPct * 100}%`, background: timerColor }} />
-        </div>
-
-        {/* Question */}
-        <div className="flex-1 flex flex-col items-center justify-center px-5 py-4">
-          <div className="w-full max-w-3xl glass rounded-3xl p-8 mb-6 text-center">
-            <p className="text-white text-2xl md:text-3xl font-bold leading-relaxed">
-              {question.question}
+          <div style={{ textAlign: "right" }}>
+            <p className="t-label">Menjawab</p>
+            <p style={{ color: "var(--text)", fontWeight: 900, fontSize: "1.3rem" }}>
+              {answerCount}
+              <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: "0.875rem" }}>/{players.length}</span>
             </p>
           </div>
-
-          {/* Options grid */}
-          <div className="grid grid-cols-2 gap-4 w-full max-w-3xl">
-            {question.options.map((opt, i) => (
-              <div key={i}
-                className="rounded-2xl p-5 flex items-center gap-4"
-                style={{ background: OPT_COLORS[i], opacity: 0.92 }}>
-                <span className="text-4xl font-black text-white opacity-80">{OPT_SHAPES[i]}</span>
-                <span className="text-white font-bold text-lg flex-1 leading-snug">{opt}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
-        {/* Control */}
-        <div className="px-5 pb-5 max-w-3xl mx-auto w-full">
-          <button
-            onClick={() => emit("host:showResults", { pin })}
-            className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all hover:bg-white/15 active:scale-98"
-            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)" }}
-          >
+        <div className="progress-track mx-6 mb-5">
+          <div className="progress-fill" style={{ width: `${timerPct * 100}%`, background: timerColor }} />
+        </div>
+
+        <div className="flex-1 col items-center justify-center px-5 py-2">
+          <div className="card center mb-6" style={{ width: "100%", maxWidth: 720, padding: "2rem", textAlign: "center" }}>
+            <p className="t-h2" style={{ lineHeight: 1.35 }}>{question.question}</p>
+          </div>
+
+          {isTF ? (
+            <div className="row" style={{ gap: "1rem", width: "100%", maxWidth: 720 }}>
+              <div className="center flex-1 ans-btn ans-tf-t" style={{ minHeight: 100, justifyContent: "center" }}>
+                <span className="t-h2">Benar</span>
+              </div>
+              <div className="center flex-1 ans-btn ans-tf-f" style={{ minHeight: 100, justifyContent: "center" }}>
+                <span className="t-h2">Salah</span>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", width: "100%", maxWidth: 720 }}>
+              {question.options.map((opt, i) => {
+                const clsMap = ["ans-a","ans-b","ans-c","ans-d"];
+                const shapes = ["▲","◆","●","■"];
+                return (
+                  <div key={i} className={`ans-btn ${clsMap[i]}`} style={{ cursor: "default" }}>
+                    <span className="shape">{shapes[i]}</span>
+                    <span className="ans-text">{opt}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="px-5 pb-5" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
+          <button onClick={() => emit("host:showResults", { pin })} className="btn btn-ghost btn-lg" style={{ width: "100%" }}>
             Tampilkan Hasil Sekarang
           </button>
         </div>
@@ -279,119 +267,120 @@ export default function HostGamePage() {
     );
   }
 
-  // ── REVIEW ──────────────────────────────────────────────────────────────
+  // ── REVIEW ────────────────────────────────────────────────────────────────────
   if (phase === "review" && results && question) {
+    const isPoll = results.type === "poll";
+    const isTF = results.type === "tf";
     const maxCount = Math.max(...results.counts, 1);
+    const mcColors = ["#DC2626","#2563EB","#16A34A","#CA8A04"];
+    const tfColors = ["#059669","#DC2626"];
+    const shapes = ["▲","◆","●","■"];
+
     return (
-      <main className="min-h-screen flex flex-col" style={{ background: BG }}>
-        <div className="text-center pt-7 pb-3 px-5">
-          <p className="text-purple-300 text-xs font-bold uppercase tracking-widest mb-1">
-            Pertanyaan {question.index + 1} — Jawaban
-          </p>
-          <p className="text-white text-lg font-bold max-w-2xl mx-auto leading-snug">
-            {results.question}
-          </p>
+      <main className="min-h-screen col" style={{ background: "var(--bg)" }}>
+        <div style={{ padding: "1.5rem 1.5rem 0.5rem", textAlign: "center" }}>
+          <p className="t-label mb-2">Pertanyaan {question.index + 1} — {isPoll ? "Hasil Pendapat" : "Jawaban"}</p>
+          <p className="t-h3" style={{ maxWidth: 640, margin: "0 auto", lineHeight: 1.35 }}>{results.question}</p>
         </div>
 
-        {/* Bar chart — fixed-height container */}
-        <div className="flex-1 flex items-end justify-center gap-3 px-6 max-w-3xl mx-auto w-full"
-          style={{ minHeight: "220px", maxHeight: "260px" }}>
+        {/* Bar chart */}
+        <div className="flex-1 row items-end justify-center px-6" style={{ gap: "0.75rem", minHeight: 200, maxHeight: 240 }}>
           {results.options.map((opt, i) => {
-            const isCorrect = i === results.correctIndex;
+            const isCorrect = !isPoll && i === results.correctIndex;
+            const color = isTF ? tfColors[i] : mcColors[i];
             const heightPct = Math.max((results.counts[i] / maxCount) * 100, 4);
             return (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1" style={{ height: "100%" }}>
-                <span className="text-white font-black text-sm mb-1">{results.counts[i]}</span>
-                <div className="w-full flex flex-col justify-end" style={{ height: "180px" }}>
-                  <div
-                    className="w-full rounded-t-xl bar-grow"
-                    style={{
-                      height: `${heightPct}%`,
-                      background: isCorrect ? OPT_COLORS[i] : `${OPT_COLORS[i]}55`,
-                      border: isCorrect ? "3px solid rgba(255,255,255,0.6)" : "none",
-                      animationDelay: `${i * 0.08}s`,
-                    }}
-                  />
+              <div key={i} className="col items-center flex-1" style={{ gap: "0.2rem" }}>
+                <span style={{ color: "var(--text)", fontWeight: 900, fontSize: "0.875rem" }}>{results.counts[i]}</span>
+                <div className="col justify-end" style={{ height: 180, width: "100%" }}>
+                  <div className="a-bargrow" style={{
+                    height: `${heightPct}%`,
+                    borderRadius: "6px 6px 0 0",
+                    background: (isPoll || isCorrect) ? color : `${color}55`,
+                    border: isCorrect ? "2.5px solid rgba(255,255,255,0.55)" : "none",
+                    animationDelay: `${i * 0.07}s`,
+                  }} />
                 </div>
-                <span className="text-xl mt-1">{OPT_SHAPES[i]}</span>
-                <span className="text-white text-xs font-semibold text-center leading-tight" style={{ maxWidth: "80px" }}>{opt}</span>
-                {isCorrect && <span className="text-green-400 font-black text-xs">✓ BENAR</span>}
+                {!isTF && <span style={{ color: "var(--text-muted)", fontSize: "1rem" }}>{shapes[i]}</span>}
+                <span style={{ color: "var(--text-dim)", fontSize: "0.7rem", fontWeight: 600, textAlign: "center", maxWidth: 80, lineHeight: 1.3 }}>
+                  {opt}
+                </span>
+                {isCorrect && <span style={{ color: "#4ADE80", fontWeight: 900, fontSize: "0.68rem", letterSpacing: "0.04em" }}>BENAR</span>}
               </div>
             );
           })}
         </div>
 
-        {/* Top 3 */}
-        <div className="px-5 pt-4 pb-2 max-w-3xl mx-auto w-full">
-          <p className="text-gray-500 text-xs font-bold uppercase tracking-widest text-center mb-3">Peringkat Sementara</p>
-          <div className="space-y-2">
-            {results.leaderboard.slice(0, 3).map((e, i) => (
-              <div key={e.id}
-                className="flex items-center gap-3 rounded-2xl px-4 py-3"
-                style={{
-                  background: i === 0 ? "rgba(251,191,36,0.15)" : i === 1 ? "rgba(156,163,175,0.12)" : "rgba(180,83,9,0.15)",
-                  border: `1px solid ${i === 0 ? "rgba(251,191,36,0.35)" : i === 1 ? "rgba(156,163,175,0.3)" : "rgba(180,83,9,0.3)"}`,
-                }}>
-                <span className="text-xl w-7 text-center">{["🥇","🥈","🥉"][i]}</span>
-                <span className="text-white font-bold flex-1 text-sm">{e.name}</span>
-                {e.lastScore > 0 && (
-                  <span className="text-green-400 text-xs font-bold">+{e.lastScore}</span>
-                )}
-                <span className="text-white font-black">{e.score.toLocaleString()}</span>
-              </div>
-            ))}
+        {/* Explanation */}
+        {results.explanation && (
+          <div className="card-hi" style={{ margin: "0.5rem 1.25rem", padding: "0.875rem 1.125rem", maxWidth: 720, marginLeft: "auto", marginRight: "auto" }}>
+            <p className="t-label mb-1">Penjelasan</p>
+            <p style={{ color: "var(--text-dim)", fontSize: "0.85rem", lineHeight: 1.6 }}>{results.explanation}</p>
+          </div>
+        )}
+
+        {/* Leaderboard */}
+        <div className="px-5 pb-2" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
+          <p className="t-label text-center mb-3 mt-2">Peringkat Sementara</p>
+          <div className="col" style={{ gap: "0.45rem" }}>
+            {results.leaderboard.slice(0, 3).map((e, i) => {
+              const bg = ["rgba(234,179,8,0.1)","rgba(156,163,175,0.08)","rgba(180,83,9,0.1)"][i];
+              const border = ["rgba(234,179,8,0.28)","rgba(156,163,175,0.2)","rgba(180,83,9,0.25)"][i];
+              return (
+                <div key={e.id} className="row" style={{ gap: "0.75rem", padding: "0.65rem 0.875rem", borderRadius: 12, background: bg, border: `1px solid ${border}` }}>
+                  <span style={{ width: 20, color: "var(--text)", fontWeight: 900, fontSize: "0.82rem" }}>{e.rank}.</span>
+                  <span style={{ color: "var(--text)", fontWeight: 700, flex: 1, fontSize: "0.875rem" }}>{e.name}</span>
+                  {e.lastScore > 0 && <span style={{ color: "#4ADE80", fontSize: "0.75rem", fontWeight: 700 }}>+{e.lastScore}</span>}
+                  <span style={{ color: "var(--text)", fontWeight: 900 }}>{e.score.toLocaleString()}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        <div className="px-5 pb-5 max-w-3xl mx-auto w-full">
-          <button
-            onClick={() => emit("host:next", { pin })}
-            className="btn-primary w-full py-5 text-xl rounded-2xl mt-3"
-          >
-            {results.isLast ? "Lihat Hasil Akhir 🏆" : "Pertanyaan Berikutnya →"}
+        <div className="px-5 pb-6" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
+          <button onClick={() => emit("host:next", { pin })} className="btn btn-primary btn-xl" style={{ width: "100%", marginTop: "0.75rem" }}>
+            {results.isLast ? "Lihat Hasil Akhir" : "Pertanyaan Berikutnya"}
           </button>
         </div>
       </main>
     );
   }
 
-  // ── ENDED ─────────────────────────────────────────────────────────────────
+  // ── ENDED ─────────────────────────────────────────────────────────────────────
   if (phase === "ended") {
     const top3 = finalLB.slice(0, 3);
     const rest = finalLB.slice(3);
+    const podiumOrder = [top3[1], top3[0], top3[2]];
+    const podHeights = [140, 188, 108];
+    const podBg = ["rgba(156,163,175,0.1)","rgba(234,179,8,0.14)","rgba(180,83,9,0.1)"];
+    const podBorder = ["rgba(156,163,175,0.28)","rgba(234,179,8,0.38)","rgba(180,83,9,0.28)"];
+
     return (
-      <main className="min-h-screen flex flex-col items-center px-5 pt-8 pb-10"
-        style={{ background: BG }}>
-        <div className="text-center mb-8 pop-in">
-          <div className="text-7xl mb-3">🏆</div>
-          <h2 className="text-4xl font-black text-white mb-1">Game Selesai!</h2>
-          <p className="text-gray-400 text-sm">Peringkat akhir</p>
+      <main className="min-h-screen col items-center px-5 pt-10 pb-12" style={{ background: "var(--bg)" }}>
+        <div className="text-center mb-8 a-popin">
+          <div className="t-display mb-1">
+            <span style={{ color: "var(--accent)" }}>KUIS</span>
+            <span style={{ color: "var(--accent-hi)" }}>!</span>
+          </div>
+          <h2 className="t-h2 mb-1">Game Selesai</h2>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>Peringkat akhir</p>
         </div>
 
-        {/* Podium */}
         {top3.length > 0 && (
-          <div className="flex items-end justify-center gap-4 mb-8 w-full max-w-md">
-            {[top3[1], top3[0], top3[2]].map((e, pos) => {
-              if (!e) return <div key={pos} className="flex-1" />;
+          <div className="row items-end justify-center mb-8" style={{ gap: "1rem", width: "100%", maxWidth: 440 }}>
+            {podiumOrder.map((e, pos) => {
+              if (!e) return <div key={pos} style={{ flex: 1 }} />;
               const rank = [2, 1, 3][pos];
-              const heights = [140, 180, 110];
-              const medals = ["🥇","🥈","🥉"];
-              const colors = ["rgba(251,191,36,0.3)","rgba(156,163,175,0.3)","rgba(180,83,9,0.3)"];
-              const borders = ["rgba(251,191,36,0.5)","rgba(156,163,175,0.4)","rgba(180,83,9,0.4)"];
               return (
-                <div key={e.id} className="flex-1 flex flex-col items-center gap-2 fade-in"
-                  style={{ animationDelay: `${pos * 0.1}s` }}>
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center font-black text-white text-lg"
-                    style={{ background: avatarColor(e.name) }}>
+                <div key={e.id} className="col items-center flex-1 a-fadeup" style={{ gap: "0.4rem", animationDelay: `${pos * 0.1}s` }}>
+                  <div className="center" style={{ width: 44, height: 44, borderRadius: "50%", background: avatarColor(e.name), color: "#fff", fontWeight: 900, fontSize: "1.1rem" }}>
                     {e.name[0].toUpperCase()}
                   </div>
-                  <span className="text-white text-xs font-bold text-center leading-tight">{e.name}</span>
-                  <span className="text-white text-sm font-black">{e.score.toLocaleString()}</span>
-                  <div
-                    className="w-full rounded-t-2xl flex items-center justify-center text-2xl"
-                    style={{ height: heights[rank - 1], background: colors[rank - 1], border: `2px solid ${borders[rank - 1]}` }}
-                  >
-                    {medals[rank - 1]}
+                  <span style={{ color: "var(--text)", fontSize: "0.75rem", fontWeight: 700, textAlign: "center", lineHeight: 1.2 }}>{e.name}</span>
+                  <span style={{ color: "var(--text-dim)", fontSize: "0.8rem", fontWeight: 700 }}>{e.score.toLocaleString()}</span>
+                  <div className="center" style={{ width: "100%", height: podHeights[rank - 1], borderRadius: "8px 8px 0 0", background: podBg[rank - 1], border: `1.5px solid ${podBorder[rank - 1]}` }}>
+                    <span style={{ fontSize: "1.75rem", fontWeight: 900, color: "var(--text-dim)" }}>{rank}</span>
                   </div>
                 </div>
               );
@@ -399,33 +388,22 @@ export default function HostGamePage() {
           </div>
         )}
 
-        {/* Rest of leaderboard */}
         {rest.length > 0 && (
-          <div className="w-full max-w-md space-y-2 mb-8">
+          <div className="col mb-8" style={{ gap: "0.45rem", width: "100%", maxWidth: 440 }}>
             {rest.map((e, i) => (
-              <div key={e.id}
-                className="flex items-center gap-3 rounded-2xl px-4 py-3 fade-in"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  animationDelay: `${(i + 3) * 0.07}s`,
-                }}>
-                <span className="text-gray-400 text-sm w-6 text-center font-bold">{e.rank}</span>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-black"
-                  style={{ background: avatarColor(e.name) }}>
+              <div key={e.id} className="card row a-fadeup" style={{ padding: "0.6rem 0.875rem", gap: "0.75rem", animationDelay: `${(i + 3) * 0.06}s` }}>
+                <span style={{ color: "var(--text-muted)", fontSize: "0.82rem", width: 20, fontWeight: 700 }}>{e.rank}</span>
+                <div className="center" style={{ width: 28, height: 28, borderRadius: "50%", background: avatarColor(e.name), color: "#fff", fontSize: "0.72rem", fontWeight: 900 }}>
                   {e.name[0].toUpperCase()}
                 </div>
-                <span className="text-white font-semibold flex-1 text-sm">{e.name}</span>
-                <span className="text-white font-black">{e.score.toLocaleString()}</span>
+                <span style={{ color: "var(--text)", fontWeight: 600, flex: 1, fontSize: "0.875rem" }}>{e.name}</span>
+                <span style={{ color: "var(--text)", fontWeight: 900, fontSize: "0.875rem" }}>{e.score.toLocaleString()}</span>
               </div>
             ))}
           </div>
         )}
 
-        <button
-          onClick={() => router.push("/")}
-          className="btn-primary px-10 py-4 text-base rounded-2xl"
-        >
+        <button onClick={() => router.push("/")} className="btn btn-primary btn-lg" style={{ minWidth: 200 }}>
           Kembali ke Beranda
         </button>
       </main>
