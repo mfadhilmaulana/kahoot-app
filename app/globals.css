@@ -42,6 +42,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  /* Prevent horizontal overflow on mobile */
+  overflow-x: hidden;
 }
 
 /* ── Typography scale ──────────────────────────────────────────────────────── */
@@ -88,6 +90,9 @@ body {
   padding: 0.75rem 1.5rem;
   transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
   user-select: none; white-space: nowrap;
+  /* Mobile touch */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .btn:active { transform: scale(0.97); }
 .btn:disabled { opacity: 0.38; cursor: not-allowed; pointer-events: none; }
@@ -147,6 +152,9 @@ textarea.input { resize: none; }
   font-family: inherit; font-weight: 700; font-size: 1.1rem; color: #fff;
   transition: transform 120ms ease, filter 120ms ease;
   user-select: none;
+  /* Mobile touch */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .ans-btn:hover { transform: scale(1.02); filter: brightness(1.08); }
 .ans-btn:active { transform: scale(0.97); }
@@ -230,4 +238,31 @@ textarea.input { resize: none; }
 .progress-fill {
   height:100%; border-radius:2px;
   transition: width 0.9s linear, background-color 0.4s ease;
+}
+
+/* ── Safe area / mobile helpers ──────────────────────────────────────────────── */
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.fixed-bottom-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* ── Mobile overrides ────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .t-display { font-size: clamp(2.4rem, 14vw, 3.5rem); }
+  .t-h1      { font-size: clamp(1.6rem, 7vw, 2rem); }
+  .t-h2      { font-size: clamp(1.2rem, 5vw, 1.5rem); }
+
+  .input-xl  { font-size: 1.75rem; letter-spacing: 0.15em; padding: 1rem; }
+
+  .btn-xl    { padding: 1rem 1.75rem; font-size: 1rem; }
+
+  .ans-btn   { font-size: 1rem; padding: 1rem 0.875rem; gap: 0.6rem; }
+  .ans-btn .shape { font-size: 1.25rem; }
+}
+
+/* Prevent double-tap zoom on interactive elements */
+input, button, a, select, textarea {
+  touch-action: manipulation;
 }

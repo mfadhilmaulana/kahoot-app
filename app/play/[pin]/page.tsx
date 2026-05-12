@@ -242,7 +242,7 @@ export default function PlayPage() {
         </div>
 
         {/* Timer + progress */}
-        <div className="col items-center pt-4 pb-2" style={{ gap: "0.25rem" }}>
+        <div className="col items-center pt-3 pb-1" style={{ gap: "0.2rem" }}>
           <CircleTimer timeLeft={timeLeft} timeLimit={question.timeLimit} />
           <p className="t-label mt-1">{question.index + 1} / {question.total}</p>
           {isPoll && (
@@ -251,9 +251,9 @@ export default function PlayPage() {
         </div>
 
         {/* Question */}
-        <div style={{ padding: "0 1rem 0.875rem" }}>
-          <div className="card center" style={{ padding: "1.25rem", textAlign: "center", maxWidth: 500, margin: "0 auto" }}>
-            <p className="t-h3" style={{ lineHeight: 1.4 }}>{question.question}</p>
+        <div style={{ padding: "0 0.875rem 0.75rem" }}>
+          <div className="card center" style={{ padding: "1rem 1.125rem", textAlign: "center", maxWidth: 500, margin: "0 auto" }}>
+            <p className="t-h3" style={{ lineHeight: 1.4, fontSize: "clamp(0.95rem, 3.5vw, 1.1rem)" }}>{question.question}</p>
           </div>
         </div>
 
@@ -261,12 +261,12 @@ export default function PlayPage() {
         {phase === "answered" ? (
           <div className="flex-1 col items-center justify-center" style={{ gap: "1rem" }}>
             <div className="center a-popin" style={{
-              width: 100, height: 100, borderRadius: "50%",
+              width: 90, height: 90, borderRadius: "50%",
               background: isTF
                 ? (chosen === 0 ? "#059669" : "#DC2626")
                 : mcColors[chosen ?? 0],
             }}>
-              <span style={{ fontSize: "2.5rem", color: "#fff", fontWeight: 900 }}>
+              <span style={{ fontSize: "2.25rem", color: "#fff", fontWeight: 900 }}>
                 {isTF ? (chosen === 0 ? "B" : "S") : ["▲","◆","●","■"][chosen ?? 0]}
               </span>
             </div>
@@ -276,30 +276,30 @@ export default function PlayPage() {
 
         /* TF answer buttons */
         ) : isTF ? (
-          <div className="flex-1 row px-4 pb-4" style={{ gap: "0.75rem" }}>
+          <div className="flex-1 row px-3 pb-3 safe-bottom" style={{ gap: "0.65rem", minHeight: 120 }}>
             <button onClick={() => handleAnswer(0)} className="ans-btn ans-tf-t flex-1"
-              style={{ minHeight: 140, flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
-              <span style={{ fontSize: "3rem", fontWeight: 900, color: "#fff" }}>B</span>
-              <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fff" }}>Benar</span>
+              style={{ minHeight: 120, flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+              <span style={{ fontSize: "clamp(2rem, 8vw, 3rem)", fontWeight: 900, color: "#fff" }}>B</span>
+              <span style={{ fontSize: "1rem", fontWeight: 700, color: "#fff" }}>Benar</span>
             </button>
             <button onClick={() => handleAnswer(1)} className="ans-btn ans-tf-f flex-1"
-              style={{ minHeight: 140, flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
-              <span style={{ fontSize: "3rem", fontWeight: 900, color: "#fff" }}>S</span>
-              <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fff" }}>Salah</span>
+              style={{ minHeight: 120, flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+              <span style={{ fontSize: "clamp(2rem, 8vw, 3rem)", fontWeight: 900, color: "#fff" }}>S</span>
+              <span style={{ fontSize: "1rem", fontWeight: 700, color: "#fff" }}>Salah</span>
             </button>
           </div>
 
         /* MC / Poll answer buttons */
         ) : (
-          <div className="flex-1 px-4 pb-4" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.65rem", alignContent: "start" }}>
+          <div className="flex-1 px-3 pb-3 safe-bottom" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.55rem", alignContent: "start" }}>
             {question.options.map((opt, i) => {
               const clsMap = ["ans-a","ans-b","ans-c","ans-d"];
               const shapes = ["▲","◆","●","■"];
               return (
                 <button key={i} onClick={() => handleAnswer(i)} className={`ans-btn ${clsMap[i]}`}
-                  style={{ minHeight: 110, flexDirection: "column", alignItems: "center", gap: "0.35rem" }}>
-                  <span style={{ fontSize: "2.25rem" }}>{shapes[i]}</span>
-                  <span className="ans-text" style={{ textAlign: "center", fontSize: "0.875rem" }}>{opt}</span>
+                  style={{ minHeight: 100, flexDirection: "column", alignItems: "center", gap: "0.3rem" }}>
+                  <span style={{ fontSize: "clamp(1.5rem, 6vw, 2.25rem)" }}>{shapes[i]}</span>
+                  <span className="ans-text" style={{ textAlign: "center", fontSize: "clamp(0.8rem, 2.5vw, 0.9rem)" }}>{opt}</span>
                 </button>
               );
             })}
@@ -321,20 +321,20 @@ export default function PlayPage() {
       : "linear-gradient(160deg, #2D1515, #450A0A)";
 
     return (
-      <main className="min-h-screen col items-center justify-center px-5 text-center" style={{ background: bgColor }}>
+      <main className="min-h-screen col items-center justify-center px-4 text-center safe-bottom" style={{ background: bgColor, paddingTop: "2rem", paddingBottom: "2rem" }}>
         {/* Result icon + label */}
-        <div className="a-popin mb-5">
+        <div className="a-popin mb-4">
           {isPoll ? (
             <>
-              <div style={{ fontSize: "3.5rem", fontWeight: 900, color: "var(--accent-hi)", marginBottom: "0.5rem" }}>
+              <div style={{ fontSize: "3rem", fontWeight: 900, color: "var(--accent-hi)", marginBottom: "0.4rem" }}>
                 +{myLastScore}
               </div>
               <h2 className="t-h2 mb-1">Terima kasih!</h2>
-              <p style={{ color: "var(--text-dim)" }}>Pendapatmu sudah dicatat</p>
+              <p style={{ color: "var(--text-dim)", fontSize: "0.875rem" }}>Pendapatmu sudah dicatat</p>
             </>
           ) : (
             <>
-              <div style={{ fontSize: "5rem", fontWeight: 900, marginBottom: "0.25rem", color: isCorrect ? "#4ADE80" : "#F87171" }}>
+              <div style={{ fontSize: "clamp(3.5rem, 15vw, 5rem)", fontWeight: 900, marginBottom: "0.2rem", color: isCorrect ? "#4ADE80" : "#F87171", lineHeight: 1 }}>
                 {isCorrect ? "✓" : "✗"}
               </div>
               <h2 className="t-h2 mb-1">{isCorrect ? "Benar!" : "Salah!"}</h2>
@@ -347,18 +347,18 @@ export default function PlayPage() {
           )}
         </div>
 
-        {/* Score cards */}
-        <div className="row mb-5 a-fadeup d-1" style={{ gap: "0.75rem" }}>
-          <div className="card" style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
+        {/* Score cards — wrap on very small screens */}
+        <div className="a-fadeup d-1 mb-4" style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", justifyContent: "center" }}>
+          <div className="card" style={{ padding: "0.875rem 1.25rem", textAlign: "center", minWidth: 100 }}>
             <p className="t-label mb-1">Total Skor</p>
             <p className="t-h2">{myScore.toLocaleString()}</p>
           </div>
-          <div className="card" style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
+          <div className="card" style={{ padding: "0.875rem 1.25rem", textAlign: "center", minWidth: 80 }}>
             <p className="t-label mb-1">Peringkat</p>
             <p className="t-h2">#{myRank}</p>
           </div>
           {myLastScore > 0 && (
-            <div className="card" style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
+            <div className="card" style={{ padding: "0.875rem 1.25rem", textAlign: "center", minWidth: 80 }}>
               <p className="t-label mb-1">Dapat</p>
               <p className="t-h2" style={{ color: "#4ADE80" }}>+{myLastScore}</p>
             </div>
@@ -367,20 +367,20 @@ export default function PlayPage() {
 
         {/* Explanation */}
         {results.explanation && (
-          <div className="card-hi mb-5 a-fadeup d-2" style={{ padding: "0.875rem 1.25rem", textAlign: "left", maxWidth: 400, width: "100%" }}>
+          <div className="card-hi mb-4 a-fadeup d-2" style={{ padding: "0.875rem 1.125rem", textAlign: "left", maxWidth: 380, width: "100%" }}>
             <p className="t-label mb-1">Penjelasan</p>
-            <p style={{ color: "var(--text-dim)", fontSize: "0.875rem", lineHeight: 1.6 }}>{results.explanation}</p>
+            <p style={{ color: "var(--text-dim)", fontSize: "0.85rem", lineHeight: 1.6 }}>{results.explanation}</p>
           </div>
         )}
 
         {/* Waiting indicator */}
-        <div className="card-hi row center a-fadeup d-3" style={{ padding: "0.875rem 1.5rem", gap: "0.75rem" }}>
+        <div className="card-hi row center a-fadeup d-3" style={{ padding: "0.75rem 1.25rem", gap: "0.65rem" }}>
           <div className="row" style={{ gap: "0.35rem" }}>
             {[0,1,2].map((i) => (
-              <div key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--accent)", animation: `dotPulse 1.2s ease ${i * 0.2}s infinite` }} />
+              <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", animation: `dotPulse 1.2s ease ${i * 0.2}s infinite` }} />
             ))}
           </div>
-          <p style={{ color: "var(--text-dim)", fontSize: "0.875rem" }}>
+          <p style={{ color: "var(--text-dim)", fontSize: "0.85rem" }}>
             {results.isLast ? "Menghitung hasil akhir..." : "Menunggu pertanyaan berikutnya..."}
           </p>
         </div>
@@ -394,52 +394,50 @@ export default function PlayPage() {
     const rank = myRank ?? myEntry?.rank ?? null;
 
     return (
-      <main className="min-h-screen col items-center justify-center px-5 text-center" style={{ background: "var(--bg)" }}>
-        <div className="a-popin mb-6">
+      <main className="min-h-screen col items-center justify-center px-4 text-center safe-bottom" style={{ background: "var(--bg)", paddingTop: "2rem", paddingBottom: "2rem" }}>
+        <div className="a-popin mb-5">
           {rank !== null && rank <= 3 && (
-            <div style={{ fontSize: "2.5rem", fontWeight: 900, color: "var(--accent-hi)", marginBottom: "0.5rem" }}>
-              #{rank}
-            </div>
+            <div style={{ fontSize: "2rem", fontWeight: 900, color: "var(--accent-hi)", marginBottom: "0.4rem" }}>#{rank}</div>
           )}
-          <div className="center mb-4" style={{
-            width: 80, height: 80, borderRadius: "50%",
+          <div className="center mb-3" style={{
+            width: 72, height: 72, borderRadius: "50%",
             background: avatarColor(name),
-            boxShadow: `0 0 40px ${avatarColor(name)}55`,
-            color: "#fff", fontSize: "1.75rem", fontWeight: 900,
+            boxShadow: `0 0 36px ${avatarColor(name)}55`,
+            color: "#fff", fontSize: "1.6rem", fontWeight: 900,
           }}>
             {name[0]?.toUpperCase()}
           </div>
           <h2 className="t-h2 mb-1">{name}</h2>
-          <p style={{ color: "var(--accent-hi)", fontWeight: 600, fontSize: "1rem" }}>
+          <p style={{ color: "var(--accent-hi)", fontWeight: 600, fontSize: "0.95rem" }}>
             Peringkat #{rank} · {myScore.toLocaleString()} poin
           </p>
         </div>
 
-        <div className="col mb-8" style={{ gap: "0.45rem", width: "100%", maxWidth: 360 }}>
-          <p className="t-label text-center mb-3">Peringkat Akhir</p>
+        <div className="col mb-6" style={{ gap: "0.4rem", width: "100%", maxWidth: 360 }}>
+          <p className="t-label text-center mb-2">Peringkat Akhir</p>
           {finalLB.slice(0, 5).map((entry, i) => {
             const isMe = entry.id === socketIdRef.current;
             return (
               <div key={entry.id} className="card row a-fadeup" style={{
-                padding: "0.6rem 0.875rem", gap: "0.75rem",
+                padding: "0.55rem 0.75rem", gap: "0.6rem",
                 animationDelay: `${i * 0.06}s`,
                 borderColor: isMe ? "var(--accent)" : "var(--border)",
                 background: isMe ? "var(--accent-dim)" : "var(--surface)",
               }}>
-                <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", width: 20, fontWeight: 700 }}>{i + 1}.</span>
-                <div className="center" style={{ width: 28, height: 28, borderRadius: "50%", background: avatarColor(entry.name), color: "#fff", fontSize: "0.72rem", fontWeight: 900 }}>
+                <span style={{ color: "var(--text-muted)", fontSize: "0.78rem", width: 18, fontWeight: 700 }}>{i + 1}.</span>
+                <div className="center" style={{ width: 26, height: 26, borderRadius: "50%", background: avatarColor(entry.name), color: "#fff", fontSize: "0.68rem", fontWeight: 900, flexShrink: 0 }}>
                   {entry.name[0]?.toUpperCase()}
                 </div>
-                <span style={{ color: isMe ? "var(--accent-hi)" : "var(--text)", fontWeight: isMe ? 700 : 600, flex: 1, fontSize: "0.875rem", textAlign: "left" }}>
+                <span style={{ color: isMe ? "var(--accent-hi)" : "var(--text)", fontWeight: isMe ? 700 : 600, flex: 1, fontSize: "0.85rem", textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {entry.name}{isMe ? " (kamu)" : ""}
                 </span>
-                <span style={{ color: "var(--text)", fontWeight: 900, fontSize: "0.875rem" }}>{entry.score.toLocaleString()}</span>
+                <span style={{ color: "var(--text)", fontWeight: 900, fontSize: "0.85rem", flexShrink: 0 }}>{entry.score.toLocaleString()}</span>
               </div>
             );
           })}
         </div>
 
-        <button onClick={() => router.push("/")} className="btn btn-primary btn-lg" style={{ minWidth: 200 }}>
+        <button onClick={() => router.push("/")} className="btn btn-primary btn-lg" style={{ minWidth: 180 }}>
           Main Lagi
         </button>
       </main>

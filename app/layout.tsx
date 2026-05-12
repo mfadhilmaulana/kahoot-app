@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -9,10 +9,18 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+  themeColor: "#08080F",
+};
+
 export const metadata: Metadata = {
   title: "KUIS! — Platform Kuis Interaktif",
   description:
-    "Platform kuis multiplayer real-time gratis. Buat kuis edukatif, tantang teman, dan belajar bersama. Lebih dari 70 soal pengetahuan tersedia.",
+    "Platform kuis multiplayer real-time gratis. Buat kuis edukatif, tantang teman, dan belajar bersama. Lebih dari 90 soal pengetahuan tersedia.",
   keywords: ["kuis", "quiz", "multiplayer", "edukatif", "interaktif", "gratis"],
 };
 

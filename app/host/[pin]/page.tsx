@@ -121,10 +121,10 @@ export default function HostGamePage() {
   if (phase === "lobby") {
     return (
       <main className="min-h-screen col" style={{ background: "var(--bg)" }}>
-        <div className="text-center" style={{ paddingTop: "3rem", paddingBottom: "2rem" }}>
+        <div className="text-center" style={{ paddingTop: "2rem", paddingBottom: "1.5rem", padding: "2rem 1.25rem 1.5rem" }}>
           <p className="t-label mb-3">Kode Game</p>
-          <div className="card-hi center" style={{ display: "inline-flex", padding: "1.25rem 3rem", marginBottom: "1rem" }}>
-            <span style={{ fontSize: "4rem", fontWeight: 900, letterSpacing: "0.2em", color: "var(--text)", fontFamily: "monospace" }}>
+          <div className="card-hi center" style={{ display: "inline-flex", padding: "1rem 2rem", marginBottom: "1rem" }}>
+            <span style={{ fontSize: "clamp(2.25rem, 10vw, 3.75rem)", fontWeight: 900, letterSpacing: "0.18em", color: "var(--text)", fontFamily: "monospace" }}>
               {pin}
             </span>
           </div>
@@ -133,7 +133,7 @@ export default function HostGamePage() {
           </p>
         </div>
 
-        <div className="flex-1 px-5" style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
+        <div className="flex-1 px-4" style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
           <div className="row mb-4" style={{ justifyContent: "space-between", alignItems: "center" }}>
             <div className="row" style={{ gap: "0.5rem" }}>
               <span className="t-h3">Pemain</span>
@@ -143,7 +143,7 @@ export default function HostGamePage() {
           </div>
 
           {players.length === 0 ? (
-            <div className="center col py-24" style={{ gap: "1rem" }}>
+            <div className="center col py-16" style={{ gap: "1rem" }}>
               <div className="row" style={{ gap: "0.5rem" }}>
                 {[0,1,2].map((i) => (
                   <div key={i} style={{
@@ -156,21 +156,21 @@ export default function HostGamePage() {
               <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>Menunggu pemain bergabung...</p>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(168px, 1fr))", gap: "0.65rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "0.55rem" }}>
               {players.map((p, i) => (
                 <div key={p.id} className="card a-slidein" style={{
-                  padding: "0.6rem 0.85rem",
-                  display: "flex", alignItems: "center", gap: "0.6rem",
+                  padding: "0.55rem 0.75rem",
+                  display: "flex", alignItems: "center", gap: "0.55rem",
                   animationDelay: `${i * 0.04}s`,
                 }}>
                   <div className="center" style={{
-                    width: 30, height: 30, borderRadius: "50%",
+                    width: 28, height: 28, borderRadius: "50%",
                     background: avatarColor(p.name), color: "#fff",
-                    fontSize: "0.78rem", fontWeight: 900, flexShrink: 0,
+                    fontSize: "0.75rem", fontWeight: 900, flexShrink: 0,
                   }}>
                     {p.name[0].toUpperCase()}
                   </div>
-                  <span style={{ color: "var(--text)", fontWeight: 600, fontSize: "0.875rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span style={{ color: "var(--text)", fontWeight: 600, fontSize: "0.82rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {p.name}
                   </span>
                 </div>
@@ -179,7 +179,7 @@ export default function HostGamePage() {
           )}
         </div>
 
-        <div className="px-5 pb-6" style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
+        <div className="px-4 pb-5 safe-bottom" style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
           <button
             onClick={handleStart}
             disabled={players.length === 0}
@@ -202,48 +202,49 @@ export default function HostGamePage() {
 
     return (
       <main className="min-h-screen col" style={{ background: "var(--bg)" }}>
-        <div className="row px-6 pt-5 pb-2" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
+        {/* Top bar: responsive — wraps on mobile */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem 0.5rem", gap: "0.5rem", flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 80 }}>
             <p className="t-label">
               {question.index + 1} / {question.total}
               {question.category && ` · ${question.category}`}
             </p>
             {isPoll && (
-              <span className="badge mt-1" style={{ background: "var(--accent-dim)", color: "var(--accent-hi)" }}>
+              <span className="badge" style={{ background: "var(--accent-dim)", color: "var(--accent-hi)", marginTop: "0.25rem", display: "inline-block" }}>
                 Pendapat
               </span>
             )}
           </div>
           <CircleTimer timeLeft={timeLeft} timeLimit={question.timeLimit} />
-          <div style={{ textAlign: "right" }}>
+          <div style={{ textAlign: "right", flex: 1, minWidth: 60 }}>
             <p className="t-label">Menjawab</p>
-            <p style={{ color: "var(--text)", fontWeight: 900, fontSize: "1.3rem" }}>
+            <p style={{ color: "var(--text)", fontWeight: 900, fontSize: "1.15rem" }}>
               {answerCount}
-              <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: "0.875rem" }}>/{players.length}</span>
+              <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: "0.8rem" }}>/{players.length}</span>
             </p>
           </div>
         </div>
 
-        <div className="progress-track mx-6 mb-5">
+        <div className="progress-track mx-4 mb-4">
           <div className="progress-fill" style={{ width: `${timerPct * 100}%`, background: timerColor }} />
         </div>
 
-        <div className="flex-1 col items-center justify-center px-5 py-2">
-          <div className="card center mb-6" style={{ width: "100%", maxWidth: 720, padding: "2rem", textAlign: "center" }}>
+        <div className="flex-1 col items-center justify-center px-4 py-2">
+          <div className="card center mb-4" style={{ width: "100%", maxWidth: 720, padding: "1.25rem 1.5rem", textAlign: "center" }}>
             <p className="t-h2" style={{ lineHeight: 1.35 }}>{question.question}</p>
           </div>
 
           {isTF ? (
-            <div className="row" style={{ gap: "1rem", width: "100%", maxWidth: 720 }}>
-              <div className="center flex-1 ans-btn ans-tf-t" style={{ minHeight: 100, justifyContent: "center" }}>
+            <div className="row" style={{ gap: "0.75rem", width: "100%", maxWidth: 720 }}>
+              <div className="center flex-1 ans-btn ans-tf-t" style={{ minHeight: 88, justifyContent: "center" }}>
                 <span className="t-h2">Benar</span>
               </div>
-              <div className="center flex-1 ans-btn ans-tf-f" style={{ minHeight: 100, justifyContent: "center" }}>
+              <div className="center flex-1 ans-btn ans-tf-f" style={{ minHeight: 88, justifyContent: "center" }}>
                 <span className="t-h2">Salah</span>
               </div>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", width: "100%", maxWidth: 720 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem", width: "100%", maxWidth: 720 }}>
               {question.options.map((opt, i) => {
                 const clsMap = ["ans-a","ans-b","ans-c","ans-d"];
                 const shapes = ["▲","◆","●","■"];
@@ -258,7 +259,7 @@ export default function HostGamePage() {
           )}
         </div>
 
-        <div className="px-5 pb-5" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
+        <div className="px-4 pb-4 safe-bottom" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
           <button onClick={() => emit("host:showResults", { pin })} className="btn btn-ghost btn-lg" style={{ width: "100%" }}>
             Tampilkan Hasil Sekarang
           </button>
@@ -283,29 +284,29 @@ export default function HostGamePage() {
           <p className="t-h3" style={{ maxWidth: 640, margin: "0 auto", lineHeight: 1.35 }}>{results.question}</p>
         </div>
 
-        {/* Bar chart */}
-        <div className="flex-1 row items-end justify-center px-6" style={{ gap: "0.75rem", minHeight: 200, maxHeight: 240 }}>
+        {/* Bar chart — responsive height */}
+        <div className="flex-1 row items-end justify-center px-4" style={{ gap: "0.5rem", minHeight: 140, maxHeight: 200 }}>
           {results.options.map((opt, i) => {
             const isCorrect = !isPoll && i === results.correctIndex;
             const color = isTF ? tfColors[i] : mcColors[i];
             const heightPct = Math.max((results.counts[i] / maxCount) * 100, 4);
             return (
-              <div key={i} className="col items-center flex-1" style={{ gap: "0.2rem" }}>
-                <span style={{ color: "var(--text)", fontWeight: 900, fontSize: "0.875rem" }}>{results.counts[i]}</span>
-                <div className="col justify-end" style={{ height: 180, width: "100%" }}>
+              <div key={i} className="col items-center flex-1" style={{ gap: "0.15rem" }}>
+                <span style={{ color: "var(--text)", fontWeight: 900, fontSize: "0.8rem" }}>{results.counts[i]}</span>
+                <div className="col justify-end" style={{ height: 140, width: "100%" }}>
                   <div className="a-bargrow" style={{
                     height: `${heightPct}%`,
-                    borderRadius: "6px 6px 0 0",
+                    borderRadius: "5px 5px 0 0",
                     background: (isPoll || isCorrect) ? color : `${color}55`,
-                    border: isCorrect ? "2.5px solid rgba(255,255,255,0.55)" : "none",
+                    border: isCorrect ? "2px solid rgba(255,255,255,0.55)" : "none",
                     animationDelay: `${i * 0.07}s`,
                   }} />
                 </div>
-                {!isTF && <span style={{ color: "var(--text-muted)", fontSize: "1rem" }}>{shapes[i]}</span>}
-                <span style={{ color: "var(--text-dim)", fontSize: "0.7rem", fontWeight: 600, textAlign: "center", maxWidth: 80, lineHeight: 1.3 }}>
+                {!isTF && <span style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>{shapes[i]}</span>}
+                <span style={{ color: "var(--text-dim)", fontSize: "0.65rem", fontWeight: 600, textAlign: "center", maxWidth: 72, lineHeight: 1.25 }}>
                   {opt}
                 </span>
-                {isCorrect && <span style={{ color: "#4ADE80", fontWeight: 900, fontSize: "0.68rem", letterSpacing: "0.04em" }}>BENAR</span>}
+                {isCorrect && <span style={{ color: "#4ADE80", fontWeight: 900, fontSize: "0.62rem", letterSpacing: "0.04em" }}>BENAR</span>}
               </div>
             );
           })}
@@ -313,33 +314,33 @@ export default function HostGamePage() {
 
         {/* Explanation */}
         {results.explanation && (
-          <div className="card-hi" style={{ margin: "0.5rem 1.25rem", padding: "0.875rem 1.125rem", maxWidth: 720, marginLeft: "auto", marginRight: "auto" }}>
+          <div className="card-hi" style={{ margin: "0.5rem 1rem", padding: "0.75rem 1rem", maxWidth: 720, marginLeft: "auto", marginRight: "auto" }}>
             <p className="t-label mb-1">Penjelasan</p>
-            <p style={{ color: "var(--text-dim)", fontSize: "0.85rem", lineHeight: 1.6 }}>{results.explanation}</p>
+            <p style={{ color: "var(--text-dim)", fontSize: "0.82rem", lineHeight: 1.6 }}>{results.explanation}</p>
           </div>
         )}
 
         {/* Leaderboard */}
-        <div className="px-5 pb-2" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
-          <p className="t-label text-center mb-3 mt-2">Peringkat Sementara</p>
-          <div className="col" style={{ gap: "0.45rem" }}>
+        <div className="px-4 pb-2" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
+          <p className="t-label text-center mb-2 mt-2">Peringkat Sementara</p>
+          <div className="col" style={{ gap: "0.4rem" }}>
             {results.leaderboard.slice(0, 3).map((e, i) => {
               const bg = ["rgba(234,179,8,0.1)","rgba(156,163,175,0.08)","rgba(180,83,9,0.1)"][i];
               const border = ["rgba(234,179,8,0.28)","rgba(156,163,175,0.2)","rgba(180,83,9,0.25)"][i];
               return (
-                <div key={e.id} className="row" style={{ gap: "0.75rem", padding: "0.65rem 0.875rem", borderRadius: 12, background: bg, border: `1px solid ${border}` }}>
-                  <span style={{ width: 20, color: "var(--text)", fontWeight: 900, fontSize: "0.82rem" }}>{e.rank}.</span>
-                  <span style={{ color: "var(--text)", fontWeight: 700, flex: 1, fontSize: "0.875rem" }}>{e.name}</span>
-                  {e.lastScore > 0 && <span style={{ color: "#4ADE80", fontSize: "0.75rem", fontWeight: 700 }}>+{e.lastScore}</span>}
-                  <span style={{ color: "var(--text)", fontWeight: 900 }}>{e.score.toLocaleString()}</span>
+                <div key={e.id} className="row" style={{ gap: "0.6rem", padding: "0.6rem 0.875rem", borderRadius: 12, background: bg, border: `1px solid ${border}` }}>
+                  <span style={{ width: 18, color: "var(--text)", fontWeight: 900, fontSize: "0.8rem" }}>{e.rank}.</span>
+                  <span style={{ color: "var(--text)", fontWeight: 700, flex: 1, fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.name}</span>
+                  {e.lastScore > 0 && <span style={{ color: "#4ADE80", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 }}>+{e.lastScore}</span>}
+                  <span style={{ color: "var(--text)", fontWeight: 900, fontSize: "0.875rem", flexShrink: 0 }}>{e.score.toLocaleString()}</span>
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="px-5 pb-6" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
-          <button onClick={() => emit("host:next", { pin })} className="btn btn-primary btn-xl" style={{ width: "100%", marginTop: "0.75rem" }}>
+        <div className="px-4 pb-4 safe-bottom" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
+          <button onClick={() => emit("host:next", { pin })} className="btn btn-primary btn-xl" style={{ width: "100%", marginTop: "0.5rem" }}>
             {results.isLast ? "Lihat Hasil Akhir" : "Pertanyaan Berikutnya"}
           </button>
         </div>
@@ -352,13 +353,14 @@ export default function HostGamePage() {
     const top3 = finalLB.slice(0, 3);
     const rest = finalLB.slice(3);
     const podiumOrder = [top3[1], top3[0], top3[2]];
-    const podHeights = [140, 188, 108];
     const podBg = ["rgba(156,163,175,0.1)","rgba(234,179,8,0.14)","rgba(180,83,9,0.1)"];
     const podBorder = ["rgba(156,163,175,0.28)","rgba(234,179,8,0.38)","rgba(180,83,9,0.28)"];
+    // Responsive podium heights — clamp for mobile
+    const podHeightPx = [120, 160, 90];
 
     return (
-      <main className="min-h-screen col items-center px-5 pt-10 pb-12" style={{ background: "var(--bg)" }}>
-        <div className="text-center mb-8 a-popin">
+      <main className="min-h-screen col items-center px-4 pt-8 pb-10 safe-bottom" style={{ background: "var(--bg)" }}>
+        <div className="text-center mb-6 a-popin">
           <div className="t-display mb-1">
             <span style={{ color: "var(--accent)" }}>KUIS</span>
             <span style={{ color: "var(--accent-hi)" }}>!</span>
@@ -368,19 +370,19 @@ export default function HostGamePage() {
         </div>
 
         {top3.length > 0 && (
-          <div className="row items-end justify-center mb-8" style={{ gap: "1rem", width: "100%", maxWidth: 440 }}>
+          <div className="row items-end justify-center mb-6" style={{ gap: "0.75rem", width: "100%", maxWidth: 420 }}>
             {podiumOrder.map((e, pos) => {
               if (!e) return <div key={pos} style={{ flex: 1 }} />;
               const rank = [2, 1, 3][pos];
               return (
-                <div key={e.id} className="col items-center flex-1 a-fadeup" style={{ gap: "0.4rem", animationDelay: `${pos * 0.1}s` }}>
-                  <div className="center" style={{ width: 44, height: 44, borderRadius: "50%", background: avatarColor(e.name), color: "#fff", fontWeight: 900, fontSize: "1.1rem" }}>
+                <div key={e.id} className="col items-center flex-1 a-fadeup" style={{ gap: "0.35rem", animationDelay: `${pos * 0.1}s` }}>
+                  <div className="center" style={{ width: 38, height: 38, borderRadius: "50%", background: avatarColor(e.name), color: "#fff", fontWeight: 900, fontSize: "0.95rem" }}>
                     {e.name[0].toUpperCase()}
                   </div>
-                  <span style={{ color: "var(--text)", fontSize: "0.75rem", fontWeight: 700, textAlign: "center", lineHeight: 1.2 }}>{e.name}</span>
-                  <span style={{ color: "var(--text-dim)", fontSize: "0.8rem", fontWeight: 700 }}>{e.score.toLocaleString()}</span>
-                  <div className="center" style={{ width: "100%", height: podHeights[rank - 1], borderRadius: "8px 8px 0 0", background: podBg[rank - 1], border: `1.5px solid ${podBorder[rank - 1]}` }}>
-                    <span style={{ fontSize: "1.75rem", fontWeight: 900, color: "var(--text-dim)" }}>{rank}</span>
+                  <span style={{ color: "var(--text)", fontSize: "0.7rem", fontWeight: 700, textAlign: "center", lineHeight: 1.2, wordBreak: "break-word" }}>{e.name}</span>
+                  <span style={{ color: "var(--text-dim)", fontSize: "0.72rem", fontWeight: 700 }}>{e.score.toLocaleString()}</span>
+                  <div className="center" style={{ width: "100%", height: podHeightPx[rank - 1], borderRadius: "8px 8px 0 0", background: podBg[rank - 1], border: `1.5px solid ${podBorder[rank - 1]}` }}>
+                    <span style={{ fontSize: "1.5rem", fontWeight: 900, color: "var(--text-dim)" }}>{rank}</span>
                   </div>
                 </div>
               );
@@ -389,21 +391,21 @@ export default function HostGamePage() {
         )}
 
         {rest.length > 0 && (
-          <div className="col mb-8" style={{ gap: "0.45rem", width: "100%", maxWidth: 440 }}>
+          <div className="col mb-6" style={{ gap: "0.4rem", width: "100%", maxWidth: 420 }}>
             {rest.map((e, i) => (
-              <div key={e.id} className="card row a-fadeup" style={{ padding: "0.6rem 0.875rem", gap: "0.75rem", animationDelay: `${(i + 3) * 0.06}s` }}>
-                <span style={{ color: "var(--text-muted)", fontSize: "0.82rem", width: 20, fontWeight: 700 }}>{e.rank}</span>
-                <div className="center" style={{ width: 28, height: 28, borderRadius: "50%", background: avatarColor(e.name), color: "#fff", fontSize: "0.72rem", fontWeight: 900 }}>
+              <div key={e.id} className="card row a-fadeup" style={{ padding: "0.6rem 0.875rem", gap: "0.65rem", animationDelay: `${(i + 3) * 0.06}s` }}>
+                <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", width: 20, fontWeight: 700 }}>{e.rank}</span>
+                <div className="center" style={{ width: 26, height: 26, borderRadius: "50%", background: avatarColor(e.name), color: "#fff", fontSize: "0.7rem", fontWeight: 900, flexShrink: 0 }}>
                   {e.name[0].toUpperCase()}
                 </div>
-                <span style={{ color: "var(--text)", fontWeight: 600, flex: 1, fontSize: "0.875rem" }}>{e.name}</span>
-                <span style={{ color: "var(--text)", fontWeight: 900, fontSize: "0.875rem" }}>{e.score.toLocaleString()}</span>
+                <span style={{ color: "var(--text)", fontWeight: 600, flex: 1, fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.name}</span>
+                <span style={{ color: "var(--text)", fontWeight: 900, fontSize: "0.85rem" }}>{e.score.toLocaleString()}</span>
               </div>
             ))}
           </div>
         )}
 
-        <button onClick={() => router.push("/")} className="btn btn-primary btn-lg" style={{ minWidth: 200 }}>
+        <button onClick={() => router.push("/")} className="btn btn-primary btn-lg" style={{ minWidth: 180 }}>
           Kembali ke Beranda
         </button>
       </main>

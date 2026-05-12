@@ -296,7 +296,7 @@ export default function CreatePage() {
       </div>
 
       {/* Sticky submit footer */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "1rem", background: "linear-gradient(to top, var(--bg) 70%, transparent)" }}>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, var(--bg) 70%, transparent)", padding: "0.75rem 1rem", paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
           <button onClick={handleSubmit} disabled={loading} className="btn btn-primary btn-xl" style={{ width: "100%", opacity: loading ? 0.6 : 1 }}>
             {loading ? "Membuat game..." : `Buat Game — ${questions.length} Pertanyaan`}

@@ -94,7 +94,7 @@ export default function QuizzesPage() {
             <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>Memuat kuis...</p>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))", gap: "0.875rem" }}>
             {quizzes.map((quiz, i) => (
               <button
                 key={quiz.id}
