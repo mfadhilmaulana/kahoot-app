@@ -127,7 +127,8 @@ export default function CreatePage() {
     <main className="min-h-screen pb-32" style={{ background: "var(--bg)" }}>
       {/* Sticky header */}
       <div className="row px-5 py-4" style={{
-        background: "var(--surface)", borderBottom: "1px solid var(--border)",
+        background: "rgba(255,255,255,0.92)", backdropFilter: "blur(16px)",
+        borderBottom: "1px solid rgba(79,70,229,0.10)",
         position: "sticky", top: 0, zIndex: 10,
       }}>
         <button onClick={() => router.push("/")} className="btn btn-ghost" style={{ marginRight: "1rem", padding: "0.5rem 0.75rem" }}>
@@ -318,7 +319,7 @@ export default function CreatePage() {
       {/* Sticky submit footer */}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, var(--bg) 70%, transparent)", padding: "0.75rem 1rem", paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <button onClick={handleSubmit} disabled={loading} className="btn btn-primary btn-xl" style={{ width: "100%", opacity: loading ? 0.6 : 1 }}>
+          <button onClick={handleSubmit} disabled={loading} className="btn btn-gradient btn-xl" style={{ width: "100%", opacity: loading ? 0.6 : 1 }}>
             {loading ? "Membuat game..." : `Buat Game — ${questions.length} Pertanyaan`}
           </button>
         </div>

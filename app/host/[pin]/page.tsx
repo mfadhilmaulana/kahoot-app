@@ -133,16 +133,29 @@ export default function HostGamePage() {
       <main className="min-h-screen col" style={{ background: "var(--bg)" }}>
         {/* Header */}
         <div style={{
-          background: "var(--accent)",
-          padding: "2rem 1.25rem 1.75rem",
+          background: "linear-gradient(135deg, #7C3AED 0%, #4F46E5 55%, #2563EB 100%)",
+          padding: "2rem 1.25rem 2rem",
           textAlign: "center",
+          position: "relative",
+          overflow: "hidden",
         }}>
-          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.75rem" }}>Kode Game</p>
-          <div style={{ fontSize: "clamp(2.25rem, 10vw, 3.75rem)", fontWeight: 900, letterSpacing: "0.18em", color: "#fff", fontFamily: "monospace", marginBottom: "0.75rem" }}>
-            {pin}
+          <div style={{ position: "absolute", top: -40, left: -40, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", bottom: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(245,158,11,0.12)", pointerEvents: "none" }} />
+          <p style={{ color: "rgba(255,255,255,0.72)", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "0.75rem" }}>Kode Game</p>
+          <div style={{
+            display: "inline-block",
+            background: "rgba(255,255,255,0.12)",
+            border: "2px solid rgba(255,255,255,0.25)",
+            borderRadius: 16,
+            padding: "0.5rem 1.5rem",
+            marginBottom: "0.75rem",
+          }}>
+            <div style={{ fontSize: "clamp(2.25rem, 10vw, 3.75rem)", fontWeight: 900, letterSpacing: "0.22em", color: "#fff", fontFamily: "monospace" }}>
+              {pin}
+            </div>
           </div>
-          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.875rem" }}>
-            Buka <span style={{ color: "#fff", fontWeight: 600 }}>sikuis.com</span> dan masukkan kode ini
+          <p style={{ color: "rgba(255,255,255,0.72)", fontSize: "0.875rem" }}>
+            Buka <span style={{ color: "#fff", fontWeight: 700 }}>sikuis.com</span> dan masukkan kode ini
           </p>
         </div>
 
@@ -452,10 +465,25 @@ export default function HostGamePage() {
     const medals = ["🥇","🥈","🥉"];
 
     return (
-      <main className="min-h-screen col items-center px-4 pt-8 pb-10 safe-bottom" style={{ background: "linear-gradient(150deg, #EFF6FF, #EEF2FF)" }}>
+      <main className="min-h-screen col items-center px-4 pt-8 pb-10 safe-bottom" style={{ background: "linear-gradient(150deg, #F0EAFF, #EAF0FF)" }}>
         <div className="text-center mb-6 a-popin">
-          <div style={{ fontWeight: 900, fontSize: "clamp(2.5rem,8vw,4rem)", letterSpacing: "-0.04em", lineHeight: 1, marginBottom: "0.5rem" }}>
-            <span style={{ color: "var(--text)" }}>Si</span><span style={{ color: "var(--accent)" }}>Kuis</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+            <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="endGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#7C3AED"/>
+                  <stop offset="55%" stopColor="#4F46E5"/>
+                  <stop offset="100%" stopColor="#3B82F6"/>
+                </linearGradient>
+              </defs>
+              <rect width="100" height="100" rx="24" fill="url(#endGrad)"/>
+              <ellipse cx="36" cy="22" rx="26" ry="11" fill="rgba(255,255,255,0.16)"/>
+              <path d="M33,32 C33,18 67,18 67,32 C67,46 53,50 53,63" stroke="white" strokeWidth="11" strokeLinecap="round" fill="none"/>
+              <circle cx="53" cy="77" r="6.5" fill="white"/>
+            </svg>
+            <div style={{ fontWeight: 900, fontSize: "clamp(2rem,7vw,3rem)", letterSpacing: "-0.04em", lineHeight: 1 }}>
+              <span style={{ color: "var(--text)" }}>Si</span><span style={{ color: "var(--accent)" }}>Kuis</span>
+            </div>
           </div>
           <h2 className="t-h2 mb-1">🎉 Game Selesai!</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>Peringkat akhir</p>

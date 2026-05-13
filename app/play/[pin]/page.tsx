@@ -181,11 +181,30 @@ export default function PlayPage() {
     return (
       <main className="min-h-screen col items-center justify-center px-5" style={{ background: "var(--bg)" }}>
         <div className="text-center mb-8 a-popin">
-          <div style={{ fontWeight: 900, fontSize: "clamp(2rem,8vw,3rem)", letterSpacing: "-0.04em", marginBottom: "0.5rem" }}>
-            <span style={{ color: "var(--text)" }}>Si</span><span style={{ color: "var(--accent)" }}>Kuis</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+            <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="joinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#7C3AED"/>
+                  <stop offset="55%" stopColor="#4F46E5"/>
+                  <stop offset="100%" stopColor="#3B82F6"/>
+                </linearGradient>
+              </defs>
+              <rect width="100" height="100" rx="24" fill="url(#joinGrad)"/>
+              <ellipse cx="36" cy="22" rx="26" ry="11" fill="rgba(255,255,255,0.16)"/>
+              <path d="M33,32 C33,18 67,18 67,32 C67,46 53,50 53,63" stroke="white" strokeWidth="11" strokeLinecap="round" fill="none"/>
+              <circle cx="53" cy="77" r="6.5" fill="white"/>
+            </svg>
+            <div style={{ fontWeight: 900, fontSize: "clamp(2rem,8vw,3rem)", letterSpacing: "-0.04em" }}>
+              <span style={{ color: "var(--text)" }}>Si</span><span style={{ color: "var(--accent)" }}>Kuis</span>
+            </div>
           </div>
-          <div className="card-hi center" style={{ display: "inline-flex", padding: "0.45rem 1.25rem" }}>
-            <span style={{ color: "var(--accent)", fontWeight: 700, letterSpacing: "0.18em", fontSize: "1.1rem" }}>{pin}</span>
+          <div style={{
+            display: "inline-flex", alignItems: "center", padding: "0.45rem 1.25rem",
+            background: "linear-gradient(135deg, rgba(79,70,229,0.10), rgba(124,58,237,0.10))",
+            border: "1.5px solid rgba(79,70,229,0.20)", borderRadius: 40,
+          }}>
+            <span style={{ color: "var(--accent)", fontWeight: 800, letterSpacing: "0.18em", fontSize: "1.1rem" }}>{pin}</span>
           </div>
         </div>
 

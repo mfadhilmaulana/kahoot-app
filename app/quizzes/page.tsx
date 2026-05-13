@@ -59,8 +59,8 @@ export default function QuizzesPage() {
     <main className="min-h-screen" style={{ background: "var(--bg)" }}>
       {/* Header */}
       <div className="row px-5 py-4" style={{
-        background: "var(--surface)",
-        borderBottom: "1px solid var(--border)",
+        background: "rgba(255,255,255,0.92)", backdropFilter: "blur(16px)",
+        borderBottom: "1px solid rgba(79,70,229,0.10)",
         position: "sticky", top: 0, zIndex: 10,
       }}>
         <button onClick={() => router.push("/")} className="btn btn-ghost" style={{ marginRight: "1rem", padding: "0.5rem 0.75rem" }}>
