@@ -1,23 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
     <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7C3AED"/>
-      <stop offset="55%" stop-color="#4F46E5"/>
+      <stop offset="0%" stop-color="#1D4ED8"/>
       <stop offset="100%" stop-color="#3B82F6"/>
     </linearGradient>
     <linearGradient id="shine" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.25)"/>
+      <stop offset="0%" stop-color="rgba(255,255,255,0.22)"/>
       <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
     </linearGradient>
   </defs>
-  <!-- Rounded square app icon background -->
   <rect width="100" height="100" rx="22" fill="url(#g)"/>
-  <!-- Shine highlight -->
   <rect width="100" height="50" rx="22" fill="url(#shine)"/>
-  <rect y="28" width="100" height="22" fill="rgba(255,255,255,0.04)"/>
-  <!-- Custom ? mark (path, no text dependency) -->
-  <path d="M33,32 C33,18 67,18 67,32 C67,46 53,50 53,63"
+  <path d="M34,32 C34,19 66,19 66,32 C66,45 53,49 53,62"
     stroke="white" stroke-width="11" stroke-linecap="round" fill="none"/>
-  <!-- ? dot -->
   <circle cx="53" cy="77" r="6.5" fill="white"/>
 </svg>

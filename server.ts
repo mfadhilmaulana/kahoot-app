@@ -480,10 +480,152 @@ const sportsQuiz: Quiz = {
   ],
 };
 
+// ── QUIZ 11: Tes IQ & Logika ──────────────────────────────────────────────────
+const iqQuiz: Quiz = {
+  id: "iq", title: "Tes IQ & Logika", icon: "🧠", color: "#7C3AED",
+  description: "Uji kemampuan penalaran, pola angka, logika verbal, dan kecerdasan analitis kamu",
+  category: "Logika", difficulty: "Sulit",
+  questions: [
+    mc("Angka berikutnya dalam barisan: 2, 4, 8, 16, 32, ___?",
+      ["48","64","60","56"],1,20,"Logika",
+      "Setiap angka dikali 2. Pola: ×2 berturut-turut (barisan geometri dengan rasio 2). 32 × 2 = 64. Barisan ini adalah pangkat dua: 2¹, 2², 2³, 2⁴, 2⁵, 2⁶."),
+    mc("Angka berikutnya dalam barisan: 1, 3, 6, 10, 15, ___?",
+      ["18","20","21","22"],2,20,"Logika",
+      "Ini adalah bilangan segitiga (triangular numbers)! Selisihnya: +2, +3, +4, +5, +6. Jadi 15 + 6 = 21. Rumus: n(n+1)/2. Bilangan segitiga muncul di susunan bola biliar, koin, dll."),
+    mc("Yang TIDAK satu kelompok: Sapi, Kambing, Kuda, Lumba-lumba",
+      ["Sapi","Kambing","Kuda","Lumba-lumba"],3,20,"Logika",
+      "Sapi, Kambing, dan Kuda adalah hewan darat. Lumba-lumba adalah mamalia laut. Pola kategorisasi adalah kunci IQ — kemampuan melihat persamaan dan perbedaan."),
+    mc("Dokter : Pasien = Guru : ___",
+      ["Buku","Murid","Sekolah","Kelas"],1,20,"Logika",
+      "Analogi relasi profesional: Dokter melayani Pasien → Guru mendidik Murid. Soal analogi mengukur kemampuan abstraksi — melihat hubungan antar konsep yang berbeda."),
+    mc("Semua A adalah B. Semua B adalah C. Kesimpulan yang PASTI benar:",
+      ["Semua B adalah A","Semua C adalah A","Semua A adalah C","Semua C adalah B"],2,20,"Logika",
+      "Silogisme klasik Aristoteles! Jika A ⊆ B dan B ⊆ C, maka A ⊆ C. Contoh: Semua kucing adalah mamalia, semua mamalia bernapas → semua kucing bernapas. Logika deduktif ini adalah fondasi matematika dan filosofi."),
+    mc("Barisan: 100, 91, 82, 73, ___?",
+      ["54","64","60","65"],1,20,"Logika",
+      "Selisih tetap: dikurangi 9 setiap langkah (barisan aritmetika). 73 − 9 = 64. Kemampuan mendeteksi pola aritmetika sederhana adalah indikator kecerdasan kuantitatif."),
+    mc("Deret Fibonacci: 1, 1, 2, 3, 5, 8, ___?",
+      ["11","13","12","14"],1,15,"Logika",
+      "Setiap angka adalah jumlah dua angka sebelumnya: 5 + 8 = 13. Fibonacci ada di mana-mana di alam: spiral bunga, cangkang siput, susunan daun. Rasio antar bilangan mendekati phi (φ ≈ 1.618) — Rasio Emas!"),
+    mc("Jika 2+3=10, 7+2=63, 6+5=66, maka 8+4=?",
+      ["48","96","84","80"],1,25,"Logika",
+      "Polanya: a + b = a × (a + b). Verifikasi: 2×(2+3)=2×5=10 ✓, 7×(7+2)=7×9=63 ✓, 6×(6+5)=6×11=66 ✓. Jadi 8×(8+4)=8×12=96. Soal ini mengukur kemampuan menemukan pola tersembunyi — kunci kreativitas."),
+    mc("3, 9, 27, ___, 243",
+      ["54","72","81","90"],2,20,"Logika",
+      "Pola: dikali 3 setiap langkah (pangkat tiga: 3¹, 3², 3³, 3⁴, 3⁵). 27 × 3 = 81. Pengenalan barisan geometri mengukur kemampuan penalaran eksponensial yang sangat berguna di sains dan bisnis."),
+    mc("Yang BUKAN warna: Biru, Merah, Kuning, Persegi",
+      ["Biru","Merah","Kuning","Persegi"],3,15,"Logika",
+      "Biru, Merah, Kuning adalah warna primer. Persegi adalah bentuk geometri, bukan warna. Kategorisasi konseptual — kemampuan mengklasifikasikan hal berdasarkan atribut — adalah inti dari kecerdasan."),
+    mc("Jam menunjukkan pukul 3:00. Sudut antara jarum jam dan jarum menit adalah?",
+      ["60°","45°","90°","120°"],2,20,"Logika",
+      "Pada pukul 3:00: jarum menit di 12 (0°) dan jarum jam di 3 (90° dari 12). Sudut antara keduanya = 90°. Penalaran spasial dan geometri adalah komponen utama tes IQ klasik."),
+    mc("Jika 5 orang butuh 5 menit untuk menggali 5 lubang, berapa menit yang dibutuhkan 100 orang untuk menggali 100 lubang?",
+      ["100 menit","10 menit","5 menit","1 menit"],2,25,"Logika",
+      "Kecepatan: 5 orang × 5 menit = 5 lubang → 1 orang menggali 1 lubang dalam 5 menit. Dengan 100 orang bekerja paralel, 100 lubang tetap selesai dalam 5 menit! Ini soal proporsi dan pemikiran paralel."),
+    mc("Ayah dari ibu saya adalah ___ saya",
+      ["Paman","Om","Kakek","Sepupu"],2,15,"Logika",
+      "Ibu saya → Ayah ibu saya = Kakek saya (Kakek dari pihak ibu). Penalaran relasional dan hubungan kekeluargaan mengukur kemampuan membangun 'peta mental' hubungan antar entitas."),
+    mc("Pagi : Siang = Musim Semi : ___",
+      ["Musim Dingin","Musim Gugur","Musim Panas","Musim Hujan"],2,20,"Logika",
+      "Analogi urutan waktu: Pagi mendahului Siang → Musim Semi mendahului Musim Panas. Kemampuan analogi mengukur pemikiran relasional dan abstraksi — salah satu prediktor terkuat kecerdasan umum (g-factor)."),
+    mc("Angka yang tepat: 2, 6, 12, 20, 30, ___?",
+      ["40","42","44","48"],1,25,"Logika",
+      "Selisihnya: +4, +6, +8, +10, +12 (bertambah 2 setiap kali). 30 + 12 = 42. Alternatif: n(n+1) untuk n=1,2,3,4,5,6: 2,6,12,20,30,42. Barisan polinom derajat 2 yang elegan!"),
+    rating("Seberapa menantang tes IQ ini menurutmu? (1 = terlalu mudah, 5 = sangat menantang)",
+      15,"Logika",
+      "Tes IQ tradisional mengukur 'g-factor' (kecerdasan umum). Namun Howard Gardner mengusulkan teori Multiple Intelligences: ada 9 jenis kecerdasan berbeda! Kamu mungkin jenius di bidang yang tidak diukur tes ini."),
+  ],
+};
+
+// ── QUIZ 12: Psikologi & Perilaku Manusia ─────────────────────────────────────
+const psychologyQuiz: Quiz = {
+  id: "psychology", title: "Psikologi & Pikiran Manusia", icon: "🧩", color: "#8B5CF6",
+  description: "Bias kognitif, motivasi, kepribadian, persepsi, dan rahasia cara kerja pikiran kita",
+  category: "Psikologi", difficulty: "Sedang",
+  questions: [
+    mc("Apa itu 'Efek Dunning-Kruger'?",
+      ["Orang pintar sering meremehkan kemampuannya","Orang dengan kemampuan rendah cenderung melebih-lebihkan kompetensinya","Bias terhadap informasi pertama yang diterima","Kecenderungan mengikuti pendapat mayoritas"],1,25,"Psikologi",
+      "Dunning-Kruger effect: orang yang tidak kompeten sering tidak tahu bahwa mereka tidak kompeten ('blind spot'). Sebaliknya, ahli sejati sering meragukan dirinya sendiri. Kuncinya: metacognition — kemampuan menilai kemampuan diri sendiri."),
+    mc("'Confirmation bias' adalah kecenderungan untuk?",
+      ["Selalu memilih jawaban pertama","Mencari & mempercayai informasi yang mendukung keyakinan yang sudah ada","Mengikuti pendapat orang tua","Takut pada hal baru"],1,20,"Psikologi",
+      "Confirmation bias adalah bias kognitif paling berbahaya. Kita cenderung mencari berita yang mendukung pandangan kita dan mengabaikan yang bertentangan. Media sosial memperparah ini dengan 'filter bubble'. Solusi: aktif cari perspektif berlawanan!"),
+    mc("Eksperimen Milgram (1960-an) membuktikan bahwa?",
+      ["Manusia pada dasarnya baik","Banyak orang bersedia menyakiti orang lain jika diperintah otoritas","Memori manusia sangat akurat","Anak-anak lebih jujur dari orang dewasa"],1,25,"Psikologi",
+      "Eksperimen Milgram mengejutkan dunia: 65% peserta bersedia memberikan 'sengatan listrik' berbahaya pada orang lain karena diperintah 'ilmuwan'. Ini menjelaskan bagaimana kekejaman terjadi dalam perang dan rezim otoriter."),
+    mc("Teori 'Maslow's Hierarchy of Needs' menyatakan bahwa kebutuhan manusia?",
+      ["Semua kebutuhan sama pentingnya","Bertingkat dari yang paling dasar (fisiologis) ke paling tinggi (aktualisasi diri)","Hanya ada 3 tingkatan","Kebutuhan spiritual adalah yang paling mendasar"],1,20,"Psikologi",
+      "Maslow: Fisiologis (makan, tidur) → Keamanan → Kasih sayang → Harga diri → Aktualisasi diri. Kebutuhan dasar harus terpenuhi sebelum manusia bisa fokus pada pertumbuhan diri. Model ini masih relevan dalam manajemen, pendidikan, dan terapi."),
+    mc("Apa itu 'Growth Mindset' menurut Carol Dweck?",
+      ["Keyakinan bahwa kecerdasan dan kemampuan bisa berkembang melalui usaha","Keyakinan bahwa kecerdasan adalah tetap sejak lahir","Fokus pada pertumbuhan ekonomi","Mindfulness dan meditasi"],0,20,"Psikologi",
+      "Growth mindset vs Fixed mindset: orang dengan growth mindset melihat tantangan sebagai peluang belajar, bukan ancaman. Penelitian Dweck membuktikan mindset ini berdampak besar pada prestasi akademik dan karir!"),
+    tf("Manusia hanya menggunakan 10% dari kapasitas otaknya.", false, 15, "Psikologi",
+      "Ini mitos populer! Scan otak (fMRI) menunjukkan hampir semua area otak aktif, meski pada waktu berbeda. Otak mengonsumsi 20% energi tubuh — evolusi tidak akan mempertahankan organ sebesar itu jika 90%-nya tidak terpakai!"),
+    mc("Dalam psikologi, 'flow state' (kondisi flow) adalah?",
+      ["Kondisi tidur paling dalam","Keadaan fokus optimal saat seseorang tenggelam dalam aktivitas yang menantang","Teknik meditasi Zen","Fase pertama tidur"],1,20,"Psikologi",
+      "Mihaly Csikszentmihalyi menemukan 'flow': kondisi psikologis optimal di mana kita sangat fokus, waktu terasa terbang, dan kita menikmati aktivitas sepenuhnya. Terjadi saat tantangan seimbang dengan kemampuan."),
+    mc("Apa yang dimaksud 'Placebo Effect'?",
+      ["Efek samping obat palsu","Perbaikan kondisi karena keyakinan bahwa sedang mendapat pengobatan efektif","Efek relaksasi dari meditasi","Peningkatan performa karena kafein"],1,20,"Psikologi",
+      "Placebo effect adalah bukti kuat koneksi pikiran-tubuh! Pasien yang diberi pil gula namun diyakini obat nyata sering mengalami perbaikan nyata. Ini mengakibatkan bahwa ekspektasi dan keyakinan secara harfiah mengubah biologi tubuh."),
+    poll("Dari teori kepribadian MBTI, tipe manakah yang paling menggambarkan dirimu?",
+      ["Introvert (suka sendiri, energi dari dalam)","Ekstrovert (suka sosial, energi dari luar)","Ambivert (campuran keduanya)","Belum tahu / Berubah-ubah"],
+      30,"Psikologi",
+      "Penelitian terbaru menunjukkan kebanyakan orang adalah ambivert! MBTI banyak dikritik karena validitasnya — kepribadian lebih kompleks dari 4 dikotomi. Big Five (OCEAN) lebih didukung sains: Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism."),
+    mc("'Learned helplessness' (ketidakberdayaan yang dipelajari) terjadi ketika?",
+      ["Seseorang belajar keterampilan baru","Seseorang berhenti mencoba karena berulang kali gagal dan merasa tidak punya kendali","Seseorang terlalu bergantung pada bantuan orang lain","Seseorang sangat termotivasi setelah gagal"],1,25,"Psikologi",
+      "Ditemukan oleh Martin Seligman: anjing yang diberi sengatan tak terkontrol kemudian tidak mencoba menghindarinya meski bisa. Pada manusia, ini menjelaskan depresi, pasif, dan kurangnya inisiatif — tapi juga bisa dibalik melalui pengalaman keberhasilan kecil!"),
+    open("Sebutkan satu bias kognitif yang menurutmu sering mempengaruhimu dalam kehidupan sehari-hari!",
+      30,"Psikologi",
+      "Kita semua punya bias kognitif — itu manusiawi! Contoh: Sunk cost fallacy (tetap menonton film membosankan karena sudah bayar), Availability heuristic (menilai risiko berdasarkan seberapa mudah contoh terpikir), atau Bandwagon effect (mengikuti tren karena semua orang melakukannya). Mengenali bias adalah langkah pertama mengatasinya."),
+  ],
+};
+
+// ── QUIZ 13: Geografi & Budaya Dunia ──────────────────────────────────────────
+const geographyQuiz: Quiz = {
+  id: "geography", title: "Geografi & Budaya Dunia", icon: "🗺️", color: "#0891B2",
+  description: "Benua, lautan, ibukota, budaya, dan keajaiban geografi dari seluruh penjuru dunia",
+  category: "Geografi", difficulty: "Sedang",
+  questions: [
+    mc("Benua manakah yang memiliki populasi terbanyak di dunia?",
+      ["Afrika","Amerika","Eropa","Asia"],3,15,"Geografi",
+      "Asia adalah rumah bagi ~4.7 miliar orang (60% populasi dunia)! China dan India masing-masing memiliki lebih dari 1 miliar penduduk. Asia Tenggara sendiri dihuni ~700 juta orang."),
+    mc("Sungai terpanjang di dunia adalah?",
+      ["Amazon (Brasil)","Nil (Afrika)","Yangtze (China)","Mississippi (AS)"],1,20,"Geografi",
+      "Sungai Nil di Afrika adalah yang terpanjang (~6.650 km), mengalir dari Uganda/Ethiopia ke Mesir. Amazon adalah yang terbesar berdasarkan volume air — mengalirkan 20% air tawar dunia ke lautan!"),
+    mc("Ibukota Australia adalah?",
+      ["Sydney","Melbourne","Brisbane","Canberra"],3,20,"Geografi",
+      "Canberra adalah ibukota Australia — bukan Sydney atau Melbourne yang lebih terkenal! Canberra sengaja dibangun antara dua kota besar yang bersaing itu sebagai kompromi. Didirikan 1913, didesain khusus sebagai ibukota."),
+    mc("Gurun terluas di dunia adalah?",
+      ["Sahara (Afrika Utara)","Gobi (Asia)","Antartika","Arabian (Arab)"],2,20,"Geografi",
+      "Antartika adalah gurun terluas di dunia (14 juta km²)! Gurun bukan hanya berarti panas — definisinya adalah wilayah dengan curah hujan sangat rendah (<250mm/tahun). Sahara adalah gurun panas terluas."),
+    mc("Negara mana yang memiliki jumlah pulau terbanyak di dunia?",
+      ["Filipina","Indonesia","Kanada","Swedia"],3,20,"Geografi",
+      "Swedia memiliki lebih dari 220.000 pulau! Diikuti Norwegia, Finlandia, dan Kanada. Indonesia berada di urutan ke-5 dengan ~17.000 pulau. Swedia memiliki banyak pulau kecil di kepulauan (skärgård) pesisirnya."),
+    mc("Di negara manakah terdapat lebih dari 800 bahasa yang berbeda?",
+      ["India","Indonesia","Brasil","Papua Nugini"],3,20,"Geografi",
+      "Papua Nugini memiliki 800+ bahasa — lebih dari negara lain mana pun! Ini karena sejarah isolasi geografis di antara pegunungan yang memisahkan komunitas selama ribuan tahun. Indonesia urutan ke-2 dengan 700+ bahasa."),
+    mc("Laut Kaspia adalah?",
+      ["Laut terluas di dunia","Danau air asin terbesar di dunia","Selat sempit di Asia","Teluk dalam di Rusia"],1,25,"Geografi",
+      "Secara teknis, Laut Kaspia adalah danau (danau air asin terbesar di dunia, ~371.000 km²). Meski disebut 'laut', ia tidak terhubung ke samudra. Dibatasi Rusia, Kazakhstan, Turkmenistan, Iran, dan Azerbaijan."),
+    mc("Puncak tertinggi di masing-masing benua dikenal dengan istilah?",
+      ["Seven Wonders","Summit Seven","Seven Peaks","Seven Summits"],3,20,"Geografi",
+      "Seven Summits: 7 puncak tertinggi di 7 benua: Everest (Asia), Aconcagua (Amerika), Denali (Amerika Utara), Kilimanjaro (Afrika), Elbrus (Eropa), Vinson (Antartika), Carstensz Pyramid/Puncak Jaya (Oseania/Indonesia!)."),
+    poll("Jika bisa berkunjung ke mana saja, benua mana yang pertama ingin kamu jelajahi?",
+      ["Eropa — sejarah & arsitektur","Asia Timur — teknologi & budaya","Amerika Latin — alam & petualangan","Afrika — satwa & suku kuno"],
+      30,"Geografi",
+      "Setiap benua punya keajaiban unik! Eropa untuk sejarah panjang, Asia Timur untuk inovasi modern bertemu tradisi kuno, Amerika Latin untuk Amazon dan Machu Picchu, Afrika untuk safari dan budaya yang belum banyak dieksplor."),
+    mc("Negara manakah yang berada di dua benua sekaligus?",
+      ["Rusia","Mesir","Turki","Semua jawaban benar"],3,20,"Geografi",
+      "Ketiganya! Rusia (Eropa & Asia), Mesir (Afrika & Asia, dengan Semenanjung Sinai), Turki (Eropa & Asia). Rusia yang paling jelas — Pegunungan Ural adalah batasnya."),
+    mc("Lautan terdalam di bumi adalah?",
+      ["Samudra Atlantik","Samudra Hindia","Samudra Pasifik","Samudra Arktik"],2,20,"Geografi",
+      "Samudra Pasifik adalah yang terluas DAN terdalam. Palung Mariana di Pasifik adalah titik terdalam bumi (~11.034 meter) — lebih dalam dari Everest yang tinggi! Tekanannya 1.000× tekanan atmosfer normal."),
+  ],
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Register all quizzes
 // ─────────────────────────────────────────────────────────────────────────────
-[scienceQuiz, historyIdQuiz, mathQuiz, digitalQuiz, healthQuiz, envQuiz, generalQuiz, economicsQuiz, bahasaQuiz, sportsQuiz]
+[scienceQuiz, historyIdQuiz, mathQuiz, digitalQuiz, healthQuiz, envQuiz, generalQuiz, economicsQuiz, bahasaQuiz, sportsQuiz, iqQuiz, psychologyQuiz, geographyQuiz]
   .forEach((q) => quizzes.set(q.id, q));
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -517,6 +659,21 @@ app.prepare().then(() => {
 
   io.on("connection", (socket) => {
 
+    // solo: get full quiz data with correct answers (client-side solo play)
+    socket.on("quiz:getSoloData", ({ quizId }: { quizId: string }, cb: (r: object) => void) => {
+      const quiz = quizzes.get(quizId);
+      if (!quiz) return cb({ error: "Kuis tidak ditemukan" });
+      cb({
+        id: quiz.id, title: quiz.title, icon: quiz.icon, color: quiz.color,
+        category: quiz.category, difficulty: quiz.difficulty, description: quiz.description,
+        questions: quiz.questions.map((q) => ({
+          id: q.id, type: q.type, question: q.question, options: q.options,
+          correctIndex: q.correctIndex, timeLimit: q.timeLimit,
+          category: q.category, explanation: q.explanation,
+        })),
+      });
+    });
+
     // list quizzes
     socket.on("quizzes:list", (_data: unknown, cb: (list: object[]) => void) => {
       const list = Array.from(quizzes.values()).map((q) => ({
@@ -524,7 +681,7 @@ app.prepare().then(() => {
         category: q.category, icon: q.icon, color: q.color,
         difficulty: q.difficulty,
         questionCount: q.questions.length,
-        estimatedMins: Math.ceil(q.questions.reduce((s, x) => s + x.timeLimit, 0) / 60) + q.questions.length,
+        estimatedMins: Math.ceil(q.questions.reduce((s, x) => s + x.timeLimit, 0) / 60) + Math.ceil(q.questions.length * 0.5),
         types: [...new Set(q.questions.map((x) => x.type))],
       }));
       cb(list);

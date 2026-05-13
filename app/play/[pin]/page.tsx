@@ -6,6 +6,7 @@ import { getSocket } from "@/lib/socket";
 import type { Socket } from "socket.io-client";
 import type { QuestionPayload, ResultsPayload, LBEntry } from "@/lib/types";
 import { playCorrect, playWrong, playPoll, playStart, playEnd, playTick } from "@/lib/sounds";
+import { SiKuisLogoMark } from "@/components/icons";
 
 const AVATAR_COLORS = ["#EF4444","#F97316","#EAB308","#22C55E","#3B82F6","#8B5CF6","#EC4899","#14B8A6"];
 function avatarColor(name: string) {
@@ -34,6 +35,31 @@ function CircleTimer({ timeLeft, timeLimit }: { timeLeft: number; timeLimit: num
 }
 
 type Phase = "join" | "lobby" | "question" | "answered" | "review" | "ended";
+
+function Confetti() {
+  const pieces = Array.from({ length: 30 }, (_, i) => ({
+    id: i,
+    left: `${(i * 3.5) % 100}%`,
+    delay: `${(i * 0.07) % 0.65}s`,
+    dur: `${0.85 + (i * 0.04) % 0.5}s`,
+    color: ["#2563EB","#F59E0B","#22C55E","#EC4899","#8B5CF6","#EF4444","#06B6D4","#F97316"][i % 8],
+    size: 6 + (i % 5),
+    rotate: (i * 47) % 360,
+  }));
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
+      {pieces.map((p) => (
+        <div key={p.id} className="a-confetti" style={{
+          position: "absolute", top: -20, left: p.left,
+          width: p.size, height: p.size * 0.55,
+          background: p.color, borderRadius: 2,
+          animationDelay: p.delay, animationDuration: p.dur,
+          transform: `rotate(${p.rotate}deg)`,
+        }} />
+      ))}
+    </div>
+  );
+}
 
 export default function PlayPage() {
   const { pin } = useParams<{ pin: string }>();
@@ -182,27 +208,15 @@ export default function PlayPage() {
       <main className="min-h-screen col items-center justify-center px-5" style={{ background: "var(--bg)" }}>
         <div className="text-center mb-8 a-popin">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
-            <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="joinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#7C3AED"/>
-                  <stop offset="55%" stopColor="#4F46E5"/>
-                  <stop offset="100%" stopColor="#3B82F6"/>
-                </linearGradient>
-              </defs>
-              <rect width="100" height="100" rx="24" fill="url(#joinGrad)"/>
-              <ellipse cx="36" cy="22" rx="26" ry="11" fill="rgba(255,255,255,0.16)"/>
-              <path d="M33,32 C33,18 67,18 67,32 C67,46 53,50 53,63" stroke="white" strokeWidth="11" strokeLinecap="round" fill="none"/>
-              <circle cx="53" cy="77" r="6.5" fill="white"/>
-            </svg>
+            <SiKuisLogoMark size={40} id="play-join-logo" />
             <div style={{ fontWeight: 900, fontSize: "clamp(2rem,8vw,3rem)", letterSpacing: "-0.04em" }}>
               <span style={{ color: "var(--text)" }}>Si</span><span style={{ color: "var(--accent)" }}>Kuis</span>
             </div>
           </div>
           <div style={{
             display: "inline-flex", alignItems: "center", padding: "0.45rem 1.25rem",
-            background: "linear-gradient(135deg, rgba(79,70,229,0.10), rgba(124,58,237,0.10))",
-            border: "1.5px solid rgba(79,70,229,0.20)", borderRadius: 40,
+            background: "rgba(37,99,235,0.08)",
+            border: "1.5px solid rgba(37,99,235,0.20)", borderRadius: 40,
           }}>
             <span style={{ color: "var(--accent)", fontWeight: 800, letterSpacing: "0.18em", fontSize: "1.1rem" }}>{pin}</span>
           </div>
@@ -417,9 +431,10 @@ export default function PlayPage() {
     const resultTextColor = isParticipation ? "var(--text)" : isCorrect ? "#15803D" : "#DC2626";
 
     return (
-      <main className="min-h-screen col items-center justify-center px-4 text-center safe-bottom" style={{ background: bgColor, paddingTop: "2rem", paddingBottom: "2rem" }}>
+      <main className="min-h-screen col items-center justify-center px-4 text-center safe-bottom" style={{ background: bgColor, paddingTop: "2rem", paddingBottom: "2rem", position: "relative", overflow: "hidden" }}>
+        {isCorrect && <Confetti />}
         {/* Result icon + label */}
-        <div className="a-popin mb-4">
+        <div className="a-popin mb-4" style={{ position: "relative", zIndex: 1 }}>
           {isParticipation ? (
             <>
               <div style={{ fontSize: "3rem", fontWeight: 900, color: "var(--accent)", marginBottom: "0.4rem" }}>
@@ -451,10 +466,10 @@ export default function PlayPage() {
         </div>
 
         {/* Score cards */}
-        <div className="a-fadeup d-1 mb-4" style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", justifyContent: "center" }}>
+        <div className="a-fadeup d-1 mb-4" style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", justifyContent: "center", position: "relative", zIndex: 1 }}>
           <div className="card" style={{ padding: "0.875rem 1.25rem", textAlign: "center", minWidth: 100 }}>
             <p className="t-label mb-1">Total Skor</p>
-            <p className="t-h2">{myScore.toLocaleString()}</p>
+            <p className={`t-h2${isCorrect ? " a-score-pop" : ""}`}>{myScore.toLocaleString()}</p>
           </div>
           <div className="card" style={{ padding: "0.875rem 1.25rem", textAlign: "center", minWidth: 80 }}>
             <p className="t-label mb-1">Peringkat</p>
@@ -470,7 +485,7 @@ export default function PlayPage() {
 
         {/* Explanation */}
         {results.explanation && (
-          <div className="card mb-4 a-fadeup d-2" style={{ padding: "0.875rem 1.125rem", textAlign: "left", maxWidth: 380, width: "100%", borderLeft: "3px solid var(--accent)" }}>
+          <div className="card mb-4 a-fadeup d-2" style={{ padding: "0.875rem 1.125rem", textAlign: "left", maxWidth: 380, width: "100%", borderLeft: "3px solid var(--accent)", position: "relative", zIndex: 1 }}>
             <p className="t-label mb-1">Penjelasan</p>
             <p style={{ color: "var(--text-dim)", fontSize: "0.85rem", lineHeight: 1.6 }}>{results.explanation}</p>
           </div>

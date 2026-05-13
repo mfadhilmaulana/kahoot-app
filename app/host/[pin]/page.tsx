@@ -6,6 +6,7 @@ import { getSocket } from "@/lib/socket";
 import type { Socket } from "socket.io-client";
 import type { QuestionPayload, ResultsPayload, LBEntry } from "@/lib/types";
 import { playJoin, playStart, playEnd, playTick } from "@/lib/sounds";
+import { SiKuisLogoMark } from "@/components/icons";
 
 interface PlayerInfo { id: string; name: string; }
 
@@ -133,7 +134,7 @@ export default function HostGamePage() {
       <main className="min-h-screen col" style={{ background: "var(--bg)" }}>
         {/* Header */}
         <div style={{
-          background: "linear-gradient(135deg, #7C3AED 0%, #4F46E5 55%, #2563EB 100%)",
+          background: "linear-gradient(135deg, #1D4ED8 0%, #2563EB 55%, #3B82F6 100%)",
           padding: "2rem 1.25rem 2rem",
           textAlign: "center",
           position: "relative",
@@ -465,22 +466,10 @@ export default function HostGamePage() {
     const medals = ["🥇","🥈","🥉"];
 
     return (
-      <main className="min-h-screen col items-center px-4 pt-8 pb-10 safe-bottom" style={{ background: "linear-gradient(150deg, #F0EAFF, #EAF0FF)" }}>
+      <main className="min-h-screen col items-center px-4 pt-8 pb-10 safe-bottom" style={{ background: "linear-gradient(150deg, #EFF6FF, #DBEAFE)" }}>
         <div className="text-center mb-6 a-popin">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
-            <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="endGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#7C3AED"/>
-                  <stop offset="55%" stopColor="#4F46E5"/>
-                  <stop offset="100%" stopColor="#3B82F6"/>
-                </linearGradient>
-              </defs>
-              <rect width="100" height="100" rx="24" fill="url(#endGrad)"/>
-              <ellipse cx="36" cy="22" rx="26" ry="11" fill="rgba(255,255,255,0.16)"/>
-              <path d="M33,32 C33,18 67,18 67,32 C67,46 53,50 53,63" stroke="white" strokeWidth="11" strokeLinecap="round" fill="none"/>
-              <circle cx="53" cy="77" r="6.5" fill="white"/>
-            </svg>
+            <SiKuisLogoMark size={48} id="host-ended-logo" />
             <div style={{ fontWeight: 900, fontSize: "clamp(2rem,7vw,3rem)", letterSpacing: "-0.04em", lineHeight: 1 }}>
               <span style={{ color: "var(--text)" }}>Si</span><span style={{ color: "var(--accent)" }}>Kuis</span>
             </div>
