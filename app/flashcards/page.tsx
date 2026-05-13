@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socket";
 import {
   SiKuisLogoMark, IconBrain, IconCheckCircle, IconArrowRight,
-  IconHome, IconStar, IconTarget, IconPlay, IconAward,
+  IconHome, IconStar, IconTarget, IconPlay, IconAward, QuizIconByID,
 } from "@/components/icons";
 
 interface QuizCard {
@@ -148,30 +148,31 @@ export default function FlashcardsPage() {
         <div style={{ maxWidth: 720, margin: "0 auto", padding: "1.5rem 1rem" }}>
           <p className="t-label mb-3">Pilih Kuis</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(310px,100%),1fr))", gap: "0.75rem" }}>
-            {quizList.filter((q) => q.questionCount > 0).map((q) => (
-              <button key={q.id} onClick={() => startQuiz(q)} style={{
+            {quizList.filter((q) => q.questionCount > 0).map((q, i) => (
+              <button key={q.id} onClick={() => startQuiz(q)} className="a-fadeup" style={{
+                animationDelay: `${i * 0.04}s`,
                 background: "var(--surface)", border: "1.5px solid var(--border)",
-                borderRadius: 16, padding: "1rem 1.25rem",
+                borderRadius: 16, padding: "1rem 1.125rem",
                 textAlign: "left", cursor: "pointer", fontFamily: "inherit",
-                display: "flex", alignItems: "center", gap: "1rem",
+                display: "flex", alignItems: "center", gap: "0.875rem",
                 transition: "border-color 140ms, transform 140ms, box-shadow 140ms",
               }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px var(--accent-glow)"; }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = q.color; (e.currentTarget as HTMLElement).style.transform = "translateY(-3px)"; (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 24px ${q.color}22`; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLElement).style.transform = "none"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}>
                 <div style={{
-                  width: 48, height: 48, borderRadius: 14, background: q.color,
+                  width: 52, height: 52, borderRadius: 14, flexShrink: 0,
+                  background: `linear-gradient(135deg, ${q.color}cc, ${q.color})`,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "1.5rem", flexShrink: 0,
-                  boxShadow: `0 4px 12px ${q.color}55`,
+                  boxShadow: `0 4px 12px ${q.color}44`,
                 }}>
-                  {q.icon}
+                  <QuizIconByID quizId={q.id} size={24} color="#fff" />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontWeight: 700, color: "var(--text)", fontSize: "0.9rem", marginBottom: "0.2rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{q.title}</p>
-                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                    <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontWeight: 600 }}>{q.questionCount} soal</span>
-                    <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--text-muted)" }} />
-                    <span style={{ fontSize: "0.72rem", color: DIFF_COLOR[q.difficulty] ?? "var(--text-muted)", fontWeight: 700 }}>{q.difficulty}</span>
+                  <p style={{ fontWeight: 800, color: "var(--text)", fontSize: "0.88rem", marginBottom: "0.25rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{q.title}</p>
+                  <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+                    <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontWeight: 600 }}>{q.questionCount} soal</span>
+                    <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--border-hi)" }} />
+                    <span style={{ fontSize: "0.68rem", color: DIFF_COLOR[q.difficulty] ?? "var(--text-muted)", fontWeight: 700 }}>{q.difficulty}</span>
                   </div>
                 </div>
                 <IconArrowRight size={16} color="var(--text-muted)" />

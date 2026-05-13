@@ -696,7 +696,7 @@ app.prepare().then(() => {
       if (top.length === 0) return cb({ error: "Tidak ada soal yang cocok dengan topik ini. Coba kata kunci lain." });
       cb({
         questions: top.map(({ q, quizTitle }) => ({
-          type: q.type, question: q.question, options: q.options,
+          id: q.id, type: q.type, question: q.question, options: q.options,
           correctIndex: q.correctIndex, timeLimit: q.timeLimit,
           category: q.category, explanation: q.explanation, sourceQuiz: quizTitle,
         })),

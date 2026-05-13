@@ -16,6 +16,7 @@ const NAV_TABS = [
   { label: "Jelajahi",    Icon: IconGlobe,   iconBg: "#22C55E", href: "/quizzes"    },
   { label: "Belajar Solo",Icon: IconBrain,   iconBg: "#F59E0B", href: "/solo"       },
   { label: "Flashcards",  Icon: IconStar,    iconBg: "#8B5CF6", href: "/flashcards" },
+  { label: "Tes IQ",      Icon: IconTarget,  iconBg: "#4F46E5", href: "/iq"         },
   { label: "Host Game",   Icon: IconPlay,    iconBg: "#2563EB", href: "/quizzes"    },
   { label: "Buat Kuis",   Icon: IconCode,    iconBg: "#EF4444", href: "/create"     },
 ];
@@ -26,7 +27,7 @@ const FEATURES = [
   { Icon: IconBrain,      title: "Mode Belajar Solo",        desc: "Latihan mandiri kapan saja. Solo kompetitif, latihan santai, flashcards, atau Ghost Mode.", color: "#7C3AED", bg: "rgba(124,58,237,0.10)"  },
   { Icon: IconBarChart,   title: "5 Jenis Pertanyaan",       desc: "Pilihan ganda, benar/salah, pendapat, rating bintang, dan jawaban teks bebas.",     color: "#E21B3C", bg: "rgba(226,27,60,0.10)"   },
   { Icon: IconTrophy,     title: "Leaderboard Live",         desc: "Skor dan peringkat tampil langsung setelah setiap pertanyaan selesai.",             color: "#F59E0B", bg: "rgba(245,158,11,0.10)"  },
-  { Icon: IconTarget,     title: "Tes IQ & Psikologi",       desc: "Uji kemampuan kognitif dan pola pikir dengan soal ilmiah berstandar tinggi.",       color: "#8B5CF6", bg: "rgba(139,92,246,0.10)"  },
+  { Icon: IconTarget,     title: "Tes IQ Real",               desc: "Ukur IQ-mu lewat soal pola, logika & analogi. Dapat profil kognitif + estimasi persentil populasi.", color: "#4F46E5", bg: "rgba(79,70,237,0.10)"   },
   { Icon: IconLightbulb,  title: "Penjelasan Mendalam",      desc: "Setiap jawaban dilengkapi penjelasan ilmiah — belajar dari setiap pertanyaan.",     color: "#059669", bg: "rgba(5,150,105,0.10)"   },
   { Icon: IconStar,       title: "Flashcards 3D",            desc: "Kartu belajar dengan animasi flip 3D. Tandai 'Sudah Tahu' dan ulang kartu yang sulit.", color: "#8B5CF6", bg: "rgba(139,92,246,0.10)"  },
   { Icon: IconCode,       title: "Buat Kuis + AI Generator", desc: "Desain kuis kustom dengan semua tipe soal. AI Generator temukan soal relevan dari bank.", color: "#0891B2", bg: "rgba(8,145,178,0.10)" },

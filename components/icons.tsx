@@ -248,6 +248,28 @@ export function IconAward(p: P) {
   );
 }
 
+/* ── Quiz icon helper — maps quiz ID to the right SVG icon ──────────────────── */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const QUIZ_ICON_MAP: Record<string, (p: P) => any> = {
+  science:      IconFlask,
+  "history-id": IconLandmark,
+  math:         IconSigma,
+  digital:      IconCode,
+  health:       IconHeartPulse,
+  environment:  IconLeaf,
+  general:      IconGlobe,
+  economics:    IconTrendingUp,
+  bahasa:       IconType,
+  sports:       IconTrophy,
+  iq:           IconBrain,
+  psychology:   IconTarget,
+  geography:    IconGlobe,
+};
+export function QuizIconByID({ quizId, size = 24, color = "#fff" }: { quizId: string; size?: number; color?: string }) {
+  const Icon = QUIZ_ICON_MAP[quizId] ?? IconLightbulb;
+  return <Icon size={size} color={color} />;
+}
+
 /* ── SiKuis brand mark (custom, not a generic icon) ─────────────────────────── */
 export function SiKuisLogoMark({ size = 36, id }: { size?: number; id?: string }) {
   const gradId = id ?? `sk${size}`;

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socket";
 import type { QuestionType } from "@/lib/types";
 import { playCorrect, playWrong, playPoll, playStart, playEnd, playTick } from "@/lib/sounds";
-import { SiKuisLogoMark, IconTarget, IconClock, IconStar, IconCheckCircle } from "@/components/icons";
+import { SiKuisLogoMark, IconTarget, IconClock, IconStar, IconCheckCircle, QuizIconByID } from "@/components/icons";
 
 interface SoloQuestion {
   id: string; type: QuestionType; question: string; options: string[];
@@ -308,34 +308,37 @@ export default function SoloPage() {
               {quizList.map((q, i) => (
                 <button key={q.id} onClick={() => selectQuiz(q.id, playMode)}
                   disabled={phase === "loading"}
-                  className="card a-fadeup"
+                  className="a-fadeup"
                   style={{
-                    padding: "1.25rem", textAlign: "left", cursor: "pointer",
-                    animationDelay: `${i * 0.05}s`,
-                    display: "flex", flexDirection: "column", gap: "0.75rem",
+                    animationDelay: `${i * 0.04}s`,
+                    display: "flex", alignItems: "center", gap: "0.875rem",
+                    background: "var(--surface)", border: "1.5px solid var(--border)",
+                    borderRadius: 16, padding: "1rem 1.125rem",
+                    textAlign: "left", cursor: phase === "loading" ? "wait" : "pointer",
                     transition: "border-color 140ms, transform 140ms, box-shadow 140ms",
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = q.color; e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = `0 8px 24px ${q.color}28`; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = q.color; e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = `0 8px 24px ${q.color}22`; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
                 >
-                  <div className="row" style={{ gap: "0.75rem" }}>
-                    <div className="center" style={{
-                      width: 48, height: 48, borderRadius: 14, flexShrink: 0,
-                      fontSize: "1.4rem",
-                      background: `linear-gradient(135deg, ${q.color}cc, ${q.color})`,
-                      boxShadow: `0 4px 12px ${q.color}44`,
-                    }}>
-                      {q.icon}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3 className="t-h3" style={{ marginBottom: "0.15rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{q.title}</h3>
-                      <p style={{ color: "var(--text-dim)", fontSize: "0.75rem", lineHeight: 1.35, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{q.description}</p>
-                    </div>
+                  <div style={{
+                    width: 52, height: 52, borderRadius: 14, flexShrink: 0,
+                    background: `linear-gradient(135deg, ${q.color}cc, ${q.color})`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: `0 4px 12px ${q.color}44`,
+                  }}>
+                    <QuizIconByID quizId={q.id} size={24} color="#fff" />
                   </div>
-                  <div className="row" style={{ gap: "0.35rem", flexWrap: "wrap" }}>
-                    <span className="badge" style={{ background: DIFF_COLOR[q.difficulty] + "1A", color: DIFF_COLOR[q.difficulty] }}>{q.difficulty}</span>
-                    <span className="badge" style={{ background: "var(--surface-3)", color: "var(--text-dim)" }}>{q.questionCount} soal</span>
-                    <span className="badge" style={{ background: "var(--surface-3)", color: "var(--text-dim)" }}>~{q.estimatedMins} mnt</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", marginBottom: "0.25rem" }}>
+                      <p style={{ fontWeight: 800, color: "var(--text)", fontSize: "0.88rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{q.title}</p>
+                      <span style={{ fontSize: "0.6rem", fontWeight: 800, flexShrink: 0, color: DIFF_COLOR[q.difficulty], background: DIFF_COLOR[q.difficulty] + "18", borderRadius: 40, padding: "0.12rem 0.45rem" }}>
+                        {q.difficulty.toUpperCase()}
+                      </span>
+                    </div>
+                    <p style={{ color: "var(--text-dim)", fontSize: "0.72rem", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "0.4rem" }}>{q.description}</p>
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.68rem", fontWeight: 600 }}>
+                      {q.questionCount} soal · ~{q.estimatedMins} mnt
+                    </span>
                   </div>
                 </button>
               ))}
