@@ -103,8 +103,7 @@ export default function HomePage() {
               }}>
                 <t.Icon size={12} color="#fff" />
               </span>
-              <span style={{ display: "none" }} className="nav-label">{t.label}</span>
-              <style>{`@media(min-width:600px){.nav-label{display:inline}}`}</style>
+              {t.label}
             </button>
           ))}
         </div>
