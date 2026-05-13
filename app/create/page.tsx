@@ -78,14 +78,14 @@ export default function CreatePage() {
     setQuestions((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  function validate(): string | null {
-    if (!title.trim()) return "Judul kuis tidak boleh kosong";
+  function validate(): { msg: string; scrollId?: string } | null {
+    if (!title.trim()) return { msg: "Judul kuis tidak boleh kosong", scrollId: "quiz-title" };
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
-      if (!q.question.trim()) return `Pertanyaan ${i + 1} masih kosong`;
+      if (!q.question.trim()) return { msg: `Pertanyaan ${i + 1}: teks soal masih kosong`, scrollId: `q-${i}` };
       if (q.type === "mc" || q.type === "poll") {
         for (let j = 0; j < q.options.length; j++) {
-          if (!q.options[j].trim()) return `Opsi ${j + 1} di pertanyaan ${i + 1} masih kosong`;
+          if (!q.options[j].trim()) return { msg: `Pertanyaan ${i + 1}: opsi ${j + 1} masih kosong`, scrollId: `q-${i}` };
         }
       }
     }
@@ -94,7 +94,14 @@ export default function CreatePage() {
 
   function handleSubmit() {
     const err = validate();
-    if (err) { setError(err); return; }
+    if (err) {
+      setError(err.msg);
+      if (err.scrollId) {
+        const el = document.getElementById(err.scrollId);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
     setError("");
     setLoading(true);
 
@@ -142,11 +149,11 @@ export default function CreatePage() {
 
       <div className="col px-4 pt-6" style={{ maxWidth: 680, margin: "0 auto", gap: "1rem" }}>
         {/* Title */}
-        <div className="card a-fadeup" style={{ padding: "1.25rem 1.5rem" }}>
+        <div id="quiz-title" className="card a-fadeup" style={{ padding: "1.25rem 1.5rem", border: error && !title.trim() ? "2px solid #EF4444" : undefined }}>
           <label className="t-label mb-2" style={{ display: "block" }}>Judul Kuis</label>
           <input
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => { setTitle(e.target.value); setError(""); }}
             placeholder="Contoh: Kuis Sejarah Indonesia"
             className="input"
             style={{ fontSize: "1.05rem", fontWeight: 600 }}
@@ -160,7 +167,7 @@ export default function CreatePage() {
           const isRating = q.type === "rating";
           const isOpen = q.type === "open";
           return (
-            <div key={qi} className="card a-fadeup" style={{ padding: "1.25rem 1.5rem", animationDelay: `${qi * 0.04}s` }}>
+            <div id={`q-${qi}`} key={qi} className="card a-fadeup" style={{ padding: "1.25rem 1.5rem", animationDelay: `${qi * 0.04}s` }}>
               {/* Question header */}
               <div className="row mb-4" style={{ justifyContent: "space-between", alignItems: "center" }}>
                 <div className="row" style={{ gap: "0.6rem" }}>
@@ -197,7 +204,7 @@ export default function CreatePage() {
               {/* Question text */}
               <textarea
                 value={q.question}
-                onChange={(e) => setQ(qi, { question: e.target.value })}
+                onChange={(e) => { setQ(qi, { question: e.target.value }); setError(""); }}
                 placeholder="Tulis pertanyaan di sini..."
                 rows={2}
                 className="input mb-4"
@@ -309,16 +316,23 @@ export default function CreatePage() {
           + Tambah Pertanyaan
         </button>
 
-        {error && (
-          <div className="card" style={{ padding: "0.875rem 1.125rem", background: "rgba(220,38,38,0.1)", borderColor: "rgba(220,38,38,0.3)" }}>
-            <p style={{ color: "#F87171", fontSize: "0.875rem", fontWeight: 600 }}>{error}</p>
-          </div>
-        )}
       </div>
 
       {/* Sticky submit footer */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, var(--bg) 70%, transparent)", padding: "0.75rem 1rem", paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, var(--bg) 85%, transparent)", padding: "0.6rem 1rem", paddingBottom: "max(0.6rem, env(safe-area-inset-bottom))" }}>
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
+          {error && (
+            <div style={{
+              background: "#FEF2F2", border: "1.5px solid #FECACA",
+              borderRadius: 10, padding: "0.55rem 0.875rem",
+              marginBottom: "0.5rem",
+              display: "flex", alignItems: "center", gap: "0.5rem",
+            }}>
+              <span style={{ fontSize: "0.95rem" }}>⚠️</span>
+              <p style={{ color: "#DC2626", fontSize: "0.82rem", fontWeight: 700, flex: 1 }}>{error}</p>
+              <button onClick={() => setError("")} style={{ background: "none", border: "none", color: "#F87171", cursor: "pointer", fontSize: "1rem", padding: 0, lineHeight: 1 }}>×</button>
+            </div>
+          )}
           <button onClick={handleSubmit} disabled={loading} className="btn btn-gradient btn-xl" style={{ width: "100%", opacity: loading ? 0.6 : 1 }}>
             {loading ? "Membuat game..." : `Buat Game — ${questions.length} Pertanyaan`}
           </button>
