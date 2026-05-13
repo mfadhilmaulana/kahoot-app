@@ -130,91 +130,173 @@ export default function HostGamePage() {
 
   // ── LOBBY ──────────────────────────────────────────────────────────────────────
   if (phase === "lobby") {
+    const canStart = players.length > 0;
     return (
-      <main className="min-h-screen col" style={{ background: "var(--bg)" }}>
-        {/* Header */}
+      <main className="min-h-screen col" style={{ background: "#0F172A" }}>
+        {/* Hero PIN section */}
         <div style={{
-          background: "linear-gradient(135deg, #1D4ED8 0%, #2563EB 55%, #3B82F6 100%)",
-          padding: "2rem 1.25rem 2rem",
+          background: "linear-gradient(160deg, #0F172A 0%, #1E3A8A 50%, #1D4ED8 100%)",
+          padding: "2.5rem 1.5rem 2.5rem",
           textAlign: "center",
-          position: "relative",
-          overflow: "hidden",
+          position: "relative", overflow: "hidden",
+          flexShrink: 0,
         }}>
-          <div style={{ position: "absolute", top: -40, left: -40, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", bottom: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(245,158,11,0.12)", pointerEvents: "none" }} />
-          <p style={{ color: "rgba(255,255,255,0.72)", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "0.75rem" }}>Kode Game</p>
-          <div style={{
-            display: "inline-block",
-            background: "rgba(255,255,255,0.12)",
-            border: "2px solid rgba(255,255,255,0.25)",
-            borderRadius: 16,
-            padding: "0.5rem 1.5rem",
-            marginBottom: "0.75rem",
-          }}>
-            <div style={{ fontSize: "clamp(2.25rem, 10vw, 3.75rem)", fontWeight: 900, letterSpacing: "0.22em", color: "#fff", fontFamily: "monospace" }}>
-              {pin}
-            </div>
+          {/* Decorative circles */}
+          <div style={{ position: "absolute", top: -80, left: -80, width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,158,11,0.12) 0%, transparent 70%)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", bottom: -60, right: -60, width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(37,99,235,0.3) 0%, transparent 70%)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 60%)", pointerEvents: "none" }} />
+
+          {/* Logo */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", marginBottom: "1.75rem" }}>
+            <SiKuisLogoMark size={28} id="host-logo" />
+            <span style={{ color: "rgba(255,255,255,0.9)", fontWeight: 900, fontSize: "1.1rem", letterSpacing: "-0.02em" }}>
+              Si<span style={{ color: "#F59E0B" }}>Kuis</span>
+            </span>
           </div>
-          <p style={{ color: "rgba(255,255,255,0.72)", fontSize: "0.875rem" }}>
-            Buka <span style={{ color: "#fff", fontWeight: 700 }}>sikuis.com</span> dan masukkan kode ini
+
+          {/* "Join at" instruction */}
+          <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "1rem" }}>
+            🌐 Buka <span style={{ color: "#fff" }}>sikuis.com</span> lalu masukkan kode
           </p>
+
+          {/* PIN display */}
+          <div style={{
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(255,255,255,0.07)",
+            border: "2px solid rgba(255,255,255,0.18)",
+            borderRadius: 20,
+            padding: "1rem 2.5rem",
+            marginBottom: "1.25rem",
+            backdropFilter: "blur(12px)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12)",
+          }}>
+            {pin.split("").map((d, i) => (
+              <span key={i} style={{
+                fontSize: "clamp(2rem,8vw,3.5rem)", fontWeight: 900,
+                color: "#fff", fontFamily: "monospace",
+                letterSpacing: "0.1em", lineHeight: 1,
+                marginRight: i === 2 ? "0.6em" : "0.05em",
+              }}>
+                {d}
+              </span>
+            ))}
+          </div>
+
+          {/* Share hint */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E", animation: "dotPulse 1.5s ease 0s infinite" }} />
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.8rem" }}>
+              Game aktif · Menunggu pemain bergabung
+            </p>
+          </div>
         </div>
 
-        <div className="flex-1 px-4 pt-5" style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
-          <div className="row mb-4" style={{ justifyContent: "space-between", alignItems: "center" }}>
-            <div className="row" style={{ gap: "0.5rem" }}>
-              <span className="t-h3">Pemain</span>
-              <span style={{ fontSize: "1.5rem", fontWeight: 900, color: "var(--accent)" }}>{players.length}</span>
+        {/* Players section */}
+        <div style={{
+          flex: 1, background: "var(--bg)",
+          borderRadius: "24px 24px 0 0", marginTop: -16,
+          padding: "1.5rem 1.25rem 0",
+        }}>
+          <div style={{ maxWidth: 960, margin: "0 auto" }}>
+            {/* Header row */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 10,
+                  background: canStart ? "linear-gradient(135deg,#2563EB,#7C3AED)" : "var(--surface-3)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "background 0.4s",
+                }}>
+                  <span style={{ color: "#fff", fontWeight: 900, fontSize: "0.95rem" }}>{players.length}</span>
+                </div>
+                <div>
+                  <p style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--text)" }}>Pemain Bergabung</p>
+                  {canStart && <p style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>Siap untuk memulai game</p>}
+                </div>
+              </div>
+              {startError && (
+                <div style={{ background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.25)", borderRadius: 8, padding: "0.3rem 0.6rem" }}>
+                  <p style={{ color: "#DC2626", fontSize: "0.72rem", fontWeight: 600 }}>{startError}</p>
+                </div>
+              )}
             </div>
-            {startError && <p style={{ color: "#DC2626", fontSize: "0.82rem", fontWeight: 600 }}>{startError}</p>}
-          </div>
 
-          {players.length === 0 ? (
-            <div className="center col py-16" style={{ gap: "1rem" }}>
-              <div className="row" style={{ gap: "0.5rem" }}>
-                {[0,1,2].map((i) => (
-                  <div key={i} style={{
-                    width: 10, height: 10, borderRadius: "50%",
-                    background: "var(--accent)",
-                    animation: `dotPulse 1.2s ease ${i * 0.2}s infinite`,
-                  }} />
+            {players.length === 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1.25rem", padding: "3.5rem 0" }}>
+                {/* Animated waiting illustration */}
+                <div style={{ position: "relative", width: 80, height: 80 }}>
+                  {[0,1,2].map((i) => (
+                    <div key={i} style={{
+                      position: "absolute", inset: 0, borderRadius: "50%",
+                      border: "2px solid var(--accent)",
+                      opacity: 0.4,
+                      animation: `dotPulse 2s ease ${i * 0.5}s infinite`,
+                      transform: `scale(${1 + i * 0.35})`,
+                    }} />
+                  ))}
+                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: "2rem" }}>👥</span>
+                  </div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ color: "var(--text)", fontWeight: 700, marginBottom: "0.25rem" }}>Belum ada pemain</p>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Bagikan kode <strong style={{ color: "var(--accent)" }}>{pin}</strong> ke peserta</p>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(148px, 1fr))", gap: "0.5rem" }}>
+                {players.map((p, i) => (
+                  <div key={p.id} className="a-popin" style={{
+                    animationDelay: `${i * 0.03}s`,
+                    display: "flex", alignItems: "center", gap: "0.5rem",
+                    background: "var(--surface)", border: "1.5px solid var(--border)",
+                    borderRadius: 12, padding: "0.55rem 0.75rem",
+                  }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: 10, flexShrink: 0,
+                      background: `linear-gradient(135deg, ${avatarColor(p.name)}cc, ${avatarColor(p.name)})`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#fff", fontSize: "0.8rem", fontWeight: 900,
+                      boxShadow: `0 2px 8px ${avatarColor(p.name)}44`,
+                    }}>
+                      {p.name[0].toUpperCase()}
+                    </div>
+                    <span style={{ color: "var(--text)", fontWeight: 600, fontSize: "0.8rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                      {p.name}
+                    </span>
+                  </div>
                 ))}
               </div>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>Menunggu pemain bergabung...</p>
-            </div>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "0.55rem" }}>
-              {players.map((p, i) => (
-                <div key={p.id} className="card a-slidein" style={{
-                  padding: "0.55rem 0.75rem",
-                  display: "flex", alignItems: "center", gap: "0.55rem",
-                  animationDelay: `${i * 0.04}s`,
-                }}>
-                  <div className="center" style={{
-                    width: 28, height: 28, borderRadius: "50%",
-                    background: avatarColor(p.name), color: "#fff",
-                    fontSize: "0.75rem", fontWeight: 900, flexShrink: 0,
-                  }}>
-                    {p.name[0].toUpperCase()}
-                  </div>
-                  <span style={{ color: "var(--text)", fontWeight: 600, fontSize: "0.82rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {p.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        <div className="px-4 pb-5 safe-bottom" style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
-          <button
-            onClick={handleStart}
-            disabled={players.length === 0}
-            className="btn btn-primary btn-xl"
-            style={{ width: "100%" }}
-          >
-            {players.length === 0 ? "Menunggu pemain..." : `Mulai Game — ${players.length} Pemain`}
-          </button>
+        {/* Start button */}
+        <div style={{
+          background: "var(--bg)", borderTop: "1px solid var(--border)",
+          padding: "1rem 1.25rem", paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+        }}>
+          <div style={{ maxWidth: 960, margin: "0 auto" }}>
+            <button
+              onClick={handleStart}
+              disabled={!canStart}
+              style={{
+                width: "100%", padding: "1rem 1.5rem",
+                borderRadius: 16, border: "none", cursor: canStart ? "pointer" : "not-allowed",
+                fontWeight: 900, fontSize: "1rem", letterSpacing: "-0.01em",
+                background: canStart
+                  ? "linear-gradient(135deg, #1D4ED8, #7C3AED)"
+                  : "var(--surface-3)",
+                color: canStart ? "#fff" : "var(--text-muted)",
+                boxShadow: canStart ? "0 4px 20px rgba(37,99,235,0.4)" : "none",
+                transition: "all 0.25s",
+              }}
+            >
+              {canStart
+                ? `▶ Mulai Game — ${players.length} Pemain`
+                : "Menunggu pemain bergabung..."}
+            </button>
+          </div>
         </div>
       </main>
     );
