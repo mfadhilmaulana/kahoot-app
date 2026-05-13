@@ -14,18 +14,22 @@ interface QuestionForm {
 }
 
 function emptyQ(type: QuestionType = "mc"): QuestionForm {
-  if (type === "tf") return { type, question: "", options: ["Benar", "Salah"], correctIndex: 0, timeLimit: 20 };
-  if (type === "poll") return { type, question: "", options: ["", ""], correctIndex: -1, timeLimit: 30 };
+  if (type === "tf")     return { type, question: "", options: ["Benar", "Salah"], correctIndex: 0, timeLimit: 20 };
+  if (type === "poll")   return { type, question: "", options: ["", ""], correctIndex: -1, timeLimit: 30 };
+  if (type === "rating") return { type, question: "", options: ["1","2","3","4","5"], correctIndex: -1, timeLimit: 20 };
+  if (type === "open")   return { type, question: "", options: [], correctIndex: -1, timeLimit: 40 };
   return { type, question: "", options: ["", "", "", ""], correctIndex: 0, timeLimit: 20 };
 }
 
-const MC_COLORS = ["#DC2626","#2563EB","#16A34A","#CA8A04"];
-const TF_COLORS = ["#059669","#DC2626"];
-const TIME_OPTIONS = [10, 20, 30, 60];
+const MC_COLORS = ["#E21B3C","#1368CE","#26890C","#D89E00"];
+const TF_COLORS = ["#26890C","#E21B3C"];
+const TIME_OPTIONS = [10, 20, 30, 40, 60];
 const TYPE_CONFIG: Record<QuestionType, { label: string; desc: string }> = {
-  mc:   { label: "Pilihan Ganda", desc: "4 opsi · 1 jawaban benar" },
-  tf:   { label: "Benar / Salah", desc: "2 opsi · 1 jawaban benar" },
-  poll: { label: "Pendapat",      desc: "Opsi bebas · Tidak ada jawaban benar" },
+  mc:     { label: "Pilihan Ganda", desc: "4 opsi · 1 jawaban benar" },
+  tf:     { label: "Benar / Salah", desc: "2 opsi · 1 jawaban benar" },
+  poll:   { label: "Pendapat",      desc: "Opsi bebas · Tidak ada jawaban benar" },
+  rating: { label: "⭐ Rating",     desc: "Pemain beri rating 1-5 bintang" },
+  open:   { label: "✏️ Teks Bebas", desc: "Pemain ketik jawaban sendiri" },
 };
 
 export default function CreatePage() {
@@ -79,8 +83,10 @@ export default function CreatePage() {
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       if (!q.question.trim()) return `Pertanyaan ${i + 1} masih kosong`;
-      for (let j = 0; j < q.options.length; j++) {
-        if (q.type !== "tf" && !q.options[j].trim()) return `Opsi ${j + 1} di pertanyaan ${i + 1} masih kosong`;
+      if (q.type === "mc" || q.type === "poll") {
+        for (let j = 0; j < q.options.length; j++) {
+          if (!q.options[j].trim()) return `Opsi ${j + 1} di pertanyaan ${i + 1} masih kosong`;
+        }
       }
     }
     return null;
@@ -128,7 +134,7 @@ export default function CreatePage() {
           ←
         </button>
         <div>
-          <h1 className="t-h3">Buat Kuis</h1>
+          <h1 className="t-h3">✏️ Buat Kuis</h1>
           <p style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>{questions.length} pertanyaan</p>
         </div>
       </div>
@@ -150,6 +156,8 @@ export default function CreatePage() {
         {questions.map((q, qi) => {
           const isTF = q.type === "tf";
           const isPoll = q.type === "poll";
+          const isRating = q.type === "rating";
+          const isOpen = q.type === "open";
           return (
             <div key={qi} className="card a-fadeup" style={{ padding: "1.25rem 1.5rem", animationDelay: `${qi * 0.04}s` }}>
               {/* Question header */}
@@ -231,6 +239,18 @@ export default function CreatePage() {
                       + Tambah opsi
                     </button>
                   )}
+                </div>
+              ) : isRating ? (
+                <div className="card-hi center mb-4" style={{ padding: "1rem", textAlign: "center", gap: "0.5rem" }}>
+                  <div className="row center" style={{ gap: "0.5rem", fontSize: "1.75rem", marginBottom: "0.5rem" }}>
+                    {[1,2,3,4,5].map((s) => <span key={s}>⭐</span>)}
+                  </div>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>Pemain akan memilih rating 1–5 bintang</p>
+                </div>
+              ) : isOpen ? (
+                <div className="card-hi center mb-4" style={{ padding: "1rem", textAlign: "center" }}>
+                  <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>✏️</div>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>Pemain akan mengetik jawaban teks bebas mereka</p>
                 </div>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "1rem" }}>

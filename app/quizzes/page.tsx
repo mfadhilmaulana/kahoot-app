@@ -67,7 +67,7 @@ export default function QuizzesPage() {
           ←
         </button>
         <div>
-          <h1 className="t-h3">Pilih Demo Kuis</h1>
+          <h1 className="t-h3">Pilih Kuis Demo</h1>
           <p style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
             {loading ? "Memuat..." : `${quizzes.length} kuis tersedia`}
           </p>

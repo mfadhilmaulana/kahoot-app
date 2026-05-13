@@ -1,11 +1,11 @@
-export type QuestionType = "mc" | "tf" | "poll";
+export type QuestionType = "mc" | "tf" | "poll" | "rating" | "open";
 
 export interface Question {
   id: string;
   type: QuestionType;
   question: string;
   options: string[];
-  correctIndex: number; // -1 for poll (no correct)
+  correctIndex: number; // -1 for poll/rating/open (no correct answer)
   timeLimit: number;    // seconds
   category: string;
   explanation: string;
@@ -63,7 +63,7 @@ export interface QuestionPayload {
 }
 
 export interface ResultsPayload {
-  correctIndex: number;   // -1 for poll
+  correctIndex: number;     // -1 for poll/rating/open
   counts: number[];
   leaderboard: LBEntry[];
   isLast: boolean;
@@ -71,4 +71,6 @@ export interface ResultsPayload {
   question: string;
   options: string[];
   explanation: string;
+  openAnswers?: string[];   // for "open" type
+  ratingAvg?: number;       // for "rating" type (1-5)
 }

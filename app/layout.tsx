@@ -14,14 +14,14 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
-  themeColor: "#08080F",
+  themeColor: "#2563EB",
 };
 
 export const metadata: Metadata = {
-  title: "KUIS! — Platform Kuis Interaktif",
+  title: "SiKuis — Platform Kuis Interaktif Gratis",
   description:
-    "Platform kuis multiplayer real-time gratis. Buat kuis edukatif, tantang teman, dan belajar bersama. Lebih dari 90 soal pengetahuan tersedia.",
-  keywords: ["kuis", "quiz", "multiplayer", "edukatif", "interaktif", "gratis"],
+    "Platform kuis multiplayer real-time gratis. Buat kuis edukatif, tantang teman, dan belajar bersama. 150+ soal pengetahuan dari 10 kategori tersedia.",
+  keywords: ["kuis", "quiz", "multiplayer", "edukatif", "interaktif", "gratis", "sikuis"],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
