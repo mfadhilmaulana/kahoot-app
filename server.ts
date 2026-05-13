@@ -674,6 +674,35 @@ app.prepare().then(() => {
       });
     });
 
+    // AI: generate questions from topic keyword search
+    socket.on("quiz:generateFromTopic", ({ topic, count = 10 }: { topic: string; count?: number }, cb: (r: object) => void) => {
+      if (!topic?.trim()) return cb({ error: "Topik tidak boleh kosong" });
+      const kw = topic.toLowerCase().trim().split(/\s+/);
+      const scored: Array<{ q: Question; score: number; quizTitle: string }> = [];
+      for (const quiz of quizzes.values()) {
+        for (const q of quiz.questions) {
+          if (q.type === "rating" || q.type === "open") continue; // skip non-scoreable types
+          let score = 0;
+          const haystack = [q.question, q.category ?? "", q.explanation ?? "", quiz.title, quiz.category].join(" ").toLowerCase();
+          for (const k of kw) {
+            if (k.length < 2) continue;
+            if (haystack.includes(k)) score += haystack.split(k).length - 1;
+          }
+          if (score > 0) scored.push({ q, score, quizTitle: quiz.title });
+        }
+      }
+      scored.sort((a, b) => b.score - a.score);
+      const top = scored.slice(0, count);
+      if (top.length === 0) return cb({ error: "Tidak ada soal yang cocok dengan topik ini. Coba kata kunci lain." });
+      cb({
+        questions: top.map(({ q, quizTitle }) => ({
+          type: q.type, question: q.question, options: q.options,
+          correctIndex: q.correctIndex, timeLimit: q.timeLimit,
+          category: q.category, explanation: q.explanation, sourceQuiz: quizTitle,
+        })),
+      });
+    });
+
     // list quizzes
     socket.on("quizzes:list", (_data: unknown, cb: (list: object[]) => void) => {
       const list = Array.from(quizzes.values()).map((q) => ({

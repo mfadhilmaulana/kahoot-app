@@ -32,12 +32,53 @@ const TYPE_CONFIG: Record<QuestionType, { label: string; desc: string }> = {
   open:   { label: "✏️ Teks Bebas", desc: "Pemain ketik jawaban sendiri" },
 };
 
+interface AIQuestion {
+  id: string; type: QuestionType; question: string; options: string[];
+  correctIndex: number; timeLimit: number; sourceQuiz: string;
+}
+
 export default function CreatePage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [questions, setQuestions] = useState<QuestionForm[]>([emptyQ("mc")]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showAI, setShowAI] = useState(false);
+  const [aiTopic, setAiTopic] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiResults, setAiResults] = useState<AIQuestion[]>([]);
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+
+  function generateFromTopic() {
+    const topic = aiTopic.trim();
+    if (!topic) return;
+    setAiLoading(true);
+    setAiError("");
+    setAiResults([]);
+    const socket = getSocket();
+    function doGenerate() {
+      socket.emit("quiz:generateFromTopic", { topic, count: 10 }, (res: { questions?: AIQuestion[]; error?: string }) => {
+        setAiLoading(false);
+        if (res.error) { setAiError(res.error); return; }
+        setAiResults(res.questions ?? []);
+      });
+    }
+    if (socket.connected) doGenerate();
+    else socket.once("connect", doGenerate);
+  }
+
+  function addAIQuestion(q: AIQuestion) {
+    setQuestions((prev) => [...prev, {
+      type: q.type,
+      question: q.question,
+      options: q.options,
+      correctIndex: q.correctIndex,
+      timeLimit: q.timeLimit,
+    }]);
+    setAddedIds((prev) => new Set(prev).add(q.id));
+    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 50);
+  }
 
   function setQ(idx: number, patch: Partial<QuestionForm>) {
     setQuestions((prev) => prev.map((q, i) => i === idx ? { ...q, ...patch } : q));
@@ -158,6 +199,91 @@ export default function CreatePage() {
             className="input"
             style={{ fontSize: "1.05rem", fontWeight: 600 }}
           />
+        </div>
+
+        {/* AI Generator */}
+        <div className="card a-fadeup" style={{ padding: "1.25rem 1.5rem", borderColor: showAI ? "var(--accent)" : undefined }}>
+          <button
+            onClick={() => setShowAI((v) => !v)}
+            style={{ display: "flex", alignItems: "center", gap: "0.6rem", background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left", padding: 0 }}
+          >
+            <div className="center" style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg,#7C3AED,#2563EB)", flexShrink: 0 }}>
+              <span style={{ fontSize: "1rem" }}>✨</span>
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontWeight: 800, fontSize: "0.9rem", color: "var(--text)" }}>AI Question Generator</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>Cari soal dari bank berdasarkan topik</p>
+            </div>
+            <span style={{ color: "var(--text-muted)", fontSize: "0.85rem", transition: "transform 0.2s", transform: showAI ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+          </button>
+
+          {showAI && (
+            <div style={{ marginTop: "1rem" }}>
+              <div className="row" style={{ gap: "0.5rem", marginBottom: "0.75rem" }}>
+                <input
+                  value={aiTopic}
+                  onChange={(e) => setAiTopic(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && generateFromTopic()}
+                  placeholder="Ketik topik... cth: fotosintesis, pancasila, pecahan"
+                  className="input flex-1"
+                  style={{ fontSize: "0.875rem" }}
+                />
+                <button
+                  onClick={generateFromTopic}
+                  disabled={!aiTopic.trim() || aiLoading}
+                  className="btn btn-gradient"
+                  style={{ flexShrink: 0, opacity: !aiTopic.trim() || aiLoading ? 0.6 : 1 }}
+                >
+                  {aiLoading ? "..." : "Cari"}
+                </button>
+              </div>
+
+              {aiError && (
+                <p style={{ color: "#DC2626", fontSize: "0.78rem", marginBottom: "0.5rem" }}>⚠️ {aiError}</p>
+              )}
+
+              {aiResults.length > 0 && (
+                <div className="col" style={{ gap: "0.4rem" }}>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.72rem", fontWeight: 700, marginBottom: "0.25rem" }}>
+                    {aiResults.length} soal ditemukan — klik "+ Tambah" untuk memasukkan ke kuis
+                  </p>
+                  {aiResults.map((q) => {
+                    const added = addedIds.has(q.id);
+                    return (
+                      <div key={q.id} className="row" style={{
+                        gap: "0.65rem", padding: "0.65rem 0.875rem",
+                        background: added ? "rgba(37,99,235,0.05)" : "var(--surface-2)",
+                        borderRadius: 10, border: `1px solid ${added ? "rgba(37,99,235,0.2)" : "var(--border)"}`,
+                        alignItems: "flex-start",
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: "0.82rem", color: "var(--text)", fontWeight: 600, marginBottom: "0.15rem", lineHeight: 1.4 }}>
+                            {q.question.length > 90 ? q.question.substring(0, 90) + "…" : q.question}
+                          </p>
+                          <p style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>
+                            {TYPE_CONFIG[q.type]?.label ?? q.type} · dari: {q.sourceQuiz}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => addAIQuestion(q)}
+                          disabled={added}
+                          className="btn"
+                          style={{
+                            flexShrink: 0, fontSize: "0.72rem", fontWeight: 700, padding: "0.3rem 0.65rem", borderRadius: 8,
+                            background: added ? "var(--surface-3)" : "var(--accent)",
+                            color: added ? "var(--text-muted)" : "#fff",
+                            border: "none", cursor: added ? "default" : "pointer",
+                          }}
+                        >
+                          {added ? "✓ Ditambah" : "+ Tambah"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Questions */}

@@ -445,6 +445,13 @@ textarea.input { resize: none; }
   .ans-btn .shape { font-size: 1.25rem; }
 }
 
+/* ── Flashcard 3-D flip ──────────────────────────────────────────────────────── */
+.fc-scene    { perspective: 1200px; width: 100%; cursor: pointer; }
+.fc-inner    { position: relative; width: 100%; transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(.4,0,.2,1); }
+.fc-inner.fc-flipped { transform: rotateY(180deg); }
+.fc-face     { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+.fc-back     { transform: rotateY(180deg); }
+
 /* ── Kahoot-style dark nav tab ───────────────────────────────────────────────── */
 .nav-tab {
   display: inline-flex; align-items: center; gap: 0.45rem;

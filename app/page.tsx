@@ -13,26 +13,27 @@ import {
 
 /* ── Nav configuration (Kahoot-style colored pills) ─────────────────────────── */
 const NAV_TABS = [
-  { label: "Jelajahi",    Icon: IconGlobe,   iconBg: "#22C55E", href: "/quizzes" },
-  { label: "Belajar Solo",Icon: IconBrain,   iconBg: "#F59E0B", href: "/solo"    },
-  { label: "Host Game",   Icon: IconPlay,    iconBg: "#2563EB", href: "/quizzes" },
-  { label: "Buat Kuis",   Icon: IconCode,    iconBg: "#EF4444", href: "/create"  },
+  { label: "Jelajahi",    Icon: IconGlobe,   iconBg: "#22C55E", href: "/quizzes"    },
+  { label: "Belajar Solo",Icon: IconBrain,   iconBg: "#F59E0B", href: "/solo"       },
+  { label: "Flashcards",  Icon: IconStar,    iconBg: "#8B5CF6", href: "/flashcards" },
+  { label: "Host Game",   Icon: IconPlay,    iconBg: "#2563EB", href: "/quizzes"    },
+  { label: "Buat Kuis",   Icon: IconCode,    iconBg: "#EF4444", href: "/create"     },
 ];
 
 /* ── Feature grid (12 features — Kahoot360-level) ───────────────────────────── */
 const FEATURES = [
   { Icon: IconZap,        title: "Multiplayer Real-Time",    desc: "Ratusan pemain, satu skor live. Skor diperbarui setiap detik tanpa refresh.",      color: "#2563EB", bg: "rgba(37,99,235,0.10)"   },
-  { Icon: IconBrain,      title: "Mode Belajar Solo",        desc: "Latihan mandiri kapan saja. Tanpa host, langsung jawab dan pelajari hasilnya.",     color: "#7C3AED", bg: "rgba(124,58,237,0.10)"  },
+  { Icon: IconBrain,      title: "Mode Belajar Solo",        desc: "Latihan mandiri kapan saja. Solo kompetitif, latihan santai, flashcards, atau Ghost Mode.", color: "#7C3AED", bg: "rgba(124,58,237,0.10)"  },
   { Icon: IconBarChart,   title: "5 Jenis Pertanyaan",       desc: "Pilihan ganda, benar/salah, pendapat, rating bintang, dan jawaban teks bebas.",     color: "#E21B3C", bg: "rgba(226,27,60,0.10)"   },
   { Icon: IconTrophy,     title: "Leaderboard Live",         desc: "Skor dan peringkat tampil langsung setelah setiap pertanyaan selesai.",             color: "#F59E0B", bg: "rgba(245,158,11,0.10)"  },
   { Icon: IconTarget,     title: "Tes IQ & Psikologi",       desc: "Uji kemampuan kognitif dan pola pikir dengan soal ilmiah berstandar tinggi.",       color: "#8B5CF6", bg: "rgba(139,92,246,0.10)"  },
   { Icon: IconLightbulb,  title: "Penjelasan Mendalam",      desc: "Setiap jawaban dilengkapi penjelasan ilmiah — belajar dari setiap pertanyaan.",     color: "#059669", bg: "rgba(5,150,105,0.10)"   },
-  { Icon: IconStar,       title: "Rating Bintang",           desc: "Ukur performamu dalam format bintang 1–3. Kejar skor sempurna di setiap kuis.",     color: "#EF4444", bg: "rgba(239,68,68,0.10)"   },
-  { Icon: IconCode,       title: "Buat Kuis Sendiri",        desc: "Desain kuis kustom dengan semua tipe soal dalam hitungan menit. Mudah & gratis.",   color: "#0891B2", bg: "rgba(8,145,178,0.10)"   },
+  { Icon: IconStar,       title: "Flashcards 3D",            desc: "Kartu belajar dengan animasi flip 3D. Tandai 'Sudah Tahu' dan ulang kartu yang sulit.", color: "#8B5CF6", bg: "rgba(139,92,246,0.10)"  },
+  { Icon: IconCode,       title: "Buat Kuis + AI Generator", desc: "Desain kuis kustom dengan semua tipe soal. AI Generator temukan soal relevan dari bank.", color: "#0891B2", bg: "rgba(8,145,178,0.10)" },
   { Icon: IconGlobe,      title: "200+ Soal Siap Pakai",     desc: "Konten dari 13 kategori: sains, sejarah, matematika, IQ, psikologi, dan lainnya.", color: "#16A34A", bg: "rgba(22,163,74,0.10)"   },
   { Icon: IconUsers,      title: "Bergabung Instan",         desc: "Tanpa akun, tanpa download. Masukkan PIN 6-digit dan langsung main dalam 5 detik.", color: "#EC4899", bg: "rgba(236,72,153,0.10)"  },
-  { Icon: IconClock,      title: "Timer & Skor Adaptif",     desc: "Jawab lebih cepat, skor lebih tinggi. Timer real-time untuk setiap pertanyaan.",   color: "#D97706", bg: "rgba(217,119,6,0.10)"   },
-  { Icon: IconGift,       title: "100% Gratis Selamanya",    desc: "Tanpa biaya berlangganan, tanpa iklan. Belajar bebas tanpa batasan waktu.",         color: "#22C55E", bg: "rgba(34,197,94,0.10)"   },
+  { Icon: IconTarget,     title: "Mode Latihan",             desc: "Belajar tanpa tekanan waktu. Lihat penjelasan langsung & kontrol sendiri tempo belajarmu.", color: "#D97706", bg: "rgba(217,119,6,0.10)" },
+  { Icon: IconGift,       title: "Ghost Mode",               desc: "Tantang skor terbaikmu sendiri. Skor sebelumnya tersimpan otomatis sebagai 'hantu' lawan.", color: "#22C55E", bg: "rgba(34,197,94,0.10)" },
 ];
 
 /* ── Categories ─────────────────────────────────────────────────────────────── */

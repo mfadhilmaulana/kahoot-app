@@ -89,10 +89,13 @@ function StarsResult({ pct }: { pct: number }) {
 }
 
 type Phase = "select" | "loading" | "playing" | "answered" | "reviewing" | "ended";
+type PlayMode = "solo" | "practice";
+interface GhostData { score: number; correctCount: number; date: string; }
 
 export default function SoloPage() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("select");
+  const [playMode, setPlayMode] = useState<PlayMode>("solo");
   const [quizList, setQuizList] = useState<QuizCard[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [quiz, setQuiz] = useState<SoloQuizMeta | null>(null);
@@ -102,6 +105,8 @@ export default function SoloPage() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [ghostData, setGhostData] = useState<GhostData | null>(null);
+  const [currentQuizId, setCurrentQuizId] = useState<string>("");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const reviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -129,8 +134,15 @@ export default function SoloPage() {
     }, 1000);
   }, []);
 
-  function selectQuiz(quizId: string) {
+  function selectQuiz(quizId: string, mode: PlayMode = playMode) {
     setPhase("loading");
+    setCurrentQuizId(quizId);
+    // Load ghost data from localStorage
+    try {
+      const raw = localStorage.getItem(`ghost:${quizId}`);
+      setGhostData(raw ? (JSON.parse(raw) as GhostData) : null);
+    } catch { setGhostData(null); }
+
     const socket = getSocket();
     function load() {
       socket.emit("quiz:getSoloData", { quizId }, (res: SoloQuizMeta & { error?: string }) => {
@@ -140,7 +152,8 @@ export default function SoloPage() {
         setAnswers([]);
         setPhase("playing");
         playStart();
-        startTimer(res.questions[0].timeLimit);
+        if (mode === "solo") startTimer(res.questions[0].timeLimit);
+        else setTimeLeft(res.questions[0].timeLimit); // practice: show time but don't auto-submit
       });
     }
     if (socket.connected) load();
@@ -152,15 +165,16 @@ export default function SoloPage() {
       const q = quiz.questions[qIndex];
       setChosen(null);
       setOpenText("");
-      startTimer(q.timeLimit);
+      if (playMode === "solo") startTimer(q.timeLimit);
+      else setTimeLeft(q.timeLimit);
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [qIndex, phase, quiz, startTimer]);
+  }, [qIndex, phase, quiz, startTimer, playMode]);
 
   useEffect(() => {
-    if (timeLeft === 0 && phase === "playing") {
+    if (timeLeft === 0 && phase === "playing" && playMode === "solo") {
       submitAnswer(null);
     }
   }, [timeLeft]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -172,7 +186,10 @@ export default function SoloPage() {
     const q = quiz.questions[qIndex];
     const isParticipation = q.correctIndex === -1;
     const isCorrect = optIdx !== null && (isParticipation || optIdx === q.correctIndex);
-    const earned = isParticipation ? 100 : isCorrect ? Math.round(1000 * Math.max(0, (timeLeft / q.timeLimit))) : 0;
+    // Practice mode: flat 100 pts (no time bonus), solo: time-based
+    const earned = isParticipation ? 100 : isCorrect
+      ? (playMode === "practice" ? 100 : Math.round(1000 * Math.max(0, (timeLeft / q.timeLimit))))
+      : 0;
 
     setChosen(optIdx);
     setAnswers((prev) => [...prev, { questionIndex: qIndex, chosen: optIdx, isCorrect, earned }]);
@@ -181,6 +198,9 @@ export default function SoloPage() {
     if (isParticipation) playPoll();
     else if (isCorrect) { playCorrect(); setShowConfetti(true); setTimeout(() => setShowConfetti(false), 2200); }
     else playWrong();
+
+    // Practice mode: don't auto-advance; user clicks Berikutnya manually
+    if (playMode === "practice") return;
 
     reviewTimerRef.current = setTimeout(() => {
       setPhase("reviewing");
@@ -194,6 +214,17 @@ export default function SoloPage() {
         }
       }, 3000);
     }, 500);
+  }
+
+  function practiceNext() {
+    if (!quiz) return;
+    if (qIndex + 1 >= quiz.questions.length) {
+      setPhase("ended");
+      playEnd();
+    } else {
+      setQIndex((i) => i + 1);
+      setPhase("playing");
+    }
   }
 
   function submitOpen(e: React.FormEvent) {
@@ -227,18 +258,41 @@ export default function SoloPage() {
         </div>
 
         <div style={{ maxWidth: 960, margin: "0 auto", padding: "2rem 1.25rem" }}>
-          {/* How solo works */}
-          <div className="card a-fadeup mb-6" style={{ padding: "1.25rem 1.5rem", background: "linear-gradient(135deg, rgba(37,99,235,0.06), rgba(245,158,11,0.06))", borderColor: "rgba(37,99,235,0.15)" }}>
-            <div className="row" style={{ gap: "1.5rem", flexWrap: "wrap" }}>
-              {[
-                { icon: <IconTarget size={20} color="#2563EB"/>, text: "Pilih quiz & langsung mulai" },
-                { icon: <IconClock size={20} color="#F59E0B"/>, text: "Timer per soal — jawab secepat mungkin" },
-                { icon: <IconCheckCircle size={20} color="#10B981"/>, text: "Lihat jawaban benar + penjelasan setelah menjawab" },
-                { icon: <IconStar size={20} color="#F59E0B"/>, text: "Dapat skor & rating bintang di akhir" },
-              ].map((item, i) => (
+          {/* Mode toggle */}
+          <div className="row a-fadeup mb-4" style={{ gap: "0.5rem", justifyContent: "center" }}>
+            <button
+              onClick={() => setPlayMode("solo")}
+              className={playMode === "solo" ? "btn btn-gradient" : "btn btn-surface"}
+              style={{ flex: "1 1 160px", maxWidth: 220, gap: "0.4rem" }}
+            >
+              <IconClock size={16} color={playMode === "solo" ? "#fff" : "var(--text-dim)"}/> Mode Solo
+            </button>
+            <button
+              onClick={() => setPlayMode("practice")}
+              className={playMode === "practice" ? "btn btn-gradient" : "btn btn-surface"}
+              style={{ flex: "1 1 160px", maxWidth: 220, gap: "0.4rem" }}
+            >
+              <IconTarget size={16} color={playMode === "practice" ? "#fff" : "var(--text-dim)"}/> Mode Latihan
+            </button>
+          </div>
+
+          {/* Mode description */}
+          <div className="card a-fadeup mb-5" style={{ padding: "1rem 1.25rem", background: playMode === "solo" ? "linear-gradient(135deg, rgba(37,99,235,0.06), rgba(245,158,11,0.06))" : "linear-gradient(135deg, rgba(16,185,129,0.06), rgba(37,99,235,0.06))", borderColor: playMode === "solo" ? "rgba(37,99,235,0.15)" : "rgba(16,185,129,0.15)" }}>
+            <div className="row" style={{ gap: "1.25rem", flexWrap: "wrap" }}>
+              {(playMode === "solo" ? [
+                { icon: <IconClock size={18} color="#F59E0B"/>, text: "Timer per soal — jawab secepat mungkin" },
+                { icon: <IconStar size={18} color="#F59E0B"/>, text: "Skor berbasis kecepatan jawaban" },
+                { icon: <IconCheckCircle size={18} color="#10B981"/>, text: "Lihat jawaban benar setelah menjawab" },
+                { icon: <IconTarget size={18} color="#2563EB"/>, text: "Skor tersimpan otomatis sebagai Ghost Mode" },
+              ] : [
+                { icon: <IconTarget size={18} color="#10B981"/>, text: "Tanpa tekanan waktu — fokus pada pemahaman" },
+                { icon: <IconCheckCircle size={18} color="#10B981"/>, text: "Lihat penjelasan langsung setelah menjawab" },
+                { icon: <IconStar size={18} color="#F59E0B"/>, text: "Skor flat 100 poin per jawaban benar" },
+                { icon: <IconClock size={18} color="#2563EB"/>, text: "Kontrol sendiri kapan lanjut ke soal berikutnya" },
+              ]).map((item, i) => (
                 <div key={i} className="row" style={{ gap: "0.5rem", flex: "1 1 180px" }}>
                   {item.icon}
-                  <span style={{ color: "var(--text-dim)", fontSize: "0.82rem" }}>{item.text}</span>
+                  <span style={{ color: "var(--text-dim)", fontSize: "0.8rem" }}>{item.text}</span>
                 </div>
               ))}
             </div>
@@ -252,7 +306,7 @@ export default function SoloPage() {
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))", gap: "0.875rem" }}>
               {quizList.map((q, i) => (
-                <button key={q.id} onClick={() => selectQuiz(q.id)}
+                <button key={q.id} onClick={() => selectQuiz(q.id, playMode)}
                   disabled={phase === "loading"}
                   className="card a-fadeup"
                   style={{
@@ -324,10 +378,18 @@ export default function SoloPage() {
           <div className="row" style={{ justifyContent: "space-between", marginBottom: "0.5rem" }}>
             <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 700 }}>
               {quiz.title} · {qIndex + 1}/{totalQuestions}
+              {playMode === "practice" && <span style={{ marginLeft: "0.35rem", color: "#10B981", fontSize: "0.68rem", fontWeight: 700 }}>✎ Latihan</span>}
             </span>
-            <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 700 }}>
-              {answers.reduce((s, a) => s + a.earned, 0).toLocaleString()} poin
-            </span>
+            <div className="row" style={{ gap: "0.75rem" }}>
+              {ghostData && (
+                <span style={{ color: "var(--text-muted)", fontSize: "0.72rem", fontWeight: 600 }}>
+                  👻 {ghostData.score.toLocaleString()}
+                </span>
+              )}
+              <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 700 }}>
+                {answers.reduce((s, a) => s + a.earned, 0).toLocaleString()} poin
+              </span>
+            </div>
           </div>
           <div style={{ height: 6, borderRadius: 3, background: "var(--surface-3)", overflow: "hidden" }}>
             <div style={{ height: "100%", borderRadius: 3, background: "var(--accent)", width: `${progress}%`, transition: "width 0.4s ease" }}/>
@@ -377,9 +439,9 @@ export default function SoloPage() {
           </div>
         )}
 
-        {/* ANSWERED (brief wait) */}
+        {/* ANSWERED */}
         {phase === "answered" && (
-          <div className="flex-1 center col a-popin" style={{ gap: "0.75rem" }}>
+          <div className="flex-1 center col a-popin px-4" style={{ gap: "0.875rem", paddingBottom: "1.25rem" }}>
             <div className="center" style={{
               width: 72, height: 72, borderRadius: "50%",
               background: isParticipation ? "var(--accent)" : isCorrect ? "#16A34A" : "#EF4444",
@@ -388,6 +450,29 @@ export default function SoloPage() {
                 {isParticipation ? "✓" : isCorrect ? "✓" : "✗"}
               </span>
             </div>
+            {lastAnswer?.earned > 0 && (
+              <div style={{ fontWeight: 900, fontSize: "1.4rem", color: "var(--accent)" }}>+{lastAnswer.earned}</div>
+            )}
+            {/* Practice mode: show answer + explanation immediately */}
+            {playMode === "practice" && (
+              <div className="col" style={{ gap: "0.5rem", width: "100%", maxWidth: 480 }}>
+                {!isCorrect && !isParticipation && currentQ.correctIndex >= 0 && (
+                  <div className="card" style={{ padding: "0.65rem 1rem", borderLeft: "3px solid #16A34A" }}>
+                    <p style={{ color: "var(--text-dim)", fontSize: "0.8rem" }}>
+                      Jawaban benar: <span style={{ fontWeight: 700, color: "#16A34A" }}>{currentQ.options[currentQ.correctIndex]}</span>
+                    </p>
+                  </div>
+                )}
+                {currentQ.explanation && (
+                  <div className="card" style={{ padding: "0.65rem 1rem", borderLeft: "3px solid var(--accent)" }}>
+                    <p style={{ color: "var(--text-dim)", fontSize: "0.8rem", lineHeight: 1.6 }}>{currentQ.explanation}</p>
+                  </div>
+                )}
+                <button onClick={practiceNext} className="btn btn-gradient btn-lg" style={{ marginTop: "0.25rem" }}>
+                  {qIndex + 1 >= totalQuestions ? "Lihat Hasil →" : "Berikutnya →"}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -454,11 +539,19 @@ export default function SoloPage() {
   // ── ENDED ────────────────────────────────────────────────────────────────────
   if (phase === "ended") {
     const totalEarned = answers.reduce((s, a) => s + a.earned, 0);
-    const correctCount = answers.filter((a) => a.isCorrect || quiz.questions[a.questionIndex]?.correctIndex === -1).length;
     const mcTfAnswers = answers.filter((_, i) => quiz.questions[i]?.correctIndex !== -1);
     const mcTfCorrect = mcTfAnswers.filter((a) => a.isCorrect).length;
     const pct = mcTfAnswers.length > 0 ? Math.round((mcTfCorrect / mcTfAnswers.length) * 100) : 100;
     const grade = pct >= 90 ? "Luar Biasa! 🎉" : pct >= 70 ? "Bagus! 👏" : pct >= 50 ? "Cukup Baik 👍" : "Terus Berlatih 💪";
+
+    // Save solo score as ghost (only in solo mode to keep ghost meaningful)
+    if (playMode === "solo" && currentQuizId) {
+      try {
+        const newGhost: GhostData = { score: totalEarned, correctCount: mcTfCorrect, date: new Date().toLocaleDateString("id-ID") };
+        localStorage.setItem(`ghost:${currentQuizId}`, JSON.stringify(newGhost));
+      } catch { /* ignore */ }
+    }
+    const ghostDiff = ghostData ? totalEarned - ghostData.score : null;
 
     return (
       <main className="min-h-screen col items-center px-4 py-8 safe-bottom" style={{ background: "linear-gradient(160deg, var(--bg), #FFF8E6)" }}>
@@ -493,6 +586,32 @@ export default function SoloPage() {
           </div>
         </div>
 
+        {/* Ghost comparison */}
+        {ghostData && ghostDiff !== null && (
+          <div className="card a-fadeup d-1" style={{
+            width: "100%", maxWidth: 480, marginBottom: "1rem",
+            padding: "0.875rem 1rem",
+            background: ghostDiff >= 0 ? "linear-gradient(135deg, rgba(16,185,129,0.08), rgba(37,99,235,0.06))" : "linear-gradient(135deg, rgba(239,68,68,0.06), rgba(245,158,11,0.06))",
+            borderColor: ghostDiff >= 0 ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.2)",
+          }}>
+            <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+              <div className="row" style={{ gap: "0.5rem" }}>
+                <span style={{ fontSize: "1.2rem" }}>👻</span>
+                <div>
+                  <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontWeight: 600 }}>Ghost — {ghostData.date}</p>
+                  <p style={{ fontSize: "0.85rem", color: "var(--text-dim)", fontWeight: 700 }}>{ghostData.score.toLocaleString()} poin</p>
+                </div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontWeight: 600 }}>Kamu sekarang</p>
+                <p style={{ fontSize: "1.1rem", fontWeight: 900, color: ghostDiff >= 0 ? "#16A34A" : "#EF4444" }}>
+                  {ghostDiff >= 0 ? "+" : ""}{ghostDiff.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Per-question breakdown */}
         <div className="col a-fadeup d-2 mb-6" style={{ gap: "0.4rem", width: "100%", maxWidth: 480 }}>
           <p className="t-label text-center mb-2">Ringkasan Jawaban</p>
@@ -517,7 +636,7 @@ export default function SoloPage() {
           <button onClick={() => { setPhase("select"); setQuiz(null); setAnswers([]); setQIndex(0); }} className="btn btn-gradient btn-lg">
             🔄 Coba Quiz Lain
           </button>
-          <button onClick={() => quiz && selectQuiz(quiz.id)} className="btn btn-surface btn-lg">
+          <button onClick={() => quiz && selectQuiz(quiz.id, playMode)} className="btn btn-surface btn-lg">
             🔁 Ulangi Quiz Ini
           </button>
           <button onClick={() => router.push("/")} className="btn btn-ghost btn-lg">← Beranda</button>
