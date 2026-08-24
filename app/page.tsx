@@ -17,6 +17,8 @@ const NAV_TABS = [
   { label: "Belajar Solo",Icon: IconBrain,   iconBg: "#F59E0B", href: "/solo"       },
   { label: "Flashcards",  Icon: IconStar,    iconBg: "#8B5CF6", href: "/flashcards" },
   { label: "Tes IQ",      Icon: IconTarget,  iconBg: "#4F46E5", href: "/iq"         },
+  { label: "Tugas & PR",  Icon: IconAward,   iconBg: "#7C3AED", href: "/assignments"},
+  { label: "Laporan",     Icon: IconBarChart,iconBg: "#0D9488", href: "/reports"    },
   { label: "Host Game",   Icon: IconPlay,    iconBg: "#2563EB", href: "/quizzes"    },
   { label: "Buat Kuis",   Icon: IconCode,    iconBg: "#EF4444", href: "/create"     },
 ];
@@ -25,16 +27,16 @@ const NAV_TABS = [
 const FEATURES = [
   { Icon: IconZap,        title: "Multiplayer Real-Time",    desc: "Ratusan pemain, satu skor live. Skor diperbarui setiap detik tanpa refresh.",      color: "#2563EB", bg: "rgba(37,99,235,0.10)"   },
   { Icon: IconBrain,      title: "Mode Belajar Solo",        desc: "Latihan mandiri kapan saja. Solo kompetitif, latihan santai, flashcards, atau Ghost Mode.", color: "#7C3AED", bg: "rgba(124,58,237,0.10)"  },
-  { Icon: IconBarChart,   title: "5 Jenis Pertanyaan",       desc: "Pilihan ganda, benar/salah, pendapat, rating bintang, dan jawaban teks bebas.",     color: "#E21B3C", bg: "rgba(226,27,60,0.10)"   },
+  { Icon: IconBarChart,   title: "7 Jenis Pertanyaan",       desc: "Pilihan ganda, benar/salah, urutkan, isian, pendapat, rating bintang, dan teks bebas.", color: "#E21B3C", bg: "rgba(226,27,60,0.10)"   },
   { Icon: IconTrophy,     title: "Leaderboard Live",         desc: "Skor dan peringkat tampil langsung setelah setiap pertanyaan selesai.",             color: "#F59E0B", bg: "rgba(245,158,11,0.10)"  },
   { Icon: IconTarget,     title: "Tes IQ Real",               desc: "Ukur IQ-mu lewat soal pola, logika & analogi. Dapat profil kognitif + estimasi persentil populasi.", color: "#4F46E5", bg: "rgba(79,70,237,0.10)"   },
   { Icon: IconLightbulb,  title: "Penjelasan Mendalam",      desc: "Setiap jawaban dilengkapi penjelasan ilmiah — belajar dari setiap pertanyaan.",     color: "#059669", bg: "rgba(5,150,105,0.10)"   },
   { Icon: IconStar,       title: "Flashcards 3D",            desc: "Kartu belajar dengan animasi flip 3D. Tandai 'Sudah Tahu' dan ulang kartu yang sulit.", color: "#8B5CF6", bg: "rgba(139,92,246,0.10)"  },
-  { Icon: IconCode,       title: "Buat Kuis + AI Generator", desc: "Desain kuis kustom dengan semua tipe soal. AI Generator temukan soal relevan dari bank.", color: "#0891B2", bg: "rgba(8,145,178,0.10)" },
-  { Icon: IconGlobe,      title: "200+ Soal Siap Pakai",     desc: "Konten dari 13 kategori: sains, sejarah, matematika, IQ, psikologi, dan lainnya.", color: "#16A34A", bg: "rgba(22,163,74,0.10)"   },
+  { Icon: IconCode,       title: "AI Generator + Gambar",    desc: "Generator soal bertenaga OpenCode Zen (gratis). Tambahkan URL gambar di setiap soal.", color: "#0891B2", bg: "rgba(8,145,178,0.10)" },
+  { Icon: IconGlobe,      title: "Tugas & PR Online",        desc: "Buat kuis jadi tugas dengan tenggat waktu. Siswa kerjakan mandiri, hasil + export CSV.", color: "#16A34A", bg: "rgba(22,163,74,0.10)"   },
   { Icon: IconUsers,      title: "Bergabung Instan",         desc: "Tanpa akun, tanpa download. Masukkan PIN 6-digit dan langsung main dalam 5 detik.", color: "#EC4899", bg: "rgba(236,72,153,0.10)"  },
-  { Icon: IconTarget,     title: "Mode Latihan",             desc: "Belajar tanpa tekanan waktu. Lihat penjelasan langsung & kontrol sendiri tempo belajarmu.", color: "#D97706", bg: "rgba(217,119,6,0.10)" },
-  { Icon: IconGift,       title: "Ghost Mode",               desc: "Tantang skor terbaikmu sendiri. Skor sebelumnya tersimpan otomatis sebagai 'hantu' lawan.", color: "#22C55E", bg: "rgba(34,197,94,0.10)" },
+  { Icon: IconBarChart,   title: "Laporan Permanen",         desc: "Hasil tiap game live tersimpan — analisis per pemain & per soal, export CSV.", color: "#0D9488", bg: "rgba(13,148,136,0.10)" },
+  { Icon: IconGift,       title: "Review Cerdas (SRS)",      desc: "Spaced repetition ala Leitner: soal yang sering salah muncul lebih dulu saat belajar.", color: "#22C55E", bg: "rgba(34,197,94,0.10)" },
 ];
 
 /* ── Categories ─────────────────────────────────────────────────────────────── */
@@ -282,7 +284,7 @@ export default function HomePage() {
       }}>
         <div style={{ maxWidth: 800, margin: "0 auto", display: "flex", justifyContent: "space-around", flexWrap: "wrap", gap: "1rem" }}>
           {[
-            { value: "200+", label: "Soal Edukatif", Icon: IconBrain },
+            { value: "150+", label: "Soal Edukatif", Icon: IconBrain },
             { value: "13",   label: "Kategori Kuis",  Icon: IconGlobe },
             { value: "5",    label: "Tipe Soal",       Icon: IconBarChart },
             { value: "∞",    label: "Pemain / Game",   Icon: IconUsers },
@@ -537,7 +539,7 @@ export default function HomePage() {
           </span>
         </div>
         <p style={{ color: "rgba(255,255,255,0.28)", fontSize: "0.72rem", lineHeight: 1.7 }}>
-          Gratis selamanya · Real-time multiplayer · Mode solo · 200+ soal · 13 kategori
+          Gratis selamanya · Real-time multiplayer · Tugas & laporan · 150+ soal · 13 kategori
         </p>
         <div style={{ marginTop: "0.75rem", display: "flex", justifyContent: "center", gap: "1.5rem", flexWrap: "wrap" }}>
           {[

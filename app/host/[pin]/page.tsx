@@ -310,6 +310,9 @@ export default function HostGamePage() {
     const isPoll = question.type === "poll";
     const isRating = question.type === "rating";
     const isOpen = question.type === "open";
+    const isBlank = question.type === "blank";
+    const isReorderQ = question.type === "reorder";
+    const isTextQ = isOpen || isBlank;
 
     return (
       <main className="min-h-screen col" style={{ background: "var(--bg)" }}>
@@ -328,6 +331,16 @@ export default function HostGamePage() {
             {isOpen && (
               <span className="badge" style={{ background: "rgba(245,158,11,0.12)", color: "#D97706", marginTop: "0.25rem", display: "inline-block" }}>
                 ✏️ Teks Bebas
+              </span>
+            )}
+            {isBlank && (
+              <span className="badge" style={{ background: "rgba(245,158,11,0.12)", color: "#D97706", marginTop: "0.25rem", display: "inline-block" }}>
+                📝 Isi Jawaban
+              </span>
+            )}
+            {isReorderQ && (
+              <span className="badge" style={{ background: "rgba(124,58,237,0.12)", color: "#7C3AED", marginTop: "0.25rem", display: "inline-block" }}>
+                🔢 Urutkan
               </span>
             )}
           </div>
@@ -349,12 +362,35 @@ export default function HostGamePage() {
           <div className="card center mb-4" style={{ width: "100%", maxWidth: 720, padding: "1.25rem 1.5rem", textAlign: "center" }}>
             <p className="t-h2" style={{ lineHeight: 1.35 }}>{question.question}</p>
           </div>
+          {question.image && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={question.image} alt="" style={{
+              maxWidth: 720, width: "100%", maxHeight: 240, objectFit: "contain",
+              borderRadius: 12, border: "1px solid var(--border)", marginBottom: "0.75rem", background: "#fff",
+            }} />
+          )}
 
-          {isOpen ? (
+          {isTextQ ? (
             <div className="card center" style={{ width: "100%", maxWidth: 720, padding: "2rem", textAlign: "center", background: "rgba(245,158,11,0.05)", borderColor: "rgba(245,158,11,0.25)" }}>
-              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>✏️</div>
+              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>{isBlank ? "📝" : "✏️"}</div>
               <p style={{ color: "var(--text-dim)", fontSize: "1rem" }}>Pemain mengetik jawaban mereka...</p>
               <p style={{ color: "var(--text-muted)", fontSize: "0.82rem", marginTop: "0.5rem" }}>{answerCount} dari {players.length} sudah menjawab</p>
+            </div>
+          ) : isReorderQ ? (
+            <div className="card" style={{ width: "100%", maxWidth: 720, padding: "1.5rem 1.75rem", background: "rgba(124,58,237,0.04)", borderColor: "rgba(124,58,237,0.25)" }}>
+              <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.8rem", fontWeight: 700, marginBottom: "0.6rem" }}>
+                Pemain menyusun item berikut ke urutan yang benar:
+              </p>
+              <div className="col" style={{ gap: "0.4rem" }}>
+                {question.options.map((item, i) => (
+                  <div key={i} style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10, padding: "0.5rem 0.8rem", fontSize: "0.9rem", fontWeight: 600, color: "var(--text)" }}>
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.78rem", marginTop: "0.7rem" }}>
+                {answerCount} dari {players.length} sudah menjawab
+              </p>
             </div>
           ) : isRating ? (
             <div className="card center" style={{ width: "100%", maxWidth: 720, padding: "2rem", textAlign: "center" }}>
@@ -404,6 +440,8 @@ export default function HostGamePage() {
     const isTF = results.type === "tf";
     const isRating = results.type === "rating";
     const isOpen = results.type === "open";
+    const isBlank = results.type === "blank";
+    const isReorderR = results.type === "reorder";
     const isParticipation = isPoll || isRating || isOpen;
     const maxCount = Math.max(...results.counts, 1);
     const mcColors = ["#E21B3C","#1368CE","#26890C","#D89E00"];
@@ -419,8 +457,58 @@ export default function HostGamePage() {
           <p className="t-h3" style={{ maxWidth: 640, margin: "0 auto", lineHeight: 1.35 }}>{results.question}</p>
         </div>
 
-        {/* Open type: show all responses */}
-        {isOpen && results.openAnswers && results.openAnswers.length > 0 ? (
+        {/* Reorder: correct order + accuracy */}
+        {isReorderR ? (
+          <div className="px-4 py-3" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
+            <div className="card center mb-3" style={{ padding: "0.9rem", textAlign: "center" }}>
+              <p style={{ fontSize: "1.9rem", fontWeight: 900, color: (results.correctRate ?? 0) >= 60 ? "#16A34A" : "#CA8A04", lineHeight: 1 }}>
+                {results.correctRate ?? 0}%
+              </p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.78rem", marginTop: "0.2rem" }}>pemain menyusun dengan benar</p>
+            </div>
+            {results.correctOrder && (
+              <div className="card" style={{ padding: "1rem 1.25rem" }}>
+                <p className="t-label mb-2">Urutan yang Benar</p>
+                <ol style={{ margin: 0, paddingLeft: "1.5rem" }}>
+                  {results.correctOrder.map((item, i) => (
+                    <li key={i} style={{ color: "var(--text)", fontWeight: 600, fontSize: "0.92rem", padding: "0.18rem 0" }}>{item}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
+          </div>
+        ) : isBlank && results.openAnswers && results.openAnswers.length > 0 ? (
+          /* Blank: accepted answers + responses */
+          <div className="px-4 py-3" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
+            {results.acceptedAnswers && (
+              <div className="card center mb-3" style={{ padding: "0.8rem 1rem", textAlign: "center", borderColor: "rgba(22,163,74,0.35)", background: "rgba(22,163,74,0.05)" }}>
+                <p className="t-label mb-1">Jawaban Diterima</p>
+                <p style={{ color: "#16A34A", fontWeight: 800, fontSize: "0.95rem" }}>{results.acceptedAnswers.join("  /  ")}</p>
+                {results.correctRate !== undefined && (
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.75rem", marginTop: "0.25rem" }}>{results.correctRate}% pemain benar</p>
+                )}
+              </div>
+            )}
+            <p className="t-label mb-2 text-center">{results.openAnswers.length} Jawaban Masuk</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "center" }}>
+              {results.openAnswers.map((ans, i) => {
+                const ok = results.acceptedAnswers?.some((a) => a.toLowerCase().trim() === ans.toLowerCase().trim());
+                return (
+                  <div key={i} className="a-popin" style={{
+                    animationDelay: `${i * 0.05}s`,
+                    background: ok ? "rgba(22,163,74,0.08)" : "var(--surface)",
+                    border: `1.5px solid ${ok ? "rgba(22,163,74,0.4)" : "var(--border-hi)"}`,
+                    borderRadius: 40, padding: "0.45rem 1rem",
+                    fontSize: "0.875rem", fontWeight: 600,
+                    color: ok ? "#16A34A" : "var(--text)",
+                  }}>
+                    {ok && "✓ "}{ans}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : isOpen && results.openAnswers && results.openAnswers.length > 0 ? (
           <div className="px-4 py-3" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
             <p className="t-label mb-2 text-center">{results.openAnswers.length} Jawaban Masuk</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "center" }}>

@@ -12,7 +12,7 @@ const DIFF_COLOR: Record<string, string> = {
 };
 const FILTERS = ["Semua", "Mudah", "Sedang", "Sulit"];
 const TYPE_LABEL: Record<string, string> = {
-  mc: "PG", tf: "B/S", poll: "Pendapat", rating: "Rating", open: "Teks",
+  mc: "PG", tf: "B/S", poll: "Pendapat", rating: "Rating", open: "Teks", reorder: "Urutkan", blank: "Isian",
 };
 
 export default function QuizzesPage() {
@@ -49,6 +49,15 @@ export default function QuizzesPage() {
       if (res.error) { setError(res.error); return; }
       if (res.pin) router.push(`/host/${res.pin}`);
     });
+  }
+
+  function handleCreateAssignment(quizId: string) {
+    setError("");
+    socketRef.current?.emit("assignment:create", { quizId, hours: 24 },
+      (res: { ok?: boolean; code?: string; error?: string }) => {
+        if (res.error || !res.code) { setError(res.error ?? "Gagal membuat tugas"); return; }
+        router.push(`/assignments?created=${res.code}`);
+      });
   }
 
   const visible = quizzes.filter((q) => {
@@ -164,10 +173,9 @@ export default function QuizzesPage() {
             {visible.map((quiz, i) => {
               const isCreating = creating === quiz.id;
               return (
-                <button
+                <div
                   key={quiz.id}
                   onClick={() => handleCreate(quiz.id)}
-                  disabled={!!creating}
                   className="a-fadeup"
                   style={{
                     animationDelay: `${i * 0.04}s`,
@@ -234,22 +242,36 @@ export default function QuizzesPage() {
                           ))}
                         </div>
                       </div>
-                      <div style={{
-                        display: "flex", alignItems: "center", gap: "0.3rem",
-                        background: isCreating ? "var(--surface-3)" : quiz.color,
-                        color: "#fff", borderRadius: 40,
-                        padding: "0.25rem 0.65rem", fontSize: "0.68rem", fontWeight: 800,
-                        opacity: creating && !isCreating ? 0.5 : 1,
-                        flexShrink: 0,
-                      }}>
-                        {isCreating
-                          ? <><div style={{ width: 8, height: 8, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", animation: "spinRing 0.7s linear infinite" }} /></>
-                          : <><IconPlay size={10} color="#fff" /> Host</>
-                        }
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexShrink: 0 }}>
+                        <div style={{
+                          display: "flex", alignItems: "center", gap: "0.3rem",
+                          background: isCreating ? "var(--surface-3)" : quiz.color,
+                          color: "#fff", borderRadius: 40,
+                          padding: "0.25rem 0.65rem", fontSize: "0.68rem", fontWeight: 800,
+                          opacity: creating && !isCreating ? 0.5 : 1,
+                        }}>
+                          {isCreating
+                            ? <><div style={{ width: 8, height: 8, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", animation: "spinRing 0.7s linear infinite" }} /></>
+                            : <><IconPlay size={10} color="#fff" /> Host</>
+                          }
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleCreateAssignment(quiz.id); }}
+                          title="Buat tugas (PR) dari kuis ini"
+                          style={{
+                            display: "flex", alignItems: "center", gap: "0.25rem",
+                            background: "var(--surface-2)", color: "var(--text-dim)",
+                            border: "1px solid var(--border-hi)", borderRadius: 40,
+                            padding: "0.25rem 0.6rem", fontSize: "0.66rem", fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          📋 Tugas
+                        </button>
                       </div>
                     </div>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>

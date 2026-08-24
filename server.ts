@@ -1,9 +1,16 @@
 import { createServer } from "http";
 import { parse } from "url";
+import { existsSync, readFileSync } from "fs";
+import { join } from "path";
 import next from "next";
 import { Server } from "socket.io";
 import { v4 as uuidv4 } from "uuid";
-import type { Quiz, Question, Player, LBEntry, QuestionType } from "./lib/types";
+import type { Quiz, Question, Player, LBEntry, QuestionType, Assignment, AssignmentResult, GameReport, ReportQuestionStat } from "./lib/types";
+import {
+  getCustomQuizzes, saveCustomQuiz,
+  saveAssignment, getAssignment, listAssignments, addAssignmentResult,
+  saveReport, getReport, listReports,
+} from "./lib/db";
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -12,15 +19,17 @@ const handle = app.getRequestHandler();
 // ─────────────────────────────────────────────────────────────────────────────
 // Game state
 // ─────────────────────────────────────────────────────────────────────────────
-interface Answer { playerId: string; optionIndex: number; timeMs: number; }
+interface Answer { playerId: string; optionIndex: number; timeMs: number; order?: number[]; }
 interface Game {
   pin: string; quiz: Quiz; hostSocketId: string;
   players: Map<string, Player>;
   state: "lobby" | "question" | "review" | "ended";
   currentQuestionIndex: number; questionStartTime: number;
   answers: Map<string, Answer>;
-  openAnswers: Map<string, string>; // playerId -> text for "open" type
+  openAnswers: Map<string, string>; // playerId -> text untuk tipe open & blank
   questionTimer: ReturnType<typeof setTimeout> | null;
+  currentShuffled?: string[];       // urutan tampil soal reorder
+  questionStats: ReportQuestionStat[];
 }
 
 const quizzes = new Map<string, Quiz>();
@@ -623,16 +632,41 @@ const geographyQuiz: Quiz = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Register all quizzes
+// Register all quizzes (+ muat kuis kustom yang tersimpan di db.json)
 // ─────────────────────────────────────────────────────────────────────────────
 [scienceQuiz, historyIdQuiz, mathQuiz, digitalQuiz, healthQuiz, envQuiz, generalQuiz, economicsQuiz, bahasaQuiz, sportsQuiz, iqQuiz, psychologyQuiz, geographyQuiz]
   .forEach((q) => quizzes.set(q.id, q));
+
+for (const [id, custom] of Object.entries(getCustomQuizzes())) {
+  quizzes.set(id, custom);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 function generatePin(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function shuffleArr<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function normText(s: string): string {
+  return s.toLowerCase().trim().replace(/\s+/g, " ").replace(/[.,!?;:]+$/, "");
+}
+
+function generateCode(): string {
+  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let c = "";
+  do {
+    c = Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+  } while (getAssignment(c));
+  return c;
 }
 
 function calcScore(type: QuestionType, timeMs: number, timeLimit: number): number {
@@ -645,6 +679,158 @@ function getLeaderboard(game: Game): LBEntry[] {
   return Array.from(game.players.values())
     .sort((a, b) => b.score - a.score)
     .map((p, i) => ({ rank: i + 1, name: p.name, score: p.score, lastScore: p.lastScore, id: p.id }));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI generator — OpenCode Zen (model gratis) → Ollama lokal → bank soal
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── 1) OpenCode Zen: https://opencode.ai/zen/v1 — model "-free" tanpa biaya.
+//     API key gratis: daftar di https://opencode.ai/auth lalu simpan key ke
+//     file data/opencode.key ATAU set env OPENCODE_API_KEY.
+const ZEN_URL = "https://opencode.ai/zen/v1";
+const ZEN_FREE_MODELS = [
+  "big-pickle", "x-preview-f-free", "mimo-v2.5-free", "hy3-free",
+  "nemotron-3-ultra-free", "deepseek-v4-flash-free",
+];
+let zenKeyCache: string | null | undefined;
+let zenModelCache: string | null | undefined;
+
+function getZenKey(): string | null {
+  if (zenKeyCache !== undefined) return zenKeyCache;
+  const env = process.env.OPENCODE_API_KEY?.trim();
+  if (env) { zenKeyCache = env; return zenKeyCache; }
+  try {
+    const p = join(process.cwd(), "data", "opencode.key");
+    if (existsSync(p)) {
+      const k = readFileSync(p, "utf8").trim();
+      if (k) { zenKeyCache = k; return zenKeyCache; }
+    }
+  } catch { /* abaikan */ }
+  zenKeyCache = null;
+  return null;
+}
+
+async function detectZenFreeModel(): Promise<string | null> {
+  if (zenModelCache !== undefined) return zenModelCache;
+  const key = getZenKey();
+  if (!key) { zenModelCache = null; return null; }
+  try {
+    const r = await fetch(`${ZEN_URL}/models`, {
+      headers: { authorization: `Bearer ${key}` },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = (await r.json()) as { data?: Array<{ id: string }> };
+    const ids = (j.data ?? []).map((m) => m.id);
+    zenModelCache = ZEN_FREE_MODELS.find((m) => ids.includes(m))
+      ?? ids.find((id) => id.endsWith("-free")) ?? null;
+    if (zenModelCache) console.log(`  🤖  OpenCode Zen aktif, model gratis: ${zenModelCache}`);
+  } catch (e) {
+    console.error("[ai] OpenCode Zen tidak tersedia:", e);
+    zenModelCache = null;
+  }
+  return zenModelCache;
+}
+
+function extractJsonBlock(text: string): unknown | null {
+  const cleaned = text.replace(/```json|```/g, "").trim();
+  try { return JSON.parse(cleaned); } catch { /* lanjut */ }
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start >= 0 && end > start) {
+    try { return JSON.parse(cleaned.slice(start, end + 1)); } catch { /* gagal */ }
+  }
+  return null;
+}
+
+interface AiDraft { question: string; options: string[]; correctIndex: number; explanation?: string }
+
+const QUESTION_PROMPT = (topic: string, count: number) => [
+  `Buat ${count} soal kuis pilihan ganda berbahasa Indonesia tentang topik: "${topic}".`,
+  'Balas HANYA dengan JSON valid berbentuk {"questions":[...]}.',
+  'Setiap soal berbentuk: {"question":"teks soal","options":["A","B","C","D"],"correctIndex":0,"explanation":"penjelasan singkat"}',
+  "correctIndex adalah indeks opsi yang benar (0-3). Variasikan tingkat kesulitan. Jangan mengulang soal yang mirip.",
+].join("\n");
+
+function draftsFromContent(content: string | undefined): AiDraft[] | null {
+  if (!content) return null;
+  const parsed = extractJsonBlock(content) as { questions?: AiDraft[] } | null;
+  if (!parsed?.questions) return null;
+  const drafts = parsed.questions.filter(
+    (d) => d.question && Array.isArray(d.options) && d.options.length >= 2 &&
+           Number.isInteger(d.correctIndex) && d.correctIndex >= 0 && d.correctIndex < d.options.length
+  );
+  return drafts.length ? drafts : null;
+}
+
+async function zenGenerateQuestions(topic: string, count: number): Promise<{ drafts: AiDraft[]; model: string } | null> {
+  const model = await detectZenFreeModel();
+  if (!model) return null;
+  const key = getZenKey()!;
+  try {
+    const res = await fetch(`${ZEN_URL}/chat/completions`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content: QUESTION_PROMPT(topic, count) }],
+        temperature: 0.7,
+      }),
+      signal: AbortSignal.timeout(180_000),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const drafts = draftsFromContent(data.choices?.[0]?.message?.content);
+    return drafts ? { drafts: drafts.slice(0, count), model } : null;
+  } catch (e) {
+    console.error("[ai] pemanggilan OpenCode Zen gagal:", e);
+    return null;
+  }
+}
+
+// ── 2) Ollama lokal (fallback jika Zen tidak dikonfigurasi)
+const OLLAMA_URL = "http://127.0.0.1:11434";
+let ollamaModelCache: string | null | undefined; // undefined = belum pernah dicek
+
+async function detectOllamaModel(): Promise<string | null> {
+  if (ollamaModelCache !== undefined) return ollamaModelCache;
+  try {
+    const r = await fetch(`${OLLAMA_URL}/api/tags`, { signal: AbortSignal.timeout(2500) });
+    const j = (await r.json()) as { models?: Array<{ name: string }> };
+    const names = (j.models ?? []).map((m) => m.name);
+    const prefer = ["llama3.2", "llama3", "qwen2.5", "qwen", "mistral", "gemma", "phi"];
+    ollamaModelCache = prefer.find((p) => names.some((n) => n.startsWith(p))) ?? names[0] ?? null;
+    if (ollamaModelCache) console.log(`  🤖  Ollama terdeteksi, model: ${ollamaModelCache}`);
+  } catch {
+    ollamaModelCache = null;
+  }
+  return ollamaModelCache;
+}
+
+async function ollamaGenerateQuestions(topic: string, count: number): Promise<{ drafts: AiDraft[]; model: string } | null> {
+  const model = await detectOllamaModel();
+  if (!model) return null;
+  try {
+    const res = await fetch(`${OLLAMA_URL}/api/chat`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content: QUESTION_PROMPT(topic, count) }],
+        stream: false,
+        format: "json",
+        options: { temperature: 0.7 },
+      }),
+      signal: AbortSignal.timeout(180_000),
+    });
+    const data = (await res.json()) as { message?: { content?: string } };
+    const drafts = draftsFromContent(data.message?.content);
+    return drafts ? { drafts: drafts.slice(0, count), model } : null;
+  } catch (e) {
+    console.error("[ai] pemanggilan Ollama gagal:", e);
+    return null;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -670,14 +856,46 @@ app.prepare().then(() => {
           id: q.id, type: q.type, question: q.question, options: q.options,
           correctIndex: q.correctIndex, timeLimit: q.timeLimit,
           category: q.category, explanation: q.explanation,
+          image: q.image, items: q.items, answers: q.answers,
         })),
       });
     });
 
-    // AI: generate questions from topic keyword search
-    socket.on("quiz:generateFromTopic", ({ topic, count = 10 }: { topic: string; count?: number }, cb: (r: object) => void) => {
+    // AI: generate questions — OpenCode Zen (gratis) → Ollama lokal → bank soal
+    socket.on("quiz:generateFromTopic", async ({ topic, count = 10 }: { topic: string; count?: number }, cb: (r: object) => void) => {
       if (!topic?.trim()) return cb({ error: "Topik tidak boleh kosong" });
-      const kw = topic.toLowerCase().trim().split(/\s+/);
+      const cleanTopic = topic.trim();
+
+      // 1) OpenCode Zen — model gratis
+      const zen = await zenGenerateQuestions(cleanTopic, count).catch(() => null);
+      if (zen?.drafts.length) {
+        return cb({
+          engine: `zen:${zen.model}`,
+          questions: zen.drafts.map((d) => ({
+            id: uuidv4(), type: "mc" as QuestionType,
+            question: d.question, options: d.options, correctIndex: d.correctIndex,
+            timeLimit: 20, category: "AI", explanation: d.explanation ?? "",
+            sourceQuiz: `OpenCode Zen (${zen.model})`,
+          })),
+        });
+      }
+
+      // 2) Ollama lokal
+      const ai = await ollamaGenerateQuestions(cleanTopic, count).catch(() => null);
+      if (ai?.drafts.length) {
+        return cb({
+          engine: `ollama:${ai.model}`,
+          questions: ai.drafts.map((d) => ({
+            id: uuidv4(), type: "mc" as QuestionType,
+            question: d.question, options: d.options, correctIndex: d.correctIndex,
+            timeLimit: 20, category: "AI", explanation: d.explanation ?? "",
+            sourceQuiz: `AI (${ai.model})`,
+          })),
+        });
+      }
+
+      // 3) Fallback: pencarian kata kunci di bank soal internal
+      const kw = cleanTopic.toLowerCase().split(/\s+/);
       const scored: Array<{ q: Question; score: number; quizTitle: string }> = [];
       for (const quiz of quizzes.values()) {
         for (const q of quiz.questions) {
@@ -693,8 +911,9 @@ app.prepare().then(() => {
       }
       scored.sort((a, b) => b.score - a.score);
       const top = scored.slice(0, count);
-      if (top.length === 0) return cb({ error: "Tidak ada soal yang cocok dengan topik ini. Coba kata kunci lain." });
+      if (top.length === 0) return cb({ error: "Tidak ada yang cocok. (AI belum aktif — simpan API key gratis OpenCode Zen di data/opencode.key untuk generator sungguhan.) Coba kata kunci lain." });
       cb({
+        engine: "bank",
         questions: top.map(({ q, quizTitle }) => ({
           id: q.id, type: q.type, question: q.question, options: q.options,
           correctIndex: q.correctIndex, timeLimit: q.timeLimit,
@@ -705,6 +924,7 @@ app.prepare().then(() => {
 
     // list quizzes
     socket.on("quizzes:list", (_data: unknown, cb: (list: object[]) => void) => {
+      const customs = getCustomQuizzes();
       const list = Array.from(quizzes.values()).map((q) => ({
         id: q.id, title: q.title, description: q.description,
         category: q.category, icon: q.icon, color: q.color,
@@ -712,6 +932,7 @@ app.prepare().then(() => {
         questionCount: q.questions.length,
         estimatedMins: Math.ceil(q.questions.reduce((s, x) => s + x.timeLimit, 0) / 60) + Math.ceil(q.questions.length * 0.5),
         types: [...new Set(q.questions.map((x) => x.type))],
+        source: customs[q.id] ? ("custom" as const) : ("builtin" as const),
       }));
       cb(list);
     });
@@ -737,6 +958,7 @@ app.prepare().then(() => {
           questions: questions.map((q) => ({ ...q, id: uuidv4(), category: q.category ?? "Kustom", explanation: q.explanation ?? "" })),
         };
         quizzes.set(quiz.id, quiz);
+        saveCustomQuiz(quiz);
         const pin = makeGame(quiz, socket.id);
         socket.join(`game:${pin}`);
         socket.data.pin = pin; socket.data.isHost = true;
@@ -755,7 +977,7 @@ app.prepare().then(() => {
         if ([...game.players.values()].some((p) => p.name === cleanName))
                                        return cb({ error: "Nama sudah dipakai. Pilih nama lain." });
 
-        const player: Player = { id: socket.id, name: cleanName, score: 0, streak: 0, lastScore: 0 };
+        const player: Player = { id: socket.id, name: cleanName, score: 0, streak: 0, lastScore: 0, correctCount: 0 };
         game.players.set(socket.id, player);
         socket.join(`game:${pin}`);
         socket.data.pin = pin; socket.data.isPlayer = true;
@@ -791,17 +1013,24 @@ app.prepare().then(() => {
       else startNextQuestion(game, io, pin);
     });
 
-    // player: answer (mc, tf, poll, rating)
+    // player: answer (mc, tf, poll, rating, reorder)
     socket.on("player:answer",
-      ({ pin, optionIndex }: { pin: string; optionIndex: number }, cb: (r: object) => void) => {
+      ({ pin, optionIndex, order }: { pin: string; optionIndex: number; order?: number[] }, cb: (r: object) => void) => {
         const game = games.get(pin);
         if (!game || game.state !== "question") return cb({ error: "Bukan waktunya menjawab." });
         if (game.answers.has(socket.id))        return cb({ error: "Sudah menjawab." });
         const q = game.quiz.questions[game.currentQuestionIndex];
-        if (q.type === "open") return cb({ error: "Gunakan jawaban teks untuk soal ini." });
-        if (optionIndex < 0 || optionIndex >= q.options.length) return cb({ error: "Pilihan tidak valid." });
+        if (q.type === "open" || q.type === "blank") return cb({ error: "Gunakan jawaban teks untuk soal ini." });
 
-        game.answers.set(socket.id, { playerId: socket.id, optionIndex, timeMs: Date.now() - game.questionStartTime });
+        if (q.type === "reorder") {
+          if (!Array.isArray(order) || order.length !== (q.items?.length ?? 0)) return cb({ error: "Urutan tidak lengkap." });
+          if (new Set(order).size !== order.length || order.some((i) => !Number.isInteger(i) || i < 0 || i >= order.length))
+            return cb({ error: "Urutan tidak valid." });
+          game.answers.set(socket.id, { playerId: socket.id, optionIndex: -3, timeMs: Date.now() - game.questionStartTime, order });
+        } else {
+          if (optionIndex < 0 || optionIndex >= q.options.length) return cb({ error: "Pilihan tidak valid." });
+          game.answers.set(socket.id, { playerId: socket.id, optionIndex, timeMs: Date.now() - game.questionStartTime });
+        }
         cb({ ok: true });
         io.to(game.hostSocketId).emit("game:answerCount", { answered: game.answers.size, total: game.players.size });
 
@@ -809,14 +1038,14 @@ app.prepare().then(() => {
       }
     );
 
-    // player: open text answer
+    // player: open text answer (tipe open & blank)
     socket.on("player:openAnswer",
       ({ pin, text }: { pin: string; text: string }, cb: (r: object) => void) => {
         const game = games.get(pin);
         if (!game || game.state !== "question") return cb({ error: "Bukan waktunya menjawab." });
         if (game.answers.has(socket.id))        return cb({ error: "Sudah menjawab." });
         const q = game.quiz.questions[game.currentQuestionIndex];
-        if (q.type !== "open") return cb({ error: "Soal ini bukan soal teks." });
+        if (q.type !== "open" && q.type !== "blank") return cb({ error: "Soal ini bukan soal teks." });
         const cleanText = text?.trim().slice(0, 150);
         if (!cleanText) return cb({ error: "Jawaban tidak boleh kosong." });
 
@@ -828,6 +1057,113 @@ app.prepare().then(() => {
         if (game.answers.size >= game.players.size) { clearTimer(game); revealResults(game, io, pin); }
       }
     );
+
+    // ── Tugas / Homework asinkron ─────────────────────────────────────────────
+    socket.on("assignment:create",
+      ({ quizId, hours }: { quizId: string; hours?: number }, cb: (r: object) => void) => {
+        const quiz = quizzes.get(quizId);
+        if (!quiz) return cb({ error: "Kuis tidak ditemukan" });
+        const h = Math.max(1, Math.min(hours ?? 24, 24 * 30));
+        const a: Assignment = {
+          id: uuidv4(), code: generateCode(), title: quiz.title,
+          createdAt: Date.now(), deadlineMs: Date.now() + h * 3600_000,
+          questions: quiz.questions.map((q) => ({
+            id: q.id, type: q.type, question: q.question, options: q.options,
+            timeLimit: q.timeLimit, image: q.image,
+            itemsShuffled: q.type === "reorder" ? shuffleArr([...(q.items ?? [])]) : undefined,
+            correctIndex: q.correctIndex, items: q.items, answers: q.answers,
+          })),
+          results: [],
+        };
+        saveAssignment(a);
+        cb({ ok: true, code: a.code, deadlineMs: a.deadlineMs, title: a.title });
+      }
+    );
+
+    socket.on("assignment:list", (_data: unknown, cb: (r: object[]) => void) => {
+      cb(listAssignments().map((a) => ({
+        id: a.id, code: a.code, title: a.title, createdAt: a.createdAt,
+        deadlineMs: a.deadlineMs, resultCount: a.results.length, questionCount: a.questions.length,
+      })));
+    });
+
+    // Siswa ambil detail tugas (tanpa kunci jawaban)
+    socket.on("assignment:get", ({ code }: { code: string }, cb: (r: object) => void) => {
+      const a = getAssignment(code);
+      if (!a) return cb({ error: "Tugas tidak ditemukan. Cek kode tugasnya." });
+      cb({
+        ok: true, code: a.code, title: a.title, expired: Date.now() > a.deadlineMs,
+        deadlineMs: a.deadlineMs,
+        questions: a.questions.map(({ id, type, question, options, timeLimit, image, itemsShuffled }) =>
+          ({ id, type, question, options, timeLimit, image, itemsShuffled })),
+      });
+    });
+
+    interface SubmitResponse { choice?: number | null; text?: string | null; order?: string[] | null }
+
+    socket.on("assignment:submit",
+      ({ code, name, responses, durationSec }: { code: string; name: string; responses: SubmitResponse[]; durationSec?: number }, cb: (r: object) => void) => {
+        const a = getAssignment(code);
+        if (!a) return cb({ error: "Tugas tidak ditemukan." });
+        if (Date.now() > a.deadlineMs) return cb({ error: "Tugas sudah melewati tenggat waktu." });
+        const cleanName = name?.trim().slice(0, 30);
+        if (!cleanName) return cb({ error: "Nama tidak boleh kosong." });
+        if (!Array.isArray(responses)) return cb({ error: "Jawaban tidak valid." });
+
+        let score = 0;
+        let correctCount = 0;
+        let total = 0;
+        a.questions.forEach((q, i) => {
+          const resp = responses[i];
+          const isScored = q.type === "mc" || q.type === "tf" || q.type === "blank" || q.type === "reorder";
+          if (!isScored) { score += 100; return; } // partisipasi
+          total++;
+          let correct = false;
+          if (q.type === "blank" && typeof resp?.text === "string") {
+            correct = (q.answers ?? []).some((ans) => normText(ans) === normText(resp.text as string));
+          } else if (q.type === "reorder" && Array.isArray(resp?.order)) {
+            const orig = q.items ?? [];
+            correct = orig.length > 0 && resp!.order!.length === orig.length &&
+              resp!.order!.every((s, k) => s === orig[k]);
+          } else if ((q.type === "mc" || q.type === "tf") && typeof resp?.choice === "number") {
+            correct = resp.choice === q.correctIndex;
+          }
+          if (correct) { correctCount++; score += q.type === "tf" ? 800 : 1000; }
+        });
+
+        // timpa hasil sebelumnya dengan nama yang sama
+        a.results = a.results.filter((r) => normText(r.name) !== normText(cleanName));
+        const result: AssignmentResult = {
+          name: cleanName, score, correctCount,
+          total: Math.max(total, 1),
+          durationSec: Math.max(0, Math.round(durationSec ?? 0)),
+          finishedAt: Date.now(),
+        };
+        addAssignmentResult(code, result);
+
+        const sorted = [...getAssignment(code)!.results].sort((x, y) => y.score - x.score);
+        const rank = sorted.findIndex((r) => r.name === cleanName) + 1;
+        cb({ ok: true, score, correctCount, total, rank });
+      }
+    );
+
+    socket.on("assignment:results", ({ code }: { code: string }, cb: (r: object) => void) => {
+      const a = getAssignment(code);
+      if (!a) return cb({ error: "Tugas tidak ditemukan." });
+      cb({
+        ok: true, code: a.code, title: a.title, createdAt: a.createdAt,
+        deadlineMs: a.deadlineMs, results: [...a.results].sort((x, y) => y.score - x.score),
+      });
+    });
+
+    // ── Laporan game live ─────────────────────────────────────────────────────
+    socket.on("report:get", ({ pin }: { pin: string }, cb: (r: object) => void) => {
+      const rep = getReport(pin);
+      if (!rep) return cb({ error: "Laporan tidak ditemukan. Pastikan kode PIN-nya benar." });
+      cb(rep);
+    });
+
+    socket.on("report:list", (_data: unknown, cb: (r: object[]) => void) => cb(listReports()));
 
     // disconnect
     socket.on("disconnect", () => {
@@ -859,7 +1195,7 @@ app.prepare().then(() => {
       players: new Map(), state: "lobby",
       currentQuestionIndex: -1, questionStartTime: 0,
       answers: new Map(), openAnswers: new Map(),
-      questionTimer: null,
+      questionTimer: null, questionStats: [],
     });
     return pin;
   }
@@ -879,12 +1215,15 @@ app.prepare().then(() => {
     game.openAnswers = new Map();
     game.questionStartTime = Date.now();
     const q = game.quiz.questions[game.currentQuestionIndex];
+    game.currentShuffled = q.type === "reorder" ? shuffleArr([...(q.items ?? [])]) : undefined;
     const isLast = game.currentQuestionIndex === game.quiz.questions.length - 1;
 
     io.to(`game:${pin}`).emit("game:question", {
       index: game.currentQuestionIndex, total: game.quiz.questions.length,
-      type: q.type, question: q.question, options: q.options,
+      type: q.type, question: q.question, options:
+        q.type === "reorder" && game.currentShuffled ? game.currentShuffled : q.options,
       timeLimit: q.timeLimit, category: q.category, isLast,
+      image: q.image, shuffledItems: game.currentShuffled,
     });
 
     game.questionTimer = setTimeout(() => { game.questionTimer = null; revealResults(game, io, pin); }, q.timeLimit * 1000);
@@ -903,9 +1242,19 @@ app.prepare().then(() => {
       if (ans.optionIndex >= 0 && ans.optionIndex < counts.length) {
         counts[ans.optionIndex]++;
       }
-      // All non-mc/tf types use correctIndex -1 → everyone is correct
-      // Open type uses sentinel optionIndex -2 → also correct
-      const isCorrect = q.correctIndex === -1 || ans.optionIndex === q.correctIndex || ans.optionIndex === -2;
+      let isCorrect: boolean;
+      if (q.type === "reorder") {
+        const sh = game.currentShuffled ?? [];
+        isCorrect = Array.isArray(ans.order) && ans.order.length === (q.items?.length ?? 0) &&
+          q.items!.every((item, k) => sh[ans.order![k]] === item);
+      } else if (q.type === "blank") {
+        const t = game.openAnswers.get(pid);
+        isCorrect = !!t && (q.answers ?? []).some((acc) => normText(acc) === normText(t));
+      } else {
+        // All non-mc/tf types use correctIndex -1 → everyone is correct
+        // Open/blank text uses sentinel optionIndex -2 → also correct
+        isCorrect = q.correctIndex === -1 || ans.optionIndex === q.correctIndex || ans.optionIndex === -2;
+      }
       if (isCorrect) correct.push(pid);
       else wrong.push(pid);
     });
@@ -915,12 +1264,18 @@ app.prepare().then(() => {
       const p = game.players.get(pid); const a = game.answers.get(pid);
       if (!p || !a) return;
       p.streak++;
-      const streakBonus = (q.type === "mc" || q.type === "tf") ? Math.min(p.streak - 1, 5) * 50 : 0;
+      p.correctCount++;
+      const streakBonus = (q.type === "mc" || q.type === "tf" || q.type === "blank") ? Math.min(p.streak - 1, 5) * 50 : 0;
       const earned = calcScore(q.type, a.timeMs, q.timeLimit) + streakBonus;
       p.lastScore = earned; p.score += earned;
     });
     wrong.forEach((pid) => { const p = game.players.get(pid); if (p) { p.streak = 0; p.lastScore = 0; } });
     game.players.forEach((p) => { if (!game.answers.has(p.id)) { p.streak = 0; p.lastScore = 0; } });
+
+    // kirim hasil personal (akurat untuk blank & reorder)
+    game.answers.forEach((_ans, pid) => {
+      io.to(pid).emit("game:myResult", { correct: correct.includes(pid), earned: game.players.get(pid)?.lastScore ?? 0 });
+    });
 
     // Calculate rating average
     let ratingAvg: number | undefined;
@@ -930,20 +1285,44 @@ app.prepare().then(() => {
       ratingAvg = total > 0 ? Math.round((sum / total) * 10) / 10 : 0;
     }
 
-    // Collect open answers
-    const openAnswers = q.type === "open" ? Array.from(game.openAnswers.values()) : undefined;
+    // Collect free-text answers (open & blank)
+    const openAnswers = (q.type === "open" || q.type === "blank")
+      ? Array.from(game.openAnswers.values()) : undefined;
+
+    // Statistik soal untuk laporan akhir
+    const answerableTotal = correct.length + wrong.length;
+    game.questionStats.push({
+      index: game.currentQuestionIndex, text: q.question, type: q.type,
+      answered: game.answers.size, correctCount: correct.length,
+      correctPct: answerableTotal > 0 ? Math.round((correct.length / answerableTotal) * 100) : 0,
+    });
 
     const isLast = game.currentQuestionIndex === game.quiz.questions.length - 1;
     io.to(`game:${pin}`).emit("game:questionResults", {
       correctIndex: q.correctIndex, counts, leaderboard: getLeaderboard(game),
-      isLast, type: q.type, question: q.question, options: q.options,
-      explanation: q.explanation, openAnswers, ratingAvg,
+      isLast, type: q.type,
+      question: q.question,
+      options: q.type === "reorder" ? (game.currentShuffled ?? q.options) : q.options,
+      explanation: q.explanation, image: q.image, openAnswers, ratingAvg,
+      correctOrder: q.type === "reorder" ? q.items : undefined,
+      acceptedAnswers: q.type === "blank" ? q.answers : undefined,
+      correctRate: answerableTotal > 0 ? Math.round((correct.length / answerableTotal) * 100) : undefined,
     });
   }
 
   function endGame(game: Game, io: Server, pin: string) {
     game.state = "ended";
-    io.to(`game:${pin}`).emit("game:ended", { leaderboard: getLeaderboard(game) });
+    const lb = getLeaderboard(game);
+    // Simpan laporan permanen (bertahan setelah restart)
+    saveReport({
+      pin, quizId: game.quiz.id, title: game.quiz.title,
+      endedAt: Date.now(), playerCount: lb.length,
+      players: [...game.players.values()]
+        .sort((a, b) => b.score - a.score)
+        .map((p, i) => ({ rank: i + 1, name: p.name, score: p.score, correctCount: p.correctCount })),
+      questions: game.questionStats,
+    });
+    io.to(`game:${pin}`).emit("game:ended", { leaderboard: lb });
     setTimeout(() => games.delete(pin), 5 * 60 * 1000);
   }
 

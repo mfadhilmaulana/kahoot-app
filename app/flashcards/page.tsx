@@ -13,7 +13,15 @@ interface QuizCard {
   category: string; difficulty: string; questionCount: number;
 }
 interface Flashcard {
-  question: string; answer: string; explanation: string; allOptions?: string[];
+  question: string; answer: string; explanation: string; allOptions?: string[]; image?: string;
+}
+interface SoloDataResponse {
+  error?: string;
+  title: string;
+  questions: Array<{
+    type: string; question: string; options: string[];
+    correctIndex: number; explanation?: string; image?: string;
+  }>;
 }
 
 type Phase = "select" | "loading" | "studying" | "reviewing" | "done";
@@ -45,15 +53,16 @@ export default function FlashcardsPage() {
     setPhase("loading");
     const socket = getSocket();
     function load() {
-      socket.emit("quiz:getSoloData", { quizId: quiz.id }, (res: any) => {
+      socket.emit("quiz:getSoloData", { quizId: quiz.id }, (res: SoloDataResponse) => {
         if (res.error) { setPhase("select"); return; }
-        const fc: Flashcard[] = (res.questions as any[])
+        const fc: Flashcard[] = res.questions
           .filter((q) => q.type === "mc" || q.type === "tf")
           .map((q) => ({
             question: q.question,
             answer: q.options[q.correctIndex] ?? "—",
             explanation: q.explanation ?? "",
             allOptions: q.type === "mc" ? q.options : undefined,
+            image: q.image ?? undefined,
           }));
         setCards(fc);
         setQuizTitle(res.title);
@@ -237,6 +246,13 @@ export default function FlashcardsPage() {
               <div className="fc-face" style={{ background: "var(--surface)", border: "1.5px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)" }}>
                 <p style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.1em", color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "1rem" }}>PERTANYAAN</p>
                 <p style={{ color: "var(--text)", fontSize: "clamp(1rem,3vw,1.25rem)", fontWeight: 700, textAlign: "center", lineHeight: 1.45 }}>{card.question}</p>
+                {card.image && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={card.image} alt="" style={{
+                    display: "block", maxWidth: "100%", maxHeight: 150, objectFit: "contain",
+                    borderRadius: 10, border: "1px solid var(--border)", margin: "0.6rem auto 0", background: "#fff",
+                  }} />
+                )}
                 {card.allOptions && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", justifyContent: "center", marginTop: "0.875rem" }}>
                     {card.allOptions.map((o, i) => (

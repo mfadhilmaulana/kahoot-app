@@ -5,11 +5,14 @@ import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socket";
 import type { QuestionType } from "@/lib/types";
 import { playCorrect, playWrong, playPoll, playStart, playEnd, playTick } from "@/lib/sounds";
+import { speak } from "@/lib/tts";
+import { recordAnswer, smartOrder } from "@/lib/srs";
 import { SiKuisLogoMark, IconTarget, IconClock, IconStar, IconCheckCircle, QuizIconByID } from "@/components/icons";
 
 interface SoloQuestion {
   id: string; type: QuestionType; question: string; options: string[];
   correctIndex: number; timeLimit: number; category: string; explanation: string;
+  image?: string; items?: string[]; answers?: string[];
 }
 interface SoloQuizMeta {
   id: string; title: string; icon: string; color: string;
@@ -30,18 +33,19 @@ function Confetti({ count = 28 }: { count?: number }) {
   return (
     <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 999, overflow: "hidden" }}>
       {Array.from({ length: count }).map((_, i) => {
-        const x = 10 + Math.random() * 80;
-        const delay = Math.random() * 0.6;
-        const dur = 1.2 + Math.random() * 1.2;
-        const size = 6 + Math.random() * 10;
+        const x = 10 + ((i * 137) % 80);
+        const delay = ((i * 61) % 60) / 100;
+        const dur = 1.2 + ((i * 29) % 120) / 100;
+        const size = 6 + (i % 5) * 2;
         const color = colors[i % colors.length];
+        const round = (i * 7) % 2 === 0;
         return (
           <div key={i} style={{
             position: "absolute",
             left: `${x}%`,
             top: `-${size}px`,
             width: size, height: size * 1.6,
-            borderRadius: Math.random() > 0.5 ? "50%" : 4,
+            borderRadius: round ? "50%" : 4,
             background: color,
             animation: `confettiFall ${dur}s ${delay}s ease-in forwards`,
           }} />
@@ -107,6 +111,9 @@ export default function SoloPage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [ghostData, setGhostData] = useState<GhostData | null>(null);
   const [currentQuizId, setCurrentQuizId] = useState<string>("");
+  const [orderPick, setOrderPick] = useState<string[]>([]);
+  const [shuffled, setShuffled] = useState<string[]>([]);
+  const [smartReview, setSmartReview] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const reviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -134,6 +141,26 @@ export default function SoloPage() {
     }, 1000);
   }, []);
 
+  // Siapkan state untuk satu soal (dipanggil saat navigasi soal, bukan dari effect)
+  const beginQuestion = useCallback((qz: SoloQuizMeta, idx: number) => {
+    const q = qz.questions[idx];
+    setChosen(null);
+    setOpenText("");
+    setOrderPick([]);
+    if (q.type === "reorder" && q.items) {
+      const arr = [...q.items];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      setShuffled(arr);
+    } else {
+      setShuffled([]);
+    }
+    if (playMode === "solo") startTimer(q.timeLimit);
+    else setTimeLeft(q.timeLimit);
+  }, [playMode, startTimer]);
+
   function selectQuiz(quizId: string, mode: PlayMode = playMode) {
     setPhase("loading");
     setCurrentQuizId(quizId);
@@ -147,13 +174,13 @@ export default function SoloPage() {
     function load() {
       socket.emit("quiz:getSoloData", { quizId }, (res: SoloQuizMeta & { error?: string }) => {
         if (res.error) { setPhase("select"); return; }
-        setQuiz(res);
+        const finalQuiz = smartReview ? { ...res, questions: smartOrder(res.id, res.questions) } : res;
+        setQuiz(finalQuiz);
         setQIndex(0);
         setAnswers([]);
         setPhase("playing");
         playStart();
-        if (mode === "solo") startTimer(res.questions[0].timeLimit);
-        else setTimeLeft(res.questions[0].timeLimit); // practice: show time but don't auto-submit
+        beginQuestion(finalQuiz, 0);
       });
     }
     if (socket.connected) load();
@@ -161,17 +188,10 @@ export default function SoloPage() {
   }
 
   useEffect(() => {
-    if (phase === "playing" && quiz) {
-      const q = quiz.questions[qIndex];
-      setChosen(null);
-      setOpenText("");
-      if (playMode === "solo") startTimer(q.timeLimit);
-      else setTimeLeft(q.timeLimit);
-    }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [qIndex, phase, quiz, startTimer, playMode]);
+  }, []);
 
   useEffect(() => {
     if (timeLeft === 0 && phase === "playing" && playMode === "solo") {
@@ -179,20 +199,29 @@ export default function SoloPage() {
     }
   }, [timeLeft]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function submitAnswer(optIdx: number | null) {
+  function submitAnswer(optIdx: number | null, opts?: { correctOverride?: boolean }) {
     if (!quiz) return;
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
 
     const q = quiz.questions[qIndex];
-    const isParticipation = q.correctIndex === -1;
-    const isCorrect = optIdx !== null && (isParticipation || optIdx === q.correctIndex);
+    const isScoredType = q.type === "mc" || q.type === "tf" || q.type === "blank" || q.type === "reorder";
+    let isParticipation = false;
+    let isCorrect = false;
+    if (optIdx !== null) {
+      if (!isScoredType) { isParticipation = true; isCorrect = true; }
+      else if (opts?.correctOverride !== undefined) isCorrect = opts.correctOverride;
+      else isCorrect = optIdx === q.correctIndex;
+    }
     // Practice mode: flat 100 pts (no time bonus), solo: time-based
     const earned = isParticipation ? 100 : isCorrect
       ? (playMode === "practice" ? 100 : Math.round(1000 * Math.max(0, (timeLeft / q.timeLimit))))
       : 0;
 
+    // Review Cerdas: catat penguasaan soal (spaced repetition)
+    if (isScoredType) recordAnswer(quiz.id, q.id, isCorrect);
+
     setChosen(optIdx);
-    setAnswers((prev) => [...prev, { questionIndex: qIndex, chosen: optIdx, isCorrect, earned }]);
+    setAnswers((prev) => [...prev, { questionIndex: qIndex, chosen: optIdx, openText, isCorrect, earned }]);
     setPhase("answered");
 
     if (isParticipation) playPoll();
@@ -210,6 +239,7 @@ export default function SoloPage() {
           playEnd();
         } else {
           setQIndex((i) => i + 1);
+          beginQuestion(quiz, qIndex + 1);
           setPhase("playing");
         }
       }, 3000);
@@ -222,16 +252,44 @@ export default function SoloPage() {
       setPhase("ended");
       playEnd();
     } else {
-      setQIndex((i) => i + 1);
+      const next = qIndex + 1;
+      setQIndex(next);
+      beginQuestion(quiz, next);
       setPhase("playing");
     }
+  }
+
+  function normLocal(s: string): string {
+    return s.toLowerCase().trim().replace(/\s+/g, " ").replace(/[.,!?;:]+$/, "");
   }
 
   function submitOpen(e: React.FormEvent) {
     e.preventDefault();
     const text = openText.trim();
-    if (!text) return;
-    submitAnswer(0);
+    if (!text || !quiz) return;
+    const q = quiz.questions[qIndex];
+    if (q.type === "blank") {
+      const ok = (q.answers ?? []).some((a) => normLocal(a) === normLocal(text));
+      submitAnswer(0, { correctOverride: ok });
+    } else {
+      submitAnswer(0);
+    }
+  }
+
+  function submitReorder(picks: string[]) {
+    if (!quiz) return;
+    const q = quiz.questions[qIndex];
+    const ok = picks.length === (q.items?.length ?? 0) && q.items!.every((item, k) => picks[k] === item);
+    submitAnswer(0, { correctOverride: ok });
+  }
+
+  function tapReorderItem(item: string) {
+    if (orderPick.includes(item)) return;
+    const next = [...orderPick, item];
+    setOrderPick(next);
+    if (next.length === shuffled.length && next.length > 0) {
+      setTimeout(() => submitReorder(next), 150);
+    }
   }
 
   useEffect(() => () => {
@@ -259,7 +317,7 @@ export default function SoloPage() {
 
         <div style={{ maxWidth: 960, margin: "0 auto", padding: "2rem 1.25rem" }}>
           {/* Mode toggle */}
-          <div className="row a-fadeup mb-4" style={{ gap: "0.5rem", justifyContent: "center" }}>
+          <div className="row a-fadeup mb-2" style={{ gap: "0.5rem", justifyContent: "center" }}>
             <button
               onClick={() => setPlayMode("solo")}
               className={playMode === "solo" ? "btn btn-gradient" : "btn btn-surface"}
@@ -274,6 +332,18 @@ export default function SoloPage() {
             >
               <IconTarget size={16} color={playMode === "practice" ? "#fff" : "var(--text-dim)"}/> Mode Latihan
             </button>
+          </div>
+          <div className="row a-fadeup mb-4" style={{ gap: "0.5rem", justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
+            <button
+              onClick={() => setSmartReview((v) => !v)}
+              className={smartReview ? "btn btn-yellow" : "btn btn-surface"}
+              style={{ flex: "0 0 auto", gap: "0.4rem", fontSize: "0.8rem" }}
+            >
+              🔄 Review Cerdas {smartReview ? "· AKTIF" : ""}
+            </button>
+            <span style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>
+              Soal yang sering salah / belum dikuasai muncul lebih dulu (spaced repetition)
+            </span>
           </div>
 
           {/* Mode description */}
@@ -356,7 +426,10 @@ export default function SoloPage() {
   const isPoll = currentQ.type === "poll";
   const isRating = currentQ.type === "rating";
   const isOpen = currentQ.type === "open";
-  const isParticipation = currentQ.correctIndex === -1;
+  const isBlankQ = currentQ.type === "blank";
+  const isReorderQ = currentQ.type === "reorder";
+  const isTextQ = isOpen || isBlankQ;
+  const isParticipation = isPoll || isRating || isOpen;
   const MC_COLORS = ["#E21B3C","#1368CE","#26890C","#D89E00"];
   const shapes = ["▲","◆","●","■"];
   const lastAnswer = answers[answers.length - 1];
@@ -406,9 +479,23 @@ export default function SoloPage() {
 
         {/* Question */}
         <div style={{ padding: "0 0.875rem 0.75rem" }}>
-          <div className={`card center ${phase === "playing" ? "a-slideright" : ""}`} style={{ padding: "1rem 1.25rem", textAlign: "center", maxWidth: 560, margin: "0 auto" }}>
+          <div className={`card center ${phase === "playing" ? "a-slideright" : ""}`} style={{ padding: "1rem 1.25rem", textAlign: "center", maxWidth: 560, margin: "0 auto", position: "relative" }}>
+            <button title="Dengarkan soal" onClick={() => speak(currentQ.question)} style={{
+              position: "absolute", top: 8, right: 8,
+              width: 28, height: 28, borderRadius: "50%",
+              background: "var(--surface-2)", border: "1px solid var(--border-hi)",
+              cursor: "pointer", fontSize: "0.78rem",
+            }}>🔊</button>
             <p className="t-h3" style={{ lineHeight: 1.4, fontSize: "clamp(0.95rem,3.5vw,1.1rem)" }}>{currentQ.question}</p>
           </div>
+          {currentQ.image && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={currentQ.image} alt="" style={{
+              display: "block", maxWidth: 560, width: "100%", maxHeight: 200,
+              objectFit: "contain", borderRadius: 12, border: "1px solid var(--border)",
+              margin: "0.6rem auto 0", background: "#fff",
+            }} />
+          )}
         </div>
 
         {/* REVIEW OVERLAY */}
@@ -424,6 +511,16 @@ export default function SoloPage() {
                 {currentQ.correctIndex >= 0 && (
                   <p style={{ color: "var(--text-dim)", fontSize: "0.82rem" }}>
                     Jawaban: <span style={{ fontWeight: 700, color: "var(--text)" }}>{currentQ.options[currentQ.correctIndex]}</span>
+                  </p>
+                )}
+                {currentQ.type === "reorder" && currentQ.items && (
+                  <p style={{ color: "var(--text-dim)", fontSize: "0.82rem" }}>
+                    Urutan benar: <span style={{ fontWeight: 700, color: "var(--text)" }}>{currentQ.items.join(" → ")}</span>
+                  </p>
+                )}
+                {currentQ.type === "blank" && currentQ.answers && (
+                  <p style={{ color: "var(--text-dim)", fontSize: "0.82rem" }}>
+                    Jawaban diterima: <span style={{ fontWeight: 700, color: "var(--text)" }}>{currentQ.answers.join(" / ")}</span>
                   </p>
                 )}
               </>
@@ -466,6 +563,20 @@ export default function SoloPage() {
                     </p>
                   </div>
                 )}
+                {!isCorrect && !isParticipation && currentQ.type === "reorder" && currentQ.items && (
+                  <div className="card" style={{ padding: "0.65rem 1rem", borderLeft: "3px solid #16A34A" }}>
+                    <p style={{ color: "var(--text-dim)", fontSize: "0.8rem" }}>
+                      Urutan benar: <span style={{ fontWeight: 700, color: "#16A34A" }}>{currentQ.items.join(" → ")}</span>
+                    </p>
+                  </div>
+                )}
+                {!isCorrect && !isParticipation && currentQ.type === "blank" && currentQ.answers && (
+                  <div className="card" style={{ padding: "0.65rem 1rem", borderLeft: "3px solid #16A34A" }}>
+                    <p style={{ color: "var(--text-dim)", fontSize: "0.8rem" }}>
+                      Jawaban diterima: <span style={{ fontWeight: 700, color: "#16A34A" }}>{currentQ.answers.join(" / ")}</span>
+                    </p>
+                  </div>
+                )}
                 {currentQ.explanation && (
                   <div className="card" style={{ padding: "0.65rem 1rem", borderLeft: "3px solid var(--accent)" }}>
                     <p style={{ color: "var(--text-dim)", fontSize: "0.8rem", lineHeight: 1.6 }}>{currentQ.explanation}</p>
@@ -482,15 +593,43 @@ export default function SoloPage() {
         {/* PLAYING: answer buttons */}
         {phase === "playing" && (
           <>
-            {isOpen ? (
+            {isTextQ ? (
               <div className="flex-1 col items-center justify-center px-4 safe-bottom" style={{ gap: "0.75rem" }}>
                 <form onSubmit={submitOpen} className="col" style={{ gap: "0.75rem", width: "100%", maxWidth: 440 }}>
                   <textarea value={openText} onChange={(e) => setOpenText(e.target.value)}
-                    placeholder="Tulis jawabanmu..." maxLength={150} rows={3}
+                    placeholder={isBlankQ ? "Ketik jawabanmu..." : "Tulis jawabanmu..."} maxLength={150} rows={3}
                     className="input" style={{ resize: "none", fontSize: "1rem" }} autoFocus/>
                   <button type="submit" disabled={!openText.trim()} className="btn btn-primary btn-lg">Kirim Jawaban</button>
-                  <p style={{ color: "var(--text-muted)", fontSize: "0.72rem", textAlign: "center" }}>{openText.length}/150</p>
+                  {isBlankQ && (
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.72rem", textAlign: "center" }}>
+                      Diperiksa otomatis — tidak peka huruf besar/kecil
+                    </p>
+                  )}
                 </form>
+              </div>
+            ) : isReorderQ ? (
+              <div className="flex-1 col px-4 pb-3 safe-bottom" style={{ gap: "0.7rem", maxWidth: 480, width: "100%", margin: "0 auto" }}>
+                <p style={{ color: "var(--text-dim)", fontSize: "0.78rem", textAlign: "center" }}>
+                  Ketuk sesuai urutan benar — terkirim otomatis saat lengkap ({orderPick.length}/{shuffled.length})
+                </p>
+                {orderPick.length > 0 && (
+                  <ol style={{ listStyle: "decimal", margin: 0, background: "var(--surface)", borderRadius: 12, border: "1px solid var(--border)", padding: "0.6rem 0.75rem 0.6rem 2.2rem" }}>
+                    {orderPick.map((item, i) => (
+                      <li key={i} onClick={() => setOrderPick((p) => p.filter((x) => x !== item))}
+                        style={{ color: "var(--accent)", fontWeight: 700, fontSize: "0.88rem", padding: "0.15rem 0", cursor: "pointer" }}>
+                        {item}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem" }}>
+                  {shuffled.filter((it) => !orderPick.includes(it)).map((item) => (
+                    <button key={item} onClick={() => tapReorderItem(item)} className="btn btn-surface"
+                      style={{ textAlign: "left", fontWeight: 600, fontSize: "0.9rem" }}>
+                      {item}
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : isRating ? (
               <div className="flex-1 col items-center justify-center px-4 safe-bottom" style={{ gap: "1.5rem" }}>
@@ -542,7 +681,8 @@ export default function SoloPage() {
   // ── ENDED ────────────────────────────────────────────────────────────────────
   if (phase === "ended") {
     const totalEarned = answers.reduce((s, a) => s + a.earned, 0);
-    const mcTfAnswers = answers.filter((_, i) => quiz.questions[i]?.correctIndex !== -1);
+    const SCORED_TYPES: string[] = ["mc", "tf", "blank", "reorder"];
+    const mcTfAnswers = answers.filter((a) => SCORED_TYPES.includes(quiz.questions[a.questionIndex]?.type));
     const mcTfCorrect = mcTfAnswers.filter((a) => a.isCorrect).length;
     const pct = mcTfAnswers.length > 0 ? Math.round((mcTfCorrect / mcTfAnswers.length) * 100) : 100;
     const grade = pct >= 90 ? "Luar Biasa! 🎉" : pct >= 70 ? "Bagus! 👏" : pct >= 50 ? "Cukup Baik 👍" : "Terus Berlatih 💪";
@@ -620,7 +760,7 @@ export default function SoloPage() {
           <p className="t-label text-center mb-2">Ringkasan Jawaban</p>
           {answers.map((ans, i) => {
             const q = quiz.questions[i];
-            const isPartic = q.correctIndex === -1;
+            const isPartic = !["mc", "tf", "blank", "reorder"].includes(q.type);
             return (
               <div key={i} className="card row" style={{ padding: "0.6rem 0.875rem", gap: "0.6rem" }}>
                 <span style={{ color: isPartic ? "var(--accent)" : ans.isCorrect ? "#16A34A" : "#EF4444", fontWeight: 900, fontSize: "1.1rem", flexShrink: 0 }}>

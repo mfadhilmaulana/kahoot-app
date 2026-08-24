@@ -11,30 +11,38 @@ interface QuestionForm {
   options: string[];
   correctIndex: number;
   timeLimit: number;
+  image: string;      // URL gambar opsional
+  items: string[];    // tipe "reorder": urutan yang benar
+  answers: string[];  // tipe "blank": jawaban yang diterima
 }
 
 function emptyQ(type: QuestionType = "mc"): QuestionForm {
-  if (type === "tf")     return { type, question: "", options: ["Benar", "Salah"], correctIndex: 0, timeLimit: 20 };
-  if (type === "poll")   return { type, question: "", options: ["", ""], correctIndex: -1, timeLimit: 30 };
-  if (type === "rating") return { type, question: "", options: ["1","2","3","4","5"], correctIndex: -1, timeLimit: 20 };
-  if (type === "open")   return { type, question: "", options: [], correctIndex: -1, timeLimit: 40 };
-  return { type, question: "", options: ["", "", "", ""], correctIndex: 0, timeLimit: 20 };
+  if (type === "tf")     return { type, question: "", options: ["Benar", "Salah"], correctIndex: 0, timeLimit: 20, image: "", items: [], answers: [] };
+  if (type === "poll")   return { type, question: "", options: ["", ""], correctIndex: -1, timeLimit: 30, image: "", items: [], answers: [] };
+  if (type === "rating") return { type, question: "", options: ["1","2","3","4","5"], correctIndex: -1, timeLimit: 20, image: "", items: [], answers: [] };
+  if (type === "open")   return { type, question: "", options: [], correctIndex: -1, timeLimit: 40, image: "", items: [], answers: [] };
+  if (type === "reorder")return { type, question: "", options: [], correctIndex: -1, timeLimit: 40, image: "", items: ["", "", ""], answers: [] };
+  if (type === "blank")  return { type, question: "", options: [], correctIndex: -1, timeLimit: 30, image: "", items: [], answers: [""] };
+  return { type, question: "", options: ["", "", "", ""], correctIndex: 0, timeLimit: 20, image: "", items: [], answers: [] };
 }
 
 const MC_COLORS = ["#E21B3C","#1368CE","#26890C","#D89E00"];
 const TF_COLORS = ["#26890C","#E21B3C"];
 const TIME_OPTIONS = [10, 20, 30, 40, 60];
 const TYPE_CONFIG: Record<QuestionType, { label: string; desc: string }> = {
-  mc:     { label: "Pilihan Ganda", desc: "4 opsi · 1 jawaban benar" },
-  tf:     { label: "Benar / Salah", desc: "2 opsi · 1 jawaban benar" },
-  poll:   { label: "Pendapat",      desc: "Opsi bebas · Tidak ada jawaban benar" },
-  rating: { label: "⭐ Rating",     desc: "Pemain beri rating 1-5 bintang" },
-  open:   { label: "✏️ Teks Bebas", desc: "Pemain ketik jawaban sendiri" },
+  mc:      { label: "Pilihan Ganda", desc: "4 opsi · 1 jawaban benar" },
+  tf:      { label: "Benar / Salah", desc: "2 opsi · 1 jawaban benar" },
+  poll:    { label: "Pendapat",      desc: "Opsi bebas · Tidak ada jawaban benar" },
+  rating:  { label: "⭐ Rating",     desc: "Pemain beri rating 1-5 bintang" },
+  open:    { label: "✏️ Teks Bebas", desc: "Pemain ketik jawaban sendiri" },
+  reorder: { label: "🔢 Urutkan",    desc: "Pemain menyusun item ke urutan yang benar" },
+  blank:   { label: "📝 Isian",      desc: "Pemain mengetik jawaban · dicek otomatis" },
 };
 
 interface AIQuestion {
   id: string; type: QuestionType; question: string; options: string[];
   correctIndex: number; timeLimit: number; sourceQuiz: string;
+  explanation?: string;
 }
 
 export default function CreatePage() {
@@ -49,6 +57,7 @@ export default function CreatePage() {
   const [aiError, setAiError] = useState("");
   const [aiResults, setAiResults] = useState<AIQuestion[]>([]);
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+  const [aiEngine, setAiEngine] = useState("");
 
   function generateFromTopic() {
     const topic = aiTopic.trim();
@@ -58,9 +67,10 @@ export default function CreatePage() {
     setAiResults([]);
     const socket = getSocket();
     function doGenerate() {
-      socket.emit("quiz:generateFromTopic", { topic, count: 10 }, (res: { questions?: AIQuestion[]; error?: string }) => {
+      socket.emit("quiz:generateFromTopic", { topic, count: 10 }, (res: { questions?: AIQuestion[]; engine?: string; error?: string }) => {
         setAiLoading(false);
         if (res.error) { setAiError(res.error); return; }
+        setAiEngine(res.engine ?? "");
         setAiResults(res.questions ?? []);
       });
     }
@@ -75,6 +85,9 @@ export default function CreatePage() {
       options: q.options,
       correctIndex: q.correctIndex,
       timeLimit: q.timeLimit,
+      image: "",
+      items: [],
+      answers: [],
     }]);
     setAddedIds((prev) => new Set(prev).add(q.id));
     setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 50);
@@ -109,6 +122,46 @@ export default function CreatePage() {
     setQ(qIdx, { options: q.options.filter((_, i) => i !== optIdx) });
   }
 
+  // ── Editor tipe "reorder" (urutan benar) ──
+  function setItem(qIdx: number, iIdx: number, val: string) {
+    setQuestions((prev) => prev.map((q, i) => {
+      if (i !== qIdx) return q;
+      const items = [...q.items];
+      items[iIdx] = val;
+      return { ...q, items };
+    }));
+  }
+  function addItemRow(qIdx: number) {
+    const q = questions[qIdx];
+    if (q.items.length >= 6) return;
+    setQ(qIdx, { items: [...q.items, ""] });
+  }
+  function removeItemRow(qIdx: number, iIdx: number) {
+    const q = questions[qIdx];
+    if (q.items.length <= 2) return;
+    setQ(qIdx, { items: q.items.filter((_, i) => i !== iIdx) });
+  }
+
+  // ── Editor tipe "blank" (jawaban diterima) ──
+  function setBlankAnswer(qIdx: number, aIdx: number, val: string) {
+    setQuestions((prev) => prev.map((q, i) => {
+      if (i !== qIdx) return q;
+      const answers = [...q.answers];
+      answers[aIdx] = val;
+      return { ...q, answers };
+    }));
+  }
+  function addBlankAnswer(qIdx: number) {
+    const q = questions[qIdx];
+    if (q.answers.length >= 5) return;
+    setQ(qIdx, { answers: [...q.answers, ""] });
+  }
+  function removeBlankAnswer(qIdx: number, aIdx: number) {
+    const q = questions[qIdx];
+    if (q.answers.length <= 1) return;
+    setQ(qIdx, { answers: q.answers.filter((_, i) => i !== aIdx) });
+  }
+
   function addQuestion() {
     setQuestions((prev) => [...prev, emptyQ("mc")]);
     setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 50);
@@ -128,6 +181,14 @@ export default function CreatePage() {
         for (let j = 0; j < q.options.length; j++) {
           if (!q.options[j].trim()) return { msg: `Pertanyaan ${i + 1}: opsi ${j + 1} masih kosong`, scrollId: `q-${i}` };
         }
+      }
+      if (q.type === "reorder") {
+        const filled = q.items.filter((x) => x.trim());
+        if (filled.length < 2) return { msg: `Pertanyaan ${i + 1}: butuh minimal 2 item untuk diurutkan`, scrollId: `q-${i}` };
+      }
+      if (q.type === "blank") {
+        const filled = q.answers.filter((x) => x.trim());
+        if (filled.length === 0) return { msg: `Pertanyaan ${i + 1}: isi minimal satu jawaban yang diterima`, scrollId: `q-${i}` };
       }
     }
     return null;
@@ -158,6 +219,9 @@ export default function CreatePage() {
             options: q.options.map((o) => o.trim()),
             correctIndex: q.correctIndex,
             timeLimit: q.timeLimit,
+            image: q.image.trim() || undefined,
+            items: q.type === "reorder" ? q.items.map((x) => x.trim()).filter(Boolean) : undefined,
+            answers: q.type === "blank" ? q.answers.map((x) => x.trim()).filter(Boolean) : undefined,
           })),
         },
         (res: { pin?: string; error?: string }) => {
@@ -212,7 +276,7 @@ export default function CreatePage() {
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ fontWeight: 800, fontSize: "0.9rem", color: "var(--text)" }}>AI Question Generator</p>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>Cari soal dari bank berdasarkan topik</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>Soal dibuat AI lokal (Ollama) atau dicari dari bank soal</p>
             </div>
             <span style={{ color: "var(--text-muted)", fontSize: "0.85rem", transition: "transform 0.2s", transform: showAI ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
           </button>
@@ -245,7 +309,18 @@ export default function CreatePage() {
               {aiResults.length > 0 && (
                 <div className="col" style={{ gap: "0.4rem" }}>
                   <p style={{ color: "var(--text-muted)", fontSize: "0.72rem", fontWeight: 700, marginBottom: "0.25rem" }}>
-                    {aiResults.length} soal ditemukan — klik "+ Tambah" untuk memasukkan ke kuis
+                    {aiResults.length} soal — klik &quot;+ Tambah&quot; untuk memasukkan ke kuis{" "}
+                    <span style={{
+                      marginLeft: "0.25rem", padding: "0.1rem 0.5rem", borderRadius: 40,
+                      fontSize: "0.62rem", fontWeight: 800,
+                      background: aiEngine.startsWith("zen") ? "rgba(124,58,237,0.12)"
+                        : aiEngine.startsWith("ollama") ? "rgba(124,58,237,0.12)" : "rgba(37,99,235,0.1)",
+                      color: aiEngine.startsWith("bank") ? "var(--accent)" : "#7C3AED",
+                    }}>
+                      {aiEngine.startsWith("zen") ? `🤖 OpenCode Zen (${aiEngine.split(":")[1] ?? "free"})`
+                        : aiEngine.startsWith("ollama") ? `🤖 AI lokal (${aiEngine.split(":")[1] ?? "ollama"})`
+                        : "📚 bank soal"}
+                    </span>
                   </p>
                   {aiResults.map((q) => {
                     const added = addedIds.has(q.id);
@@ -292,6 +367,8 @@ export default function CreatePage() {
           const isPoll = q.type === "poll";
           const isRating = q.type === "rating";
           const isOpen = q.type === "open";
+          const isReorder = q.type === "reorder";
+          const isBlank = q.type === "blank";
           return (
             <div id={`q-${qi}`} key={qi} className="card a-fadeup" style={{ padding: "1.25rem 1.5rem", animationDelay: `${qi * 0.04}s` }}>
               {/* Question header */}
@@ -333,8 +410,17 @@ export default function CreatePage() {
                 onChange={(e) => { setQ(qi, { question: e.target.value }); setError(""); }}
                 placeholder="Tulis pertanyaan di sini..."
                 rows={2}
-                className="input mb-4"
+                className="input mb-2"
                 style={{ resize: "none" }}
+              />
+
+              {/* Image URL (opsional, semua tipe) */}
+              <input
+                value={q.image}
+                onChange={(e) => setQ(qi, { image: e.target.value })}
+                placeholder="🖼️ URL gambar (opsional) — https://..."
+                className="input mb-4"
+                style={{ fontSize: "0.78rem" }}
               />
 
               {/* Options */}
@@ -385,6 +471,56 @@ export default function CreatePage() {
                 <div className="card-hi center mb-4" style={{ padding: "1rem", textAlign: "center" }}>
                   <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>✏️</div>
                   <p style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>Pemain akan mengetik jawaban teks bebas mereka</p>
+                </div>
+              ) : isReorder ? (
+                <div className="col mb-4" style={{ gap: "0.45rem" }}>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>Tulis item dalam <strong>URUTAN YANG BENAR</strong> (item pertama = paling atas):</p>
+                  {q.items.map((item, ii) => (
+                    <div key={ii} className="row" style={{ gap: "0.5rem" }}>
+                      <div className="center" style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontSize: "0.75rem", fontWeight: 900, flexShrink: 0 }}>{ii + 1}</div>
+                      <input
+                        value={item}
+                        onChange={(e) => setItem(qi, ii, e.target.value)}
+                        placeholder={`Item urutan ${ii + 1}`}
+                        className="input flex-1"
+                        style={{ fontSize: "0.875rem" }}
+                      />
+                      {q.items.length > 2 && (
+                        <button onClick={() => removeItemRow(qi, ii)} className="btn btn-ghost" style={{ padding: "0.45rem 0.6rem", color: "#F87171" }}>×</button>
+                      )}
+                    </div>
+                  ))}
+                  {q.items.length < 6 && (
+                    <button onClick={() => addItemRow(qi)} className="btn btn-ghost" style={{ fontSize: "0.78rem", padding: "0.45rem 0.875rem", alignSelf: "flex-start" }}>
+                      + Tambah item
+                    </button>
+                  )}
+                </div>
+              ) : isBlank ? (
+                <div className="col mb-4" style={{ gap: "0.45rem" }}>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>
+                    Jawaban yang diterima — pemain mengetik salah satu dari ini dianggap benar (tidak peka huruf besar/kecil):
+                  </p>
+                  {q.answers.map((ans, ai2) => (
+                    <div key={ai2} className="row" style={{ gap: "0.5rem" }}>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", width: 26, textAlign: "center", flexShrink: 0 }}>{ai2 === 0 ? "✅" : "atau"}</span>
+                      <input
+                        value={ans}
+                        onChange={(e) => setBlankAnswer(qi, ai2, e.target.value)}
+                        placeholder={`Jawaban benar ${ai2 + 1}`}
+                        className="input flex-1"
+                        style={{ fontSize: "0.875rem" }}
+                      />
+                      {q.answers.length > 1 && (
+                        <button onClick={() => removeBlankAnswer(qi, ai2)} className="btn btn-ghost" style={{ padding: "0.45rem 0.6rem", color: "#F87171" }}>×</button>
+                      )}
+                    </div>
+                  ))}
+                  {q.answers.length < 5 && (
+                    <button onClick={() => addBlankAnswer(qi)} className="btn btn-ghost" style={{ fontSize: "0.78rem", padding: "0.45rem 0.875rem", alignSelf: "flex-start" }}>
+                      + Terima jawaban lain
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "1rem" }}>

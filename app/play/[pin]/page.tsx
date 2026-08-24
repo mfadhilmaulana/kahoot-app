@@ -6,6 +6,8 @@ import { getSocket } from "@/lib/socket";
 import type { Socket } from "socket.io-client";
 import type { QuestionPayload, ResultsPayload, LBEntry } from "@/lib/types";
 import { playCorrect, playWrong, playPoll, playStart, playEnd, playTick } from "@/lib/sounds";
+import { speak } from "@/lib/tts";
+import { randomNickname } from "@/lib/nicknames";
 import { SiKuisLogoMark } from "@/components/icons";
 
 const AVATAR_COLORS = ["#EF4444","#F97316","#EAB308","#22C55E","#3B82F6","#8B5CF6","#EC4899","#14B8A6"];
@@ -70,12 +72,15 @@ export default function PlayPage() {
   const [phase, setPhase] = useState<Phase>("join");
   const [name, setName] = useState("");
   const [joinError, setJoinError] = useState("");
+  const [myId, setMyId] = useState("");
   const [quizTitle, setQuizTitle] = useState("");
   const [totalQ, setTotalQ] = useState(0);
   const [playerCount, setPlayerCount] = useState(0);
   const [question, setQuestion] = useState<QuestionPayload | null>(null);
   const [chosen, setChosen] = useState<number | null>(null);
   const [openText, setOpenText] = useState("");
+  const [orderPick, setOrderPick] = useState<string[]>([]);
+  const [myCorrect, setMyCorrect] = useState<boolean | null>(null);
   const [results, setResults] = useState<ResultsPayload | null>(null);
   const [myScore, setMyScore] = useState(0);
   const [myRank, setMyRank] = useState<number | null>(null);
@@ -89,7 +94,10 @@ export default function PlayPage() {
     socketRef.current = socket;
     socketIdRef.current = socket.id ?? "";
 
-    const onConnect = () => { socketIdRef.current = socket.id ?? ""; };
+    const onConnect = () => {
+      socketIdRef.current = socket.id ?? "";
+      setMyId(socket.id ?? "");
+    };
     const onPlayerJoined = ({ players }: { players: { id: string }[] }) => setPlayerCount(players.length);
     const onPlayerLeft = ({ players }: { players: { id: string }[] }) => setPlayerCount(players.length);
 
@@ -97,6 +105,8 @@ export default function PlayPage() {
       setQuestion(payload);
       setChosen(null);
       setOpenText("");
+      setOrderPick([]);
+      setMyCorrect(null);
       setResults(null);
       setPhase("question");
       setTimeLeft(payload.timeLimit);
@@ -119,6 +129,9 @@ export default function PlayPage() {
       setPhase("review");
     };
 
+    // hasil personal dari server (akurat untuk blank & reorder)
+    const onMyResult = ({ correct }: { correct: boolean }) => setMyCorrect(correct);
+
     const onEnded = ({ leaderboard }: { leaderboard: LBEntry[] }) => {
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
       setFinalLB(leaderboard);
@@ -138,6 +151,7 @@ export default function PlayPage() {
     socket.on("game:playerLeft", onPlayerLeft);
     socket.on("game:question", onQuestion);
     socket.on("game:questionResults", onResults);
+    socket.on("game:myResult", onMyResult);
     socket.on("game:ended", onEnded);
     socket.on("game:hostLeft", onHostLeft);
 
@@ -147,6 +161,7 @@ export default function PlayPage() {
       socket.off("game:playerLeft", onPlayerLeft);
       socket.off("game:question", onQuestion);
       socket.off("game:questionResults", onResults);
+      socket.off("game:myResult", onMyResult);
       socket.off("game:ended", onEnded);
       socket.off("game:hostLeft", onHostLeft);
       if (timerRef.current) clearInterval(timerRef.current);
@@ -156,9 +171,12 @@ export default function PlayPage() {
   // Play sound after results arrive (client side)
   useEffect(() => {
     if (!results || !question) return;
-    const isParticipation = results.correctIndex === -1;
-    if (isParticipation) { playPoll(); return; }
-    if (chosen === results.correctIndex) playCorrect();
+    const scoredType = results.type === "mc" || results.type === "tf" || results.type === "blank" || results.type === "reorder";
+    if (!scoredType) { playPoll(); return; }
+    const correctNow = (results.type === "mc" || results.type === "tf")
+      ? chosen === results.correctIndex
+      : myCorrect === true;
+    if (correctNow) playCorrect();
     else playWrong();
   }, [results]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -177,6 +195,7 @@ export default function PlayPage() {
           setQuizTitle(res.quizTitle ?? "");
           setTotalQ(res.totalQuestions ?? 0);
           socketIdRef.current = socket!.id ?? "";
+          setMyId(socket!.id ?? "");
           setPhase("lobby");
         }
       );
@@ -231,9 +250,16 @@ export default function PlayPage() {
               placeholder="Nama kamu..."
               maxLength={20}
               autoFocus
-              className="input mb-3"
+              className="input mb-2"
               style={{ textAlign: "center", fontSize: "1.2rem", fontWeight: 700 }}
             />
+            <button type="button" onClick={() => setName(randomNickname())} style={{
+              background: "none", border: "none", color: "var(--accent)",
+              fontSize: "0.75rem", fontWeight: 700, cursor: "pointer",
+              margin: "0 auto 0.9rem", display: "block",
+            }}>
+              🎲 Nama acak
+            </button>
             {joinError && (
               <p style={{ color: "#DC2626", textAlign: "center", fontSize: "0.82rem", fontWeight: 600, marginBottom: "0.75rem" }}>{joinError}</p>
             )}
@@ -294,7 +320,17 @@ export default function PlayPage() {
     const isPoll = question.type === "poll";
     const isRating = question.type === "rating";
     const isOpen = question.type === "open";
+    const isBlank = question.type === "blank";
+    const isReorderQ = question.type === "reorder";
     const mcColors = ["#E21B3C","#1368CE","#26890C","#D89E00"];
+
+    function submitReorder(picks: string[]) {
+      if (chosen !== null || !question) return;
+      const order = picks.map((s) => question.options.indexOf(s));
+      setChosen(-3);
+      setPhase("answered");
+      socketRef.current?.emit("player:answer", { pin, optionIndex: -3, order }, () => {});
+    }
 
     return (
       <main className="min-h-screen col" style={{ background: "var(--bg)" }}>
@@ -308,14 +344,30 @@ export default function PlayPage() {
           <CircleTimer timeLeft={timeLeft} timeLimit={question.timeLimit} />
           <p className="t-label mt-1">{question.index + 1} / {question.total}</p>
           {(isPoll || isRating) && <span className="badge" style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>{isRating ? "⭐ Rating" : "Pendapat"}</span>}
-          {isOpen && <span className="badge" style={{ background: "rgba(245,158,11,0.12)", color: "#D97706" }}>✏️ Jawaban Terbuka</span>}
+          {(isOpen || isBlank) && <span className="badge" style={{ background: "rgba(245,158,11,0.12)", color: "#D97706" }}>{isBlank ? "📝 Isi Jawaban" : "✏️ Jawaban Terbuka"}</span>}
+          {isReorderQ && <span className="badge" style={{ background: "rgba(124,58,237,0.12)", color: "#7C3AED" }}>🔢 Urutkan</span>}
         </div>
 
         {/* Question */}
         <div style={{ padding: "0 0.875rem 0.75rem" }}>
-          <div className="card center" style={{ padding: "1rem 1.125rem", textAlign: "center", maxWidth: 500, margin: "0 auto" }}>
+          <div className="card center" style={{ padding: "1rem 1.125rem", textAlign: "center", maxWidth: 500, margin: "0 auto", position: "relative" }}>
+            <button title="Dengarkan soal" onClick={() => speak(question.question)} style={{
+              position: "absolute", top: 8, right: 8,
+              width: 30, height: 30, borderRadius: "50%",
+              background: "var(--surface-2)", border: "1px solid var(--border-hi)",
+              cursor: "pointer", fontSize: "0.8rem",
+            }}>🔊</button>
             <p className="t-h3" style={{ lineHeight: 1.4, fontSize: "clamp(0.95rem, 3.5vw, 1.1rem)" }}>{question.question}</p>
           </div>
+          {question.image && (
+            <div style={{ maxWidth: 500, margin: "0.6rem auto 0" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={question.image} alt="" style={{
+                width: "100%", maxHeight: 220, objectFit: "contain",
+                borderRadius: 12, border: "1px solid var(--border)", background: "#fff",
+              }} />
+            </div>
+          )}
         </div>
 
         {/* Answered state */}
@@ -323,26 +375,26 @@ export default function PlayPage() {
           <div className="flex-1 col items-center justify-center" style={{ gap: "1rem" }}>
             <div className="center a-popin" style={{
               width: 90, height: 90, borderRadius: "50%",
-              background: isOpen || isRating ? "var(--accent)"
+              background: isOpen || isRating || isBlank || isReorderQ ? "var(--accent)"
                 : isTF ? (chosen === 0 ? "#26890C" : "#E21B3C")
                 : mcColors[chosen ?? 0] ?? "var(--accent)",
             }}>
               <span style={{ fontSize: isRating ? "1.8rem" : "2.25rem", color: "#fff", fontWeight: 900 }}>
-                {isOpen ? "✓" : isRating ? `${(chosen ?? 0) + 1}★` : isTF ? (chosen === 0 ? "B" : "S") : ["▲","◆","●","■"][chosen ?? 0]}
+                {isRating ? `${(chosen ?? 0) + 1}★` : (isOpen || isBlank || isReorderQ) ? "✓" : isTF ? (chosen === 0 ? "B" : "S") : ["▲","◆","●","■"][chosen ?? 0]}
               </span>
             </div>
             <p className="t-h3">Jawaban terkirim!</p>
             <p style={{ color: "var(--text-dim)", fontSize: "0.875rem" }}>Menunggu pemain lain...</p>
           </div>
 
-        /* Open text input */
-        ) : isOpen ? (
+        /* Open / blank text input */
+        ) : (isOpen || isBlank) ? (
           <div className="flex-1 col items-center justify-center px-4 safe-bottom" style={{ gap: "1rem" }}>
             <form onSubmit={handleOpenAnswer} className="col" style={{ gap: "0.75rem", width: "100%", maxWidth: 440 }}>
               <textarea
                 value={openText}
                 onChange={(e) => setOpenText(e.target.value)}
-                placeholder="Tulis jawabanmu di sini..."
+                placeholder={isBlank ? "Ketik jawabanmu di sini..." : "Tulis jawabanmu di sini..."}
                 maxLength={150}
                 rows={3}
                 className="input"
@@ -352,7 +404,11 @@ export default function PlayPage() {
               <button type="submit" disabled={!openText.trim()} className="btn btn-primary btn-lg">
                 Kirim Jawaban
               </button>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.72rem", textAlign: "center" }}>{openText.length}/150 karakter</p>
+              {isBlank && (
+                <p style={{ color: "var(--text-muted)", fontSize: "0.72rem", textAlign: "center" }}>
+                  Jawaban diperiksa otomatis — tidak peka huruf besar/kecil
+                </p>
+              )}
             </form>
           </div>
 
@@ -377,6 +433,35 @@ export default function PlayPage() {
             <div className="row" style={{ gap: "1.75rem" }}>
               <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontWeight: 600 }}>Buruk</span>
               <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontWeight: 600 }}>Sangat Baik</span>
+            </div>
+          </div>
+
+        /* Reorder (urutkan) */
+        ) : isReorderQ ? (
+          <div className="flex-1 col px-4 pb-3 safe-bottom" style={{ gap: "0.7rem", maxWidth: 480, width: "100%", margin: "0 auto" }}>
+            <p style={{ color: "var(--text-dim)", fontSize: "0.78rem", textAlign: "center" }}>
+              Ketuk item sesuai urutan yang benar — terkirim otomatis saat lengkap ({orderPick.length}/{question.options.length})
+            </p>
+            {orderPick.length > 0 && (
+              <ol style={{ listStyle: "decimal", paddingLeft: "1.5rem", margin: 0, background: "var(--surface)", borderRadius: 12, border: "1px solid var(--border)", padding: "0.6rem 0.75rem 0.6rem 2.2rem" }}>
+                {orderPick.map((item, i) => (
+                  <li key={i} onClick={() => setOrderPick((p) => p.filter((x) => x !== item))}
+                    style={{ color: "var(--accent)", fontWeight: 700, fontSize: "0.88rem", padding: "0.15rem 0", cursor: "pointer" }}>
+                    {item}
+                  </li>
+                ))}
+              </ol>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem" }}>
+              {question.options.filter((it) => !orderPick.includes(it)).map((item) => (
+                <button key={item} onClick={() => {
+                  const next = [...orderPick, item];
+                  setOrderPick(next);
+                  if (next.length === question.options.length) submitReorder(next);
+                }} className="btn btn-surface" style={{ textAlign: "left", fontWeight: 600, fontSize: "0.9rem" }}>
+                  {item}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -417,10 +502,14 @@ export default function PlayPage() {
 
   // ── REVIEW ────────────────────────────────────────────────────────────────────
   if (phase === "review" && results && question) {
-    const isParticipation = results.correctIndex === -1;
-    const isCorrect = !isParticipation && chosen === results.correctIndex;
+    const scoredType = results.type === "mc" || results.type === "tf" || results.type === "blank" || results.type === "reorder";
+    const isCorrect = scoredType
+      ? (results.type === "mc" || results.type === "tf"
+          ? chosen === results.correctIndex
+          : myCorrect === true)
+      : false;
+    const isParticipation = !scoredType;
     const isRating = results.type === "rating";
-    const isOpen = results.type === "open";
 
     const bgColor = isParticipation
       ? "var(--bg)"
@@ -440,13 +529,13 @@ export default function PlayPage() {
               <div style={{ fontSize: "3rem", fontWeight: 900, color: "var(--accent)", marginBottom: "0.4rem" }}>
                 +{myLastScore}
               </div>
-              <h2 className="t-h2 mb-1">{isRating ? "Rating terkirim!" : isOpen ? "Jawaban tercatat!" : "Terima kasih!"}</h2>
+              <h2 className="t-h2 mb-1">{isRating ? "Rating terkirim!" : results.type === "open" ? "Jawaban tercatat!" : "Terima kasih!"}</h2>
               {isRating && results.ratingAvg !== undefined && (
                 <p style={{ color: "var(--text-dim)", fontSize: "0.875rem" }}>
                   Rating rata-rata: <span style={{ fontWeight: 700, color: "var(--accent)" }}>{"⭐".repeat(Math.round(results.ratingAvg))} ({results.ratingAvg}/5)</span>
                 </p>
               )}
-              {isOpen && (
+              {results.type === "open" && (
                 <p style={{ color: "var(--text-dim)", fontSize: "0.875rem" }}>Pendapatmu sudah dicatat</p>
               )}
             </>
@@ -459,6 +548,16 @@ export default function PlayPage() {
               {!isCorrect && results.correctIndex >= 0 && (
                 <p style={{ color: "var(--text-dim)", fontSize: "0.875rem" }}>
                   Jawaban: <span style={{ color: "var(--text)", fontWeight: 700 }}>{results.options[results.correctIndex]}</span>
+                </p>
+              )}
+              {!isCorrect && results.type === "reorder" && results.correctOrder && (
+                <p style={{ color: "var(--text-dim)", fontSize: "0.875rem" }}>
+                  Urutan benar: <span style={{ color: "var(--text)", fontWeight: 700 }}>{results.correctOrder.join(" → ")}</span>
+                </p>
+              )}
+              {!isCorrect && results.type === "blank" && results.acceptedAnswers && (
+                <p style={{ color: "var(--text-dim)", fontSize: "0.875rem" }}>
+                  Jawaban diterima: <span style={{ color: "var(--text)", fontWeight: 700 }}>{results.acceptedAnswers.join(" / ")}</span>
                 </p>
               )}
             </>
@@ -508,7 +607,7 @@ export default function PlayPage() {
 
   // ── ENDED ─────────────────────────────────────────────────────────────────────
   if (phase === "ended") {
-    const myEntry = finalLB.find((e) => e.id === socketIdRef.current);
+    const myEntry = finalLB.find((e) => e.id === myId);
     const rank = myRank ?? myEntry?.rank ?? null;
 
     return (
@@ -536,7 +635,7 @@ export default function PlayPage() {
         <div className="col mb-6" style={{ gap: "0.4rem", width: "100%", maxWidth: 360 }}>
           <p className="t-label text-center mb-2">Peringkat Akhir</p>
           {finalLB.slice(0, 5).map((entry, i) => {
-            const isMe = entry.id === socketIdRef.current;
+            const isMe = entry.id === myId;
             return (
               <div key={entry.id} className="card row a-fadeup" style={{
                 padding: "0.55rem 0.75rem", gap: "0.6rem",
