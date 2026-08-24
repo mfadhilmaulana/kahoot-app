@@ -14,6 +14,7 @@ interface QuestionForm {
   image: string;      // URL gambar opsional
   items: string[];    // tipe "reorder": urutan yang benar
   answers: string[];  // tipe "blank": jawaban yang diterima
+  explanation?: string;
 }
 
 function emptyQ(type: QuestionType = "mc"): QuestionForm {
@@ -58,6 +59,10 @@ export default function CreatePage() {
   const [aiResults, setAiResults] = useState<AIQuestion[]>([]);
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const [aiEngine, setAiEngine] = useState("");
+  const [showImport, setShowImport] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const [importLoading, setImportLoading] = useState("");
+  const [importError, setImportError] = useState("");
 
   function generateFromTopic() {
     const topic = aiTopic.trim();
@@ -88,9 +93,83 @@ export default function CreatePage() {
       image: "",
       items: [],
       answers: [],
+      explanation: "",
     }]);
     setAddedIds((prev) => new Set(prev).add(q.id));
     setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 50);
+  }
+
+  // ── Impor soal ────────────────────────────────────────────────────────────
+  const readFileB64 = (f: File): Promise<string> => new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(",")[1] ?? "");
+    r.onerror = () => rej(new Error("gagal baca file"));
+    r.readAsDataURL(f);
+  });
+
+  function parseCsv(text: string): QuestionForm[] {
+    const out: QuestionForm[] = [];
+    for (const line of text.split(/\r?\n/).map((l) => l.trim())) {
+      if (!line || /^[a-z_-]+$/i.test(line.split(";")[0])) continue; // skip header
+      const parts = line.split(";").map((s) => s.trim());
+      if (parts.length < 6 || !parts[0]) continue;
+      const ki = Math.max(0, Math.min(3, (parseInt(parts[5], 10) || 1) - 1));
+      out.push({
+        type: "mc", question: parts[0],
+        options: [parts[1] ?? "", parts[2] ?? "", parts[3] ?? "", parts[4] ?? ""],
+        correctIndex: ki, timeLimit: 20, image: "", items: [], answers: [],
+        explanation: parts[6] ?? "",
+      });
+    }
+    return out;
+  }
+
+  async function handleGenerateFromText(textOverride?: string) {
+    const t = (textOverride ?? pasteText).trim();
+    if (t.length < 60) { setImportError("Tempel teks minimal beberapa paragraf (≥60 karakter)."); return; }
+    setImportLoading("AI menyusun soal dari teks...");
+    setImportError("");
+    setAiResults([]);
+    getSocket().emit("quiz:generateFromText", { text: t.slice(0, 8000), count: 8 },
+      (res: { questions?: AIQuestion[]; engine?: string; error?: string }) => {
+        setImportLoading("");
+        if (res.error) { setImportError(res.error); return; }
+        setAiEngine(res.engine ?? "");
+        setAiResults(res.questions ?? []);
+      });
+  }
+
+  async function handleImportFile(file: File | undefined) {
+    if (!file) return;
+    setImportError("");
+    const name = file.name.toLowerCase();
+    try {
+      if (name.endsWith(".csv")) {
+        const qs = parseCsv(await file.text());
+        if (qs.length === 0) { setImportError("CSV kosong / format salah. Format: soal;opsiA;opsiB;opsiC;opsiD;kunci(1-4);penjelasan"); return; }
+        setQuestions((prev) => [...prev, ...qs]);
+        setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 50);
+        return;
+      }
+      setImportLoading(name.endsWith(".pdf") ? "Membaca PDF & menyusun soal dengan AI..." : "Menyusun soal dari teks...");
+      setAiResults([]);
+      if (name.endsWith(".txt")) {
+        handleGenerateFromText(await file.text());
+        setImportLoading("");
+        return;
+      }
+      const b64 = await readFileB64(file);
+      getSocket().emit("quiz:importPdf", { b64, count: 8 },
+        (res: { questions?: AIQuestion[]; engine?: string; error?: string }) => {
+          setImportLoading("");
+          if (res.error) { setImportError(res.error); return; }
+          setAiEngine(res.engine ?? "");
+          setAiResults(res.questions ?? []);
+        });
+    } catch {
+      setImportLoading("");
+      setImportError("Gagal membaca file.");
+    }
   }
 
   function setQ(idx: number, patch: Partial<QuestionForm>) {
@@ -222,6 +301,7 @@ export default function CreatePage() {
             image: q.image.trim() || undefined,
             items: q.type === "reorder" ? q.items.map((x) => x.trim()).filter(Boolean) : undefined,
             answers: q.type === "blank" ? q.answers.map((x) => x.trim()).filter(Boolean) : undefined,
+            explanation: q.explanation?.trim() || "",
           })),
         },
         (res: { pin?: string; error?: string }) => {
@@ -357,6 +437,53 @@ export default function CreatePage() {
                   })}
                 </div>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* Impor Soal */}
+        <div className="card a-fadeup" style={{ padding: "1.25rem 1.5rem", borderColor: showImport ? "var(--accent)" : undefined }}>
+          <button
+            onClick={() => setShowImport((v) => !v)}
+            style={{ display: "flex", alignItems: "center", gap: "0.6rem", background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left", padding: 0 }}
+          >
+            <div className="center" style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg,#059669,#2563EB)", flexShrink: 0 }}>
+              <span style={{ fontSize: "1rem" }}>📥</span>
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontWeight: 800, fontSize: "0.9rem", color: "var(--text)" }}>Impor Soal</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>Tempel teks materi, unggah PDF/TXT (via AI gratis), atau CSV</p>
+            </div>
+            <span style={{ color: "var(--text-muted)", fontSize: "0.85rem", transition: "transform 0.2s", transform: showImport ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+          </button>
+
+          {showImport && (
+            <div style={{ marginTop: "1rem" }}>
+              <textarea
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                placeholder="Tempel materi pelajaran di sini (artikel, ringkasan bab buku, catatan) — AI akan menyusun soal darinya..."
+                rows={5}
+                className="input"
+                style={{ fontSize: "0.82rem", resize: "vertical" }}
+              />
+              <div className="row" style={{ gap: "0.5rem", marginTop: "0.6rem", flexWrap: "wrap" }}>
+                <button onClick={() => handleGenerateFromText()} disabled={importLoading !== "" || pasteText.trim().length < 60} className="btn btn-gradient" style={{ flexShrink: 0, opacity: pasteText.trim().length < 60 ? 0.5 : 1 }}>
+                  ✨ Buat Soal dari Teks
+                </button>
+                <label className="btn btn-surface" style={{ cursor: "pointer", flexShrink: 0 }}>
+                  📄 Pilih PDF / TXT / CSV
+                  <input type="file" accept=".pdf,.txt,.csv" hidden onChange={(e) => handleImportFile(e.target.files?.[0])} />
+                </label>
+              </div>
+              {importLoading && <p style={{ marginTop: "0.6rem", color: "var(--accent)", fontSize: "0.78rem", fontWeight: 700 }}>⏳ {importLoading}</p>}
+              {importError && <p style={{ marginTop: "0.6rem", color: "#DC2626", fontSize: "0.78rem", fontWeight: 600 }}>⚠️ {importError}</p>}
+              <details style={{ marginTop: "0.7rem" }}>
+                <summary style={{ color: "var(--text-muted)", fontSize: "0.72rem", cursor: "pointer" }}>Format CSV</summary>
+                <code style={{ display: "block", marginTop: "0.35rem", padding: "0.5rem 0.75rem", background: "var(--surface-2)", borderRadius: 8, fontSize: "0.68rem", color: "var(--text-dim)" }}>
+                  soal;opsiA;opsiB;opsiC;opsiD;kunci(1-4);penjelasan<br />Contoh: Ibukota Indonesia?;Bandung;Jakarta;Surabaya;Medan;2;Jakarta sejak 1949
+                </code>
+              </details>
             </div>
           )}
         </div>

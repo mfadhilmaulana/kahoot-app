@@ -133,9 +133,105 @@ ok("assignment:results entri terurut", asgRes.results?.length >= 1 && asgRes.res
 const badSub = await emit(p1, "assignment:submit", { code: "ZZZZZZ", name: "X", responses: [] });
 ok("kode salah ditolak", !!badSub.error);
 
-// 6. AI fallback bank (tanpa key)
-const ai = await emit(host, "quiz:generateFromTopic", { topic: "sains", count: 5 });
-ok("AI fallback bank + engine label", ai.questions?.length > 0 && ai.engine === "bank", JSON.stringify(ai.engine ?? ai.error));
+// 6. AI: OpenCode Zen anonim (gratis, tanpa key) — fallback bank bila jaringan gagal
+const ai2 = await emit(host, "quiz:generateFromTopic", { topic: "fotosintesis", count: 3 });
+ok("AI Zen/bank merespons", ai2.questions?.length > 0 && (ai2.engine?.startsWith("zen:") || ai2.engine === "bank"),
+  `engine=${ai2.engine ?? "?"} err=${ai2.error ?? "-"}`);
+if (ai2.engine?.startsWith("zen:")) console.log(`    ℹ️ mesin AI: ${ai2.engine} (tanpa API key!)`);
+
+// ── 7. Mode TIM: penugasan otomatis + teamTotals ──
+const tHost = io(URL), tA = io(URL), tB = io(URL);
+await Promise.all([tHost, tA, tB].map((s) => new Promise((r) => s.on("connect", r))));
+const tGame = await emit(tHost, "host:createCustom", {
+  title: "TimTest", teams: true,
+  questions: [{ type: "mc", question: "1+1?", options: ["1","2","3","4"], correctIndex: 1, timeLimit: 20 }],
+});
+let joinedPayload = null;
+tHost.on("game:playerJoined", (p) => { joinedPayload = p; });
+await emit(tA, "player:join", { pin: tGame.pin, name: "Tim-A" });
+await emit(tB, "player:join", { pin: tGame.pin, name: "Tim-B" });
+ok("tim dibagi otomatis Merah/Biru", joinedPayload?.players?.length === 2 &&
+  new Set(joinedPayload.players.map((x) => x.team)).size === 2, JSON.stringify(joinedPayload));
+const qP7 = waitEvent(tA, "game:question");
+tHost.emit("host:start", { pin: tGame.pin }, () => {});
+await qP7;
+const rP7 = waitEvent(tA, "game:ended");
+await emit(tA, "player:answer", { pin: tGame.pin, optionIndex: 1 });
+await emit(tB, "player:answer", { pin: tGame.pin, optionIndex: 0 }); // semua jawab → reveal otomatis
+await waitEvent(tA, "game:questionResults");
+tHost.emit("host:next", { pin: tGame.pin }); // soal terakhir → ended + teamTotals
+const ended7 = await Promise.race([rP7, delay(20000).then(() => null)]);
+ok("teamTotals dikirim di akhir", !!ended7 && Array.isArray(ended7.teamTotals) && ended7.teamTotals.length === 2,
+  JSON.stringify(ended7?.teamTotals ?? null));
+[tHost, tA, tB].forEach((s) => s.close());
+
+// ── 8. Mode EKONOMI: koin, beli ×2, efek penggandaan ──
+const eHost = io(URL), eP = io(URL);
+await Promise.all([eHost, eP].map((s) => new Promise((r) => s.on("connect", r))));
+const eGame = await emit(eHost, "host:createCustom", {
+  title: "Ekonomi Test",
+  economy: true,
+  questions: [
+    { type: "mc", question: "1+1?", options: ["1","2","3","4"], correctIndex: 1, timeLimit: 20 },
+    { type: "mc", question: "2+2?", options: ["3","4","5","6"], correctIndex: 1, timeLimit: 20 },
+    { type: "open", question: "Bebas", options: [], correctIndex: -1, timeLimit: 20 },
+    { type: "mc", question: "3+3?", options: ["5","6","7","8"], correctIndex: 1, timeLimit: 20 },
+  ],
+});
+let coinState = null;
+eP.on("game:coins", (c) => { coinState = c; });
+await emit(eP, "player:join", { pin: eGame.pin, name: "Koin" });
+const eQP = waitEvent(eP, "game:question");
+eHost.emit("host:start", { pin: eGame.pin }, () => {});
+await eQP;
+let eRP = waitEvent(eP, "game:questionResults");
+await emit(eP, "player:answer", { pin: eGame.pin, optionIndex: 1 }); // benar → dapat koin
+await eRP;
+await delay(50);
+ok("koin: 200 awal +100 setelah benar", coinState?.coins === 300, JSON.stringify(coinState));
+const bought = await emit(eP, "player:buyPowerUp", { pin: eGame.pin, type: "x2" });
+ok("beli power-up ×2 (300 koin)", bought.ok === true && coinState?.coins === 0, JSON.stringify([bought, coinState]));
+const poorBuy = await emit(eP, "player:buyPowerUp", { pin: eGame.pin, type: "shield" });
+ok("beli saat koin kurang ditolak", !!poorBuy.error);
+
+// Q2: benar dengan ×2 aktif → poin minimal 2000 (1000×2)
+eRP = waitEvent(eP, "game:questionResults");
+await nextQuestionEmit(eHost, eP, eGame.pin); // lanjut Q2
+await emit(eP, "player:answer", { pin: eGame.pin, optionIndex: 1 });
+const r8 = await eRP;
+await delay(50);
+const meEntry = r8.leaderboard.find((x) => x.name === "Koin");
+ok("×2 menggandakan poin (≥2000 di soal itu)", meEntry?.lastScore >= 2000, `lastScore=${meEntry?.lastScore}`);
+
+// Q3 open → partisipasi (tanpa koin), saldo tetap dari Q2
+eRP = waitEvent(eP, "game:questionResults");
+await nextQuestionEmit(eHost, eP, eGame.pin);
+await emit(eP, "player:openAnswer", { pin: eGame.pin, text: "apa saja" });
+await eRP;
+await delay(50);
+ok("saldo koin konsisten setelah Q3", coinState?.coins === 100, JSON.stringify(coinState));
+
+// selesaikan game (Q4)
+eRP = waitEvent(eP, "game:questionResults");
+await nextQuestionEmit(eHost, eP, eGame.pin);
+await emit(eP, "player:answer", { pin: eGame.pin, optionIndex: 1 });
+await eRP;
+[eHost, eP].forEach((s) => s.close());
+
+// ── 9. Impor teks → AI (Zen anonim / fallback Ollama) ──
+const imp = await emit(host, "quiz:generateFromText", {
+  text: "Fotosintesis adalah proses pembuatan makanan pada tumbuhan hijau yang memiliki klorofil. Proses ini membutuhkan sinar matahari, air, dan karbon dioksida, lalu menghasilkan glukosa serta oksigen. Fotosintesis terjadi di kloroplas dan sangat penting bagi kehidupan di bumi karena menjadi sumber oksigen bebas.",
+  count: 3,
+});
+ok("impor teks → soal AI", imp.questions?.length > 0 && (imp.engine?.startsWith("zen:") || imp.engine?.startsWith("ollama:")),
+  `engine=${imp.engine ?? "?"} err=${imp.error ?? "-"}`);
+if (imp.questions?.length) console.log(`    ℹ️ contoh soal: ${imp.questions[0].question?.slice(0, 80)}…`);
 
 console.log(`\n═══ HASIL: ${passed} lulus, ${failed} gagal ═══`);
 process.exit(failed > 0 ? 1 : 0);
+
+function nextQuestionEmit(h, sock, pin) {
+  const qp = waitEvent(sock, "game:question");
+  h.emit("host:next", { pin });
+  return qp;
+}

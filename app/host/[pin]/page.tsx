@@ -8,7 +8,7 @@ import type { QuestionPayload, ResultsPayload, LBEntry } from "@/lib/types";
 import { playJoin, playStart, playEnd, playTick } from "@/lib/sounds";
 import { SiKuisLogoMark } from "@/components/icons";
 
-interface PlayerInfo { id: string; name: string; }
+interface PlayerInfo { id: string; name: string; team?: number }
 
 const AVATAR_COLORS = ["#EF4444","#F97316","#EAB308","#22C55E","#3B82F6","#8B5CF6","#EC4899","#14B8A6"];
 function avatarColor(name: string) {
@@ -51,6 +51,8 @@ export default function HostGamePage() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [startError, setStartError] = useState("");
   const [finalLB, setFinalLB] = useState<LBEntry[]>([]);
+  const [teamTotals, setTeamTotals] = useState<Array<{ team: number; name: string; score: number }> | null>(null);
+  const [opts, setOpts] = useState<{ teams: boolean; economy: boolean }>({ teams: false, economy: false });
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -60,6 +62,15 @@ export default function HostGamePage() {
     const onPlayerJoined = ({ players: p }: { players: PlayerInfo[] }) => {
       setPlayers(p);
       playJoin();
+    };
+    const onOptions = (o: { teams: boolean; economy: boolean }) => setOpts(o);
+
+    const onEnded = ({ leaderboard, teamTotals: tt }: { leaderboard: LBEntry[]; teamTotals?: Array<{ team: number; name: string; score: number }> }) => {
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      setFinalLB(leaderboard);
+      setTeamTotals(tt ?? null);
+      setPhase("ended");
+      playEnd();
     };
     const onPlayerLeft = ({ players: p }: { players: PlayerInfo[] }) => setPlayers(p);
 
@@ -88,16 +99,10 @@ export default function HostGamePage() {
       setResults(payload);
     };
 
-    const onEnded = ({ leaderboard }: { leaderboard: LBEntry[] }) => {
-      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-      setFinalLB(leaderboard);
-      setPhase("ended");
-      playEnd();
-    };
-
     const onHostLeft = () => router.replace("/");
 
     socket.on("game:playerJoined", onPlayerJoined);
+    socket.on("game:options", onOptions);
     socket.on("game:playerLeft", onPlayerLeft);
     socket.on("game:question", onQuestion);
     socket.on("game:answerCount", onAnswerCount);
@@ -107,6 +112,7 @@ export default function HostGamePage() {
 
     return () => {
       socket.off("game:playerJoined", onPlayerJoined);
+      socket.off("game:options", onOptions);
       socket.off("game:playerLeft", onPlayerLeft);
       socket.off("game:question", onQuestion);
       socket.off("game:answerCount", onAnswerCount);
@@ -126,6 +132,12 @@ export default function HostGamePage() {
       const r = res as { ok?: boolean; error?: string };
       if (r.error) setStartError(r.error);
     });
+  }
+
+  function toggleOpt(key: "teams" | "economy") {
+    const next = { ...opts, [key]: !opts[key] };
+    setOpts(next);
+    emit("host:setOptions", { pin, [key]: next[key] }, () => {});
   }
 
   // ── LOBBY ──────────────────────────────────────────────────────────────────────
@@ -191,6 +203,26 @@ export default function HostGamePage() {
           </div>
         </div>
 
+        {/* Mode toggles */}
+        <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 0 0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+          <button onClick={() => toggleOpt("teams")} className="btn" style={{
+            padding: "0.45rem 0.9rem", fontSize: "0.78rem", fontWeight: 800, borderRadius: 40,
+            background: opts.teams ? "#DC2626" : "var(--surface-2)",
+            color: opts.teams ? "#fff" : "var(--text-dim)",
+            border: `1.5px solid ${opts.teams ? "#DC2626" : "var(--border)"}`,
+          }}>
+            🚩 Mode Tim {opts.teams ? "· AKTIF" : ""}
+          </button>
+          <button onClick={() => toggleOpt("economy")} className="btn" style={{
+            padding: "0.45rem 0.9rem", fontSize: "0.78rem", fontWeight: 800, borderRadius: 40,
+            background: opts.economy ? "#CA8A04" : "var(--surface-2)",
+            color: opts.economy ? "#fff" : "var(--text-dim)",
+            border: `1.5px solid ${opts.economy ? "#CA8A04" : "var(--border)"}`,
+          }}>
+            🪙 Mode Koin & Power-Up {opts.economy ? "· AKTIF" : ""}
+          </button>
+        </div>
+
         {/* Players section */}
         <div style={{
           flex: 1, background: "var(--bg)",
@@ -254,12 +286,13 @@ export default function HostGamePage() {
                   }}>
                     <div style={{
                       width: 32, height: 32, borderRadius: 10, flexShrink: 0,
-                      background: `linear-gradient(135deg, ${avatarColor(p.name)}cc, ${avatarColor(p.name)})`,
+                      background: p.team === 0 ? "#DC2626" : p.team === 1 ? "#2563EB"
+                        : `linear-gradient(135deg, ${avatarColor(p.name)}cc, ${avatarColor(p.name)})`,
                       display: "flex", alignItems: "center", justifyContent: "center",
                       color: "#fff", fontSize: "0.8rem", fontWeight: 900,
                       boxShadow: `0 2px 8px ${avatarColor(p.name)}44`,
                     }}>
-                      {p.name[0].toUpperCase()}
+                      {p.team === 0 ? "🚩" : p.team === 1 ? "🚩" : p.name[0].toUpperCase()}
                     </div>
                     <span style={{ color: "var(--text)", fontWeight: 600, fontSize: "0.8rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                       {p.name}
@@ -509,22 +542,52 @@ export default function HostGamePage() {
             </div>
           </div>
         ) : isOpen && results.openAnswers && results.openAnswers.length > 0 ? (
-          <div className="px-4 py-3" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
-            <p className="t-label mb-2 text-center">{results.openAnswers.length} Jawaban Masuk</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "center" }}>
-              {results.openAnswers.map((ans, i) => (
-                <div key={i} className="a-popin" style={{
-                  animationDelay: `${i * 0.05}s`,
-                  background: "var(--surface)", border: "1.5px solid var(--border-hi)",
-                  borderRadius: 40, padding: "0.45rem 1rem",
-                  fontSize: "0.875rem", fontWeight: 600, color: "var(--text)",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-                }}>
-                  {ans}
+          (() => {
+            const STOP = new Set(["yang","dan","di","ke","dari","itu","ini","untuk","dengan","pada","adalah","saya","aku","karena","atau","juga","tidak","bisa","akan","para","kami","kita","mereka","ada","saat","oleh","agar","supaya","lebih","paling","sangat","tapi","tetapi","serta","the","of","and","to","in"]);
+            const freq = new Map<string, number>();
+            for (const ans of results.openAnswers) {
+              for (const w of ans.toLowerCase().split(/[^a-zà-ÿ0-9]+/)) {
+                if (w.length < 3 || STOP.has(w)) continue;
+                freq.set(w, (freq.get(w) ?? 0) + 1);
+              }
+            }
+            const words = [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 28);
+            const max = Math.max(...words.map(([, n]) => n), 1);
+            const wColors = ["#2563EB","#7C3AED","#DC2626","#CA8A04","#0D9488","#DB2777"];
+            return (
+              <div className="px-4 py-3" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
+                <div className="card" style={{ padding: "1.25rem 1.5rem" }}>
+                  <p className="t-label mb-2 text-center">☁️ Word Cloud — {results.openAnswers.length} jawaban</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem 0.8rem", justifyContent: "center", alignItems: "baseline" }}>
+                    {words.map(([w, n], i) => {
+                      const scale = Math.sqrt(n / max);
+                      return (
+                        <span key={w} title={`${n}× disebut`} className="a-popin" style={{
+                          fontSize: `${0.85 + scale * 1.6}rem`,
+                          fontWeight: n === max ? 900 : 600,
+                          color: wColors[i % wColors.length],
+                          opacity: 0.55 + scale * 0.45,
+                          animationDelay: `${i * 0.04}s`,
+                        }}>{w}</span>
+                      );
+                    })}
+                  </div>
+                  <details style={{ marginTop: "0.9rem" }}>
+                    <summary style={{ color: "var(--text-muted)", fontSize: "0.72rem", cursor: "pointer", fontWeight: 700 }}>Lihat semua jawaban mentah</summary>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.5rem" }}>
+                      {results.openAnswers.map((ans, i) => (
+                        <span key={i} style={{
+                          background: "var(--surface)", border: "1.5px solid var(--border-hi)",
+                          borderRadius: 40, padding: "0.25rem 0.75rem",
+                          fontSize: "0.78rem", fontWeight: 600, color: "var(--text)",
+                        }}>{ans}</span>
+                      ))}
+                    </div>
+                  </details>
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            );
+          })()
         ) : isRating ? (
           /* Rating: show star distribution + average */
           <div className="px-4" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
@@ -647,6 +710,22 @@ export default function HostGamePage() {
           <h2 className="t-h2 mb-1">🎉 Game Selesai!</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>Peringkat akhir</p>
         </div>
+
+        {teamTotals && teamTotals.length === 2 && (
+          <div className="row a-fadeup mb-5" style={{ gap: "0.75rem", width: "100%", maxWidth: 420 }}>
+            {teamTotals.map((t) => (
+              <div key={t.team} className="col" style={{
+                flex: 1, padding: "1rem 0.75rem", borderRadius: 16, textAlign: "center",
+                background: t.team === 0 ? "rgba(220,38,38,0.08)" : "rgba(37,99,235,0.08)",
+                border: `2px solid ${teamTotals[0].team === t.team ? "#F59E0B" : t.team === 0 ? "rgba(220,38,38,0.4)" : "rgba(37,99,235,0.4)"}`,
+              }}>
+                <p style={{ fontSize: "1.6rem", margin: 0 }}>{teamTotals[0].team === t.team ? "🏆" : "🚩"}</p>
+                <p style={{ fontWeight: 900, color: t.team === 0 ? "#DC2626" : "#2563EB", fontSize: "0.95rem", margin: "0.15rem 0" }}>Tim {t.name}</p>
+                <p style={{ fontWeight: 900, fontSize: "1.3rem", color: "var(--text)", margin: 0 }}>{t.score.toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {top3.length > 0 && (
           <div className="row items-end justify-center mb-6" style={{ gap: "0.75rem", width: "100%", maxWidth: 420 }}>

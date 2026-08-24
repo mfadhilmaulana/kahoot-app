@@ -86,6 +86,13 @@ export default function PlayPage() {
   const [myRank, setMyRank] = useState<number | null>(null);
   const [myLastScore, setMyLastScore] = useState(0);
   const [finalLB, setFinalLB] = useState<LBEntry[]>([]);
+  const [teamTotals, setTeamTotals] = useState<Array<{ team: number; name: string; score: number }> | null>(null);
+  const [myTeam, setMyTeam] = useState<number | undefined>(undefined);
+  const [gameOpts, setGameOpts] = useState<{ teams: boolean; economy: boolean }>({ teams: false, economy: false });
+  const [coins, setCoins] = useState(0);
+  const [puX2, setPuX2] = useState(false);
+  const [puShield, setPuShield] = useState(false);
+  const [shopMsg, setShopMsg] = useState("");
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -100,6 +107,10 @@ export default function PlayPage() {
     };
     const onPlayerJoined = ({ players }: { players: { id: string }[] }) => setPlayerCount(players.length);
     const onPlayerLeft = ({ players }: { players: { id: string }[] }) => setPlayerCount(players.length);
+    const onOptions = (o: { teams: boolean; economy: boolean }) => setGameOpts(o);
+    const onCoins = (c: { coins: number; x2: boolean; shield: boolean }) => {
+      setCoins(c.coins); setPuX2(c.x2); setPuShield(c.shield);
+    };
 
     const onQuestion = (payload: QuestionPayload) => {
       setQuestion(payload);
@@ -132,10 +143,11 @@ export default function PlayPage() {
     // hasil personal dari server (akurat untuk blank & reorder)
     const onMyResult = ({ correct }: { correct: boolean }) => setMyCorrect(correct);
 
-    const onEnded = ({ leaderboard }: { leaderboard: LBEntry[] }) => {
+    const onEnded = ({ leaderboard, teamTotals: tt }: { leaderboard: LBEntry[]; teamTotals?: Array<{ team: number; name: string; score: number }> }) => {
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
       setFinalLB(leaderboard);
-      const me = leaderboard.find((e) => e.id === socketIdRef.current);
+      setTeamTotals(tt ?? null);
+      const me = leaderboard.find((e) => e.id === (socket.id ?? ""));
       if (me) { setMyScore(me.score); setMyRank(me.rank); }
       setPhase("ended");
       playEnd();
@@ -148,6 +160,8 @@ export default function PlayPage() {
 
     socket.on("connect", onConnect);
     socket.on("game:playerJoined", onPlayerJoined);
+    socket.on("game:options", onOptions);
+    socket.on("game:coins", onCoins);
     socket.on("game:playerLeft", onPlayerLeft);
     socket.on("game:question", onQuestion);
     socket.on("game:questionResults", onResults);
@@ -158,6 +172,8 @@ export default function PlayPage() {
     return () => {
       socket.off("connect", onConnect);
       socket.off("game:playerJoined", onPlayerJoined);
+      socket.off("game:options", onOptions);
+      socket.off("game:coins", onCoins);
       socket.off("game:playerLeft", onPlayerLeft);
       socket.off("game:question", onQuestion);
       socket.off("game:questionResults", onResults);
@@ -190,12 +206,13 @@ export default function PlayPage() {
 
     function doJoin() {
       socket!.emit("player:join", { pin, name: cleanName },
-        (res: { ok?: boolean; error?: string; quizTitle?: string; totalQuestions?: number }) => {
+        (res: { ok?: boolean; error?: string; quizTitle?: string; totalQuestions?: number; team?: number }) => {
           if (res.error) { setJoinError(res.error); return; }
           setQuizTitle(res.quizTitle ?? "");
           setTotalQ(res.totalQuestions ?? 0);
           socketIdRef.current = socket!.id ?? "";
           setMyId(socket!.id ?? "");
+          setMyTeam(res.team);
           setPhase("lobby");
         }
       );
@@ -219,6 +236,14 @@ export default function PlayPage() {
     setChosen(-2);
     setPhase("answered");
     socketRef.current?.emit("player:openAnswer", { pin, text }, () => {});
+  }
+
+  function buyPowerUp(type: "x2" | "shield") {
+    setShopMsg("");
+    socketRef.current?.emit("player:buyPowerUp", { pin, type }, (res: { ok?: boolean; error?: string }) => {
+      setShopMsg(res.ok ? "✓ Terpasang untuk soal berikutnya!" : `⚠️ ${res.error ?? "Gagal"}`);
+      setTimeout(() => setShopMsg(""), 2500);
+    });
   }
 
   // ── JOIN ──────────────────────────────────────────────────────────────────────
@@ -287,6 +312,11 @@ export default function PlayPage() {
           </div>
           <h2 className="t-h2 mb-1">{name}</h2>
           <p style={{ color: "var(--accent)", fontWeight: 700, marginBottom: "0.3rem" }}>Berhasil bergabung!</p>
+          {myTeam !== undefined && (
+            <p style={{ color: myTeam === 0 ? "#DC2626" : "#2563EB", fontWeight: 800, marginBottom: "0.3rem" }}>
+              🚩 Kamu di Tim {myTeam === 0 ? "Merah" : "Biru"}
+            </p>
+          )}
           {quizTitle && (
             <p style={{ color: "var(--text-dim)", fontSize: "0.875rem", marginBottom: "0.25rem" }}>
               Kuis: <span style={{ color: "var(--text)", fontWeight: 600 }}>{quizTitle}</span>
@@ -324,13 +354,15 @@ export default function PlayPage() {
     const isReorderQ = question.type === "reorder";
     const mcColors = ["#E21B3C","#1368CE","#26890C","#D89E00"];
 
-    function submitReorder(picks: string[]) {
-      if (chosen !== null || !question) return;
-      const order = picks.map((s) => question.options.indexOf(s));
-      setChosen(-3);
-      setPhase("answered");
-      socketRef.current?.emit("player:answer", { pin, optionIndex: -3, order }, () => {});
-    }
+  function submitReorder(picks: string[]) {
+    if (chosen !== null || !question) return;
+    const order = picks.map((s) => question.options.indexOf(s));
+    setChosen(-3);
+    setPhase("answered");
+    socketRef.current?.emit("player:answer", { pin, optionIndex: -3, order }, () => {});
+  }
+
+
 
     return (
       <main className="min-h-screen col" style={{ background: "var(--bg)" }}>
@@ -346,6 +378,11 @@ export default function PlayPage() {
           {(isPoll || isRating) && <span className="badge" style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>{isRating ? "⭐ Rating" : "Pendapat"}</span>}
           {(isOpen || isBlank) && <span className="badge" style={{ background: "rgba(245,158,11,0.12)", color: "#D97706" }}>{isBlank ? "📝 Isi Jawaban" : "✏️ Jawaban Terbuka"}</span>}
           {isReorderQ && <span className="badge" style={{ background: "rgba(124,58,237,0.12)", color: "#7C3AED" }}>🔢 Urutkan</span>}
+          {gameOpts.economy && (
+            <span className="badge" style={{ background: "rgba(202,138,4,0.15)", color: "#CA8A04", fontWeight: 900 }}>
+              🪙 {coins}{puX2 ? " · ×2 siap" : ""}{puShield ? " · 🛡️ siap" : ""}
+            </span>
+          )}
         </div>
 
         {/* Question */}
@@ -590,6 +627,22 @@ export default function PlayPage() {
           </div>
         )}
 
+        {/* Toko power-up (mode koin) */}
+        {gameOpts.economy && (
+          <div className="card a-fadeup d-2 mb-3" style={{ padding: "0.8rem 1rem", textAlign: "left", maxWidth: 380, width: "100%", position: "relative", zIndex: 1, borderColor: "rgba(202,138,4,0.4)" }}>
+            <p className="t-label mb-2">🪙 {coins.toLocaleString()} koin — toko power-up</p>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button onClick={() => buyPowerUp("x2")} disabled={puX2 || coins < 300} className="btn btn-surface" style={{ flex: 1, fontSize: "0.72rem", padding: "0.45rem 0.3rem", opacity: puX2 || coins < 300 ? 0.5 : 1 }}>
+                ✌️ ×2 Poin<br /><span style={{ fontSize: "0.62rem", color: "#CA8A04" }}>300 🪙 {puX2 ? "· aktif" : ""}</span>
+              </button>
+              <button onClick={() => buyPowerUp("shield")} disabled={puShield || coins < 200} className="btn btn-surface" style={{ flex: 1, fontSize: "0.72rem", padding: "0.45rem 0.3rem", opacity: puShield || coins < 200 ? 0.5 : 1 }}>
+                🛡️ Perisai Streak<br /><span style={{ fontSize: "0.62rem", color: "#CA8A04" }}>200 🪙 {puShield ? "· aktif" : ""}</span>
+              </button>
+            </div>
+            {shopMsg && <p style={{ marginTop: "0.45rem", fontSize: "0.7rem", fontWeight: 700, color: shopMsg.startsWith("✓") ? "#16A34A" : "#D97706" }}>{shopMsg}</p>}
+          </div>
+        )}
+
         {/* Waiting indicator */}
         <div className="card row center a-fadeup d-3" style={{ padding: "0.75rem 1.25rem", gap: "0.65rem" }}>
           <div className="row" style={{ gap: "0.35rem" }}>
@@ -631,6 +684,23 @@ export default function PlayPage() {
             Peringkat #{rank} · {myScore.toLocaleString()} poin
           </p>
         </div>
+
+        {teamTotals && teamTotals.length === 2 && (
+          <div className="row a-fadeup d-1 mb-5" style={{ gap: "0.6rem", width: "100%", maxWidth: 360 }}>
+            {teamTotals.map((t) => (
+              <div key={t.team} className="col" style={{
+                flex: 1, padding: "0.8rem 0.5rem", borderRadius: 14, textAlign: "center",
+                background: t.team === 0 ? "rgba(220,38,38,0.08)" : "rgba(37,99,235,0.08)",
+                border: `2px solid ${teamTotals[0].team === t.team ? "#F59E0B" : "var(--border)"}`,
+              }}>
+                <p style={{ fontSize: "1.4rem", margin: 0 }}>{teamTotals[0].team === t.team ? "🏆" : "🚩"}</p>
+                <p style={{ fontWeight: 900, fontSize: "0.8rem", color: t.team === 0 ? "#DC2626" : "#2563EB", margin: "0.1rem 0" }}>Tim {t.name}</p>
+                <p style={{ fontWeight: 900, color: "var(--text)", margin: 0 }}>{t.score.toLocaleString()}</p>
+                {myTeam === t.team && <p style={{ fontSize: "0.62rem", color: "var(--text-muted)", fontWeight: 700, margin: 0 }}>(tim kamu)</p>}
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="col mb-6" style={{ gap: "0.4rem", width: "100%", maxWidth: 360 }}>
           <p className="t-label text-center mb-2">Peringkat Akhir</p>

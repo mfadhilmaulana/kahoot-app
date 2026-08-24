@@ -46,6 +46,10 @@ export interface Player {
   streak: number;
   lastScore: number;
   correctCount: number;
+  coins: number;      // mode ekonomi
+  team: number;       // -1 = tanpa tim; 0 Merah, 1 Biru
+  x2Next: boolean;    // power-up: gandakan poin soal berikutnya
+  shieldNext: boolean;// power-up: pertahankan streak saat salah
 }
 
 export interface LBEntry {
@@ -54,7 +58,10 @@ export interface LBEntry {
   score: number;
   lastScore: number;
   id: string;
+  team?: number;
 }
+
+export interface GameOptions { teams: boolean; economy: boolean; }
 
 export interface QuestionPayload {
   index: number;
@@ -136,8 +143,9 @@ export interface GameReport {
   title: string;
   endedAt: number;
   playerCount: number;
-  players: Array<{ rank: number; name: string; score: number; correctCount: number }>;
+  players: Array<{ rank: number; name: string; score: number; correctCount: number; team?: number }>;
   questions: ReportQuestionStat[];
+  teamTotals?: Array<{ team: number; name: string; score: number }>;
 }
 
 // ── Review Cerdas (spaced repetition / Leitner) ───────────────────────────────

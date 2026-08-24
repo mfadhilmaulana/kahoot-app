@@ -5,6 +5,7 @@ import { join } from "path";
 import next from "next";
 import { Server } from "socket.io";
 import { v4 as uuidv4 } from "uuid";
+import { PDFParse } from "pdf-parse";
 import type { Quiz, Question, Player, LBEntry, QuestionType, Assignment, AssignmentResult, GameReport, ReportQuestionStat } from "./lib/types";
 import {
   getCustomQuizzes, saveCustomQuiz,
@@ -30,6 +31,8 @@ interface Game {
   questionTimer: ReturnType<typeof setTimeout> | null;
   currentShuffled?: string[];       // urutan tampil soal reorder
   questionStats: ReportQuestionStat[];
+  teams: boolean;                   // mode tim (Merah vs Biru)
+  economy: boolean;                 // mode koin & power-up
 }
 
 const quizzes = new Map<string, Quiz>();
@@ -678,23 +681,31 @@ function calcScore(type: QuestionType, timeMs: number, timeLimit: number): numbe
 function getLeaderboard(game: Game): LBEntry[] {
   return Array.from(game.players.values())
     .sort((a, b) => b.score - a.score)
-    .map((p, i) => ({ rank: i + 1, name: p.name, score: p.score, lastScore: p.lastScore, id: p.id }));
+    .map((p, i) => ({ rank: i + 1, name: p.name, score: p.score, lastScore: p.lastScore, id: p.id, team: game.teams ? p.team : undefined }));
+}
+
+const TEAM_NAMES = ["Merah", "Biru"];
+function isScoredType(t: QuestionType): boolean {
+  return t === "mc" || t === "tf" || t === "blank" || t === "reorder";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AI generator — OpenCode Zen (model gratis) → Ollama lokal → bank soal
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── 1) OpenCode Zen: https://opencode.ai/zen/v1 — model "-free" tanpa biaya.
-//     API key gratis: daftar di https://opencode.ai/auth lalu simpan key ke
-//     file data/opencode.key ATAU set env OPENCODE_API_KEY.
+// ── 1) OpenCode Zen: https://opencode.ai/zen/v1 — model gratis bisa dipakai
+//     ANONIM (tanpa API key). Jika user menaruh key di data/opencode.key atau
+//     env OPENCODE_API_KEY, key ikut dikirim (membuka model lebih banyak).
 const ZEN_URL = "https://opencode.ai/zen/v1";
+// urutan preferensi — model terverifikasi gratis-anonim di depan
 const ZEN_FREE_MODELS = [
-  "big-pickle", "x-preview-f-free", "mimo-v2.5-free", "hy3-free",
-  "nemotron-3-ultra-free", "deepseek-v4-flash-free",
+  "mimo-v2.5-free", "deepseek-v4-flash-free", "nemotron-3.5-lightning-free",
+  "laguna-s-2.1-free", "x-preview-f-free", "nemotron-3-ultra-free",
+  "hy3-free", "big-pickle",
 ];
 let zenKeyCache: string | null | undefined;
-let zenModelCache: string | null | undefined;
+let zenModelIdx = 0;        // rotasi model bila upstream sedang error
+let zenLogged = false;
 
 function getZenKey(): string | null {
   if (zenKeyCache !== undefined) return zenKeyCache;
@@ -711,26 +722,36 @@ function getZenKey(): string | null {
   return null;
 }
 
-async function detectZenFreeModel(): Promise<string | null> {
-  if (zenModelCache !== undefined) return zenModelCache;
+function zenHeaders(): Record<string, string> {
+  const h: Record<string, string> = { "content-type": "application/json" };
   const key = getZenKey();
-  if (!key) { zenModelCache = null; return null; }
+  if (key) h.authorization = `Bearer ${key}`;
+  return h;
+}
+
+// Daftar model gratis yang sedang tersedia (urutan preferensi)
+async function getZenCandidates(): Promise<string[]> {
   try {
-    const r = await fetch(`${ZEN_URL}/models`, {
-      headers: { authorization: `Bearer ${key}` },
-      signal: AbortSignal.timeout(8000),
-    });
+    const r = await fetch(`${ZEN_URL}/models`, { headers: zenHeaders(), signal: AbortSignal.timeout(8000) });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = (await r.json()) as { data?: Array<{ id: string }> };
-    const ids = (j.data ?? []).map((m) => m.id);
-    zenModelCache = ZEN_FREE_MODELS.find((m) => ids.includes(m))
-      ?? ids.find((id) => id.endsWith("-free")) ?? null;
-    if (zenModelCache) console.log(`  🤖  OpenCode Zen aktif, model gratis: ${zenModelCache}`);
+    const ids = new Set((j.data ?? []).map((m) => m.id));
+    const avail = ZEN_FREE_MODELS.filter((m) => ids.has(m));
+    if (avail.length) {
+      if (!zenLogged) { console.log(`  🤖  OpenCode Zen aktif (gratis, anonim): ${avail.join(", ")}`); zenLogged = true; }
+      return avail;
+    }
+    return [...ids].filter((id) => id.endsWith("-free"));
   } catch (e) {
     console.error("[ai] OpenCode Zen tidak tersedia:", e);
-    zenModelCache = null;
+    return [];
   }
-  return zenModelCache;
+}
+
+async function nextZenModel(): Promise<string | null> {
+  const avail = await getZenCandidates();
+  if (!avail.length) return null;
+  return avail[zenModelIdx++ % avail.length];
 }
 
 function extractJsonBlock(text: string): unknown | null {
@@ -762,31 +783,6 @@ function draftsFromContent(content: string | undefined): AiDraft[] | null {
            Number.isInteger(d.correctIndex) && d.correctIndex >= 0 && d.correctIndex < d.options.length
   );
   return drafts.length ? drafts : null;
-}
-
-async function zenGenerateQuestions(topic: string, count: number): Promise<{ drafts: AiDraft[]; model: string } | null> {
-  const model = await detectZenFreeModel();
-  if (!model) return null;
-  const key = getZenKey()!;
-  try {
-    const res = await fetch(`${ZEN_URL}/chat/completions`, {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: QUESTION_PROMPT(topic, count) }],
-        temperature: 0.7,
-      }),
-      signal: AbortSignal.timeout(180_000),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const drafts = draftsFromContent(data.choices?.[0]?.message?.content);
-    return drafts ? { drafts: drafts.slice(0, count), model } : null;
-  } catch (e) {
-    console.error("[ai] pemanggilan OpenCode Zen gagal:", e);
-    return null;
-  }
 }
 
 // ── 2) Ollama lokal (fallback jika Zen tidak dikonfigurasi)
@@ -832,6 +828,71 @@ async function ollamaGenerateQuestions(topic: string, count: number): Promise<{ 
     return null;
   }
 }
+void ollamaGenerateQuestions; // dipertahankan utk pemakaian manual/debug
+
+// Prompt berbasis teks bahan bacaan (untuk impor PDF/tempel teks)
+const PASSAGE_PROMPT = (passage: string, count: number) => [
+  "Buat soal kuis pilihan ganda berbahasa Indonesia BERDASARKAN teks berikut.",
+  `Jumlah soal: ${count}.`,
+  'Balas HANYA dengan JSON valid berbentuk {"questions":[...]}.',
+  'Setiap soal berbentuk: {"question":"teks soal","options":["A","B","C","D"],"correctIndex":0,"explanation":"penjelasan singkat"}',
+  "Semua jawaban HARUS dapat ditemukan dalam teks. Jangan mengarang fakta di luar teks.",
+  "--- TEKS BAHAN ---",
+  passage,
+].join("\n");
+
+function draftsToQuestions(drafts: AiDraft[], source: string): Array<Record<string, unknown>> {
+  return drafts.map((d) => ({
+    id: uuidv4(), type: "mc" as QuestionType,
+    question: d.question, options: d.options, correctIndex: d.correctIndex,
+    timeLimit: 20, category: "AI", explanation: d.explanation ?? "",
+    sourceQuiz: source,
+  }));
+}
+
+// Rantai AI: OpenCode Zen (anonim/gratis, rotasi model bila gagal) → Ollama lokal
+async function aiChainFromPrompt(prompt: string, count: number): Promise<{ drafts: AiDraft[]; engine: string } | null> {
+  // hingga 3 percobaan dengan model Zen berbeda (upstream kadang flaky)
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const model = await nextZenModel();
+    if (!model) break;
+    try {
+      const res = await fetch(`${ZEN_URL}/chat/completions`, {
+        method: "POST",
+        headers: zenHeaders(),
+        body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }], temperature: 0.7 }),
+        signal: AbortSignal.timeout(180_000),
+      });
+      if (!res.ok) {
+        console.error(`[ai] Zen ${model} HTTP ${res.status} — coba model lain…`);
+        continue;
+      }
+      const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+      const drafts = draftsFromContent(data.choices?.[0]?.message?.content);
+      if (drafts?.length) return { drafts, engine: `zen:${model}` };
+      console.error(`[ai] Zen ${model} menghasilkan output tak valid — coba model lain…`);
+    } catch (e) {
+      console.error(`[ai] Zen ${model} error:`, e);
+    }
+  }
+  const om = await detectOllamaModel();
+  if (om) {
+    try {
+      const res = await fetch(`${OLLAMA_URL}/api/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ model: om, messages: [{ role: "user", content: prompt }], stream: false, format: "json" }),
+        signal: AbortSignal.timeout(180_000),
+      });
+      const data = (await res.json()) as { message?: { content?: string } };
+      const drafts = draftsFromContent(data.message?.content);
+      if (drafts?.length) return { drafts, engine: `ollama:${om}` };
+    } catch (e) {
+      console.error("[ai] Ollama error:", e);
+    }
+  }
+  return null;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Socket server
@@ -861,37 +922,17 @@ app.prepare().then(() => {
       });
     });
 
-    // AI: generate questions — OpenCode Zen (gratis) → Ollama lokal → bank soal
+    // AI: generate questions — OpenCode Zen (gratis, anonim) → Ollama → bank soal
     socket.on("quiz:generateFromTopic", async ({ topic, count = 10 }: { topic: string; count?: number }, cb: (r: object) => void) => {
       if (!topic?.trim()) return cb({ error: "Topik tidak boleh kosong" });
       const cleanTopic = topic.trim();
 
-      // 1) OpenCode Zen — model gratis
-      const zen = await zenGenerateQuestions(cleanTopic, count).catch(() => null);
-      if (zen?.drafts.length) {
-        return cb({
-          engine: `zen:${zen.model}`,
-          questions: zen.drafts.map((d) => ({
-            id: uuidv4(), type: "mc" as QuestionType,
-            question: d.question, options: d.options, correctIndex: d.correctIndex,
-            timeLimit: 20, category: "AI", explanation: d.explanation ?? "",
-            sourceQuiz: `OpenCode Zen (${zen.model})`,
-          })),
-        });
-      }
-
-      // 2) Ollama lokal
-      const ai = await ollamaGenerateQuestions(cleanTopic, count).catch(() => null);
+      // 1+2) Rantai AI dengan rotasi model Zen lalu Ollama
+      const ai = await aiChainFromPrompt(QUESTION_PROMPT(cleanTopic, count), count).catch(() => null);
       if (ai?.drafts.length) {
-        return cb({
-          engine: `ollama:${ai.model}`,
-          questions: ai.drafts.map((d) => ({
-            id: uuidv4(), type: "mc" as QuestionType,
-            question: d.question, options: d.options, correctIndex: d.correctIndex,
-            timeLimit: 20, category: "AI", explanation: d.explanation ?? "",
-            sourceQuiz: `AI (${ai.model})`,
-          })),
-        });
+        const src = ai.engine.startsWith("zen:")
+          ? `OpenCode Zen (${ai.engine.split(":")[1]})` : `AI (${ai.engine.split(":")[1]})`;
+        return cb({ engine: ai.engine, questions: draftsToQuestions(ai.drafts, src) });
       }
 
       // 3) Fallback: pencarian kata kunci di bank soal internal
@@ -911,7 +952,7 @@ app.prepare().then(() => {
       }
       scored.sort((a, b) => b.score - a.score);
       const top = scored.slice(0, count);
-      if (top.length === 0) return cb({ error: "Tidak ada yang cocok. (AI belum aktif — simpan API key gratis OpenCode Zen di data/opencode.key untuk generator sungguhan.) Coba kata kunci lain." });
+      if (top.length === 0) return cb({ error: "Tidak ada yang cocok. Coba kata kunci lain." });
       cb({
         engine: "bank",
         questions: top.map(({ q, quizTitle }) => ({
@@ -920,6 +961,34 @@ app.prepare().then(() => {
           category: q.category, explanation: q.explanation, sourceQuiz: quizTitle,
         })),
       });
+    });
+
+    // Impor: buat soal dari teks bahan (AI gratis Zen → Ollama)
+    socket.on("quiz:generateFromText", async ({ text, count = 8 }: { text: string; count?: number }, cb: (r: object) => void) => {
+      const clean = text?.trim() ?? "";
+      if (clean.length < 60) return cb({ error: "Teks terlalu pendek — tempel minimal beberapa paragraf materi." });
+      const ai = await aiChainFromPrompt(PASSAGE_PROMPT(clean.slice(0, 8000), count), count).catch(() => null);
+      if (!ai) return cb({ error: "AI sedang tidak tersedia. Coba lagi sebentar." });
+      cb({ engine: ai.engine, questions: draftsToQuestions(ai.drafts, `AI impor teks (${ai.engine})`) });
+    });
+
+    // Impor: ekstrak PDF → buat soal dengan AI
+    socket.on("quiz:importPdf", async ({ b64, count = 8 }: { b64: string; count?: number }, cb: (r: object) => void) => {
+      try {
+        if (!b64 || b64.length > 14_000_000) return cb({ error: "File terlalu besar / tidak valid (maks ~10 MB)." });
+        const buf = Buffer.from(b64.replace(/^data:[^;]+;base64,/, ""), "base64");
+        const p = new PDFParse({ data: new Uint8Array(buf) });
+        const pdf = await p.getText();
+        await p.destroy();
+        const text = (pdf.text || "").replace(/\s+/g, " ").trim().slice(0, 8000);
+        if (text.length < 60) return cb({ error: "Teks PDF tidak terbaca / terlalu pendek. PDF hasil scan tidak didukung." });
+        const ai = await aiChainFromPrompt(PASSAGE_PROMPT(text, count), count).catch(() => null);
+        if (!ai) return cb({ error: "AI sedang tidak tersedia. Coba lagi sebentar." });
+        cb({ engine: ai.engine, questions: draftsToQuestions(ai.drafts, `AI impor PDF (${ai.engine})`), chars: text.length });
+      } catch (e) {
+        console.error("[pdf] gagal memproses:", e);
+        cb({ error: "Gagal membaca PDF. Pastikan file PDF valid dan tidak terkunci password." });
+      }
     });
 
     // list quizzes
@@ -938,18 +1007,20 @@ app.prepare().then(() => {
     });
 
     // host: start with existing quiz
-    socket.on("host:create", ({ quizId }: { quizId: string }, cb: (r: object) => void) => {
-      const quiz = quizzes.get(quizId);
-      if (!quiz) return cb({ error: "Kuis tidak ditemukan" });
-      const pin = makeGame(quiz, socket.id);
-      socket.join(`game:${pin}`);
-      socket.data.pin = pin; socket.data.isHost = true;
-      cb({ pin, quizTitle: quiz.title, totalQuestions: quiz.questions.length, description: quiz.description });
-    });
+    socket.on("host:create",
+      ({ quizId, teams, economy }: { quizId: string; teams?: boolean; economy?: boolean }, cb: (r: object) => void) => {
+        const quiz = quizzes.get(quizId);
+        if (!quiz) return cb({ error: "Kuis tidak ditemukan" });
+        const pin = makeGame(quiz, socket.id, { teams, economy });
+        socket.join(`game:${pin}`);
+        socket.data.pin = pin; socket.data.isHost = true;
+        cb({ pin, quizTitle: quiz.title, totalQuestions: quiz.questions.length, description: quiz.description });
+      }
+    );
 
     // host: custom quiz
     socket.on("host:createCustom",
-      ({ title, questions }: { title: string; questions: Omit<Question, "id">[] }, cb: (r: object) => void) => {
+      ({ title, questions, teams, economy }: { title: string; questions: Omit<Question, "id">[]; teams?: boolean; economy?: boolean }, cb: (r: object) => void) => {
         if (!title || !questions?.length) return cb({ error: "Data tidak valid" });
         const quiz: Quiz = {
           id: uuidv4(), title, description: "Kuis kustom",
@@ -959,7 +1030,7 @@ app.prepare().then(() => {
         };
         quizzes.set(quiz.id, quiz);
         saveCustomQuiz(quiz);
-        const pin = makeGame(quiz, socket.id);
+        const pin = makeGame(quiz, socket.id, { teams, economy });
         socket.join(`game:${pin}`);
         socket.data.pin = pin; socket.data.isHost = true;
         cb({ pin, quizTitle: quiz.title, totalQuestions: quiz.questions.length });
@@ -977,13 +1048,20 @@ app.prepare().then(() => {
         if ([...game.players.values()].some((p) => p.name === cleanName))
                                        return cb({ error: "Nama sudah dipakai. Pilih nama lain." });
 
-        const player: Player = { id: socket.id, name: cleanName, score: 0, streak: 0, lastScore: 0, correctCount: 0 };
+        const team = game.teams
+          ? (Array.from(game.players.values()).filter((p) => p.team === 0).length <=
+             Array.from(game.players.values()).filter((p) => p.team === 1).length ? 0 : 1)
+          : -1;
+        // uang saku awal agar power-up langsung terasa
+        const STARTING_COINS = 200;
+        const player: Player = { id: socket.id, name: cleanName, score: 0, streak: 0, lastScore: 0, correctCount: 0, coins: game.economy ? STARTING_COINS : 0, team, x2Next: false, shieldNext: false };
         game.players.set(socket.id, player);
         socket.join(`game:${pin}`);
         socket.data.pin = pin; socket.data.isPlayer = true;
 
         io.to(`game:${pin}`).emit("game:playerJoined", { players: playerList(game) });
-        cb({ ok: true, quizTitle: game.quiz.title, totalQuestions: game.quiz.questions.length });
+        io.to(socket.id).emit("game:coins", { coins: player.coins, x2: false, shield: false });
+        cb({ ok: true, quizTitle: game.quiz.title, totalQuestions: game.quiz.questions.length, team: game.teams ? team : undefined });
       }
     );
 
@@ -1165,6 +1243,41 @@ app.prepare().then(() => {
 
     socket.on("report:list", (_data: unknown, cb: (r: object[]) => void) => cb(listReports()));
 
+    // ── Opsi game (host, sebelum mulai) ───────────────────────────────────────
+    socket.on("host:setOptions",
+      ({ pin, teams, economy }: { pin: string; teams?: boolean; economy?: boolean }, cb: (r: object) => void) => {
+        const game = games.get(pin);
+        if (!game || game.hostSocketId !== socket.id) return cb({ error: "Unauthorized" });
+        if (game.state !== "lobby") return cb({ error: "Opsi hanya bisa diubah di lobby." });
+        if (typeof teams === "boolean") game.teams = teams;
+        if (typeof economy === "boolean") game.economy = economy;
+        io.to(`game:${pin}`).emit("game:options", { teams: game.teams, economy: game.economy });
+        io.to(`game:${pin}`).emit("game:playerJoined", { players: playerList(game) });
+        cb({ ok: true, teams: game.teams, economy: game.economy });
+      }
+    );
+
+    // ── Power-up (mode ekonomi) ───────────────────────────────────────────────
+    socket.on("player:buyPowerUp",
+      ({ pin, type }: { pin: string; type: string }, cb: (r: object) => void) => {
+        const game = games.get(pin);
+        if (!game || !game.economy) return cb({ error: "Mode koin tidak aktif." });
+        if (game.state !== "review") return cb({ error: "Belanja hanya antara soal." });
+        const p = game.players.get(socket.id);
+        if (!p) return cb({ error: "Bukan pemain game ini." });
+        const COST = { x2: 300, shield: 200 } as Record<string, number>;
+        const cost = COST[type];
+        if (!cost) return cb({ error: "Power-up tidak dikenal." });
+        if (type === "x2" && p.x2Next) return cb({ error: "×2 sudah aktif." });
+        if (type === "shield" && p.shieldNext) return cb({ error: "Perisai sudah aktif." });
+        if (p.coins < cost) return cb({ error: `Koin kurang (butuh ${cost}).` });
+        p.coins -= cost;
+        if (type === "x2") p.x2Next = true; else p.shieldNext = true;
+        io.to(socket.id).emit("game:coins", { coins: p.coins, x2: p.x2Next, shield: p.shieldNext });
+        cb({ ok: true, coins: p.coins });
+      }
+    );
+
     // disconnect
     socket.on("disconnect", () => {
       const pin = socket.data.pin as string | undefined;
@@ -1187,7 +1300,7 @@ app.prepare().then(() => {
   });
 
   // ── Game flow helpers ────────────────────────────────────────────────────────
-  function makeGame(quiz: Quiz, hostId: string): string {
+  function makeGame(quiz: Quiz, hostId: string, opts?: { teams?: boolean; economy?: boolean }): string {
     let pin = generatePin();
     while (games.has(pin)) pin = generatePin();
     games.set(pin, {
@@ -1196,12 +1309,16 @@ app.prepare().then(() => {
       currentQuestionIndex: -1, questionStartTime: 0,
       answers: new Map(), openAnswers: new Map(),
       questionTimer: null, questionStats: [],
+      teams: !!opts?.teams, economy: !!opts?.economy,
     });
     return pin;
   }
 
   function playerList(game: Game) {
-    return [...game.players.values()].map((p) => ({ id: p.id, name: p.name }));
+    return [...game.players.values()].map((p) => ({
+      id: p.id, name: p.name,
+      team: game.teams ? p.team : undefined,
+    }));
   }
 
   function clearTimer(game: Game) {
@@ -1260,17 +1377,33 @@ app.prepare().then(() => {
     });
 
     // Award scores
+    const scoredQ = isScoredType(q.type);
     correct.forEach((pid) => {
       const p = game.players.get(pid); const a = game.answers.get(pid);
       if (!p || !a) return;
       p.streak++;
       p.correctCount++;
       const streakBonus = (q.type === "mc" || q.type === "tf" || q.type === "blank") ? Math.min(p.streak - 1, 5) * 50 : 0;
-      const earned = calcScore(q.type, a.timeMs, q.timeLimit) + streakBonus;
+      let earned = calcScore(q.type, a.timeMs, q.timeLimit) + streakBonus;
+      if (game.economy && scoredQ) {
+        p.coins += 100;
+        if (p.x2Next) { earned *= 2; p.x2Next = false; }
+      }
       p.lastScore = earned; p.score += earned;
     });
-    wrong.forEach((pid) => { const p = game.players.get(pid); if (p) { p.streak = 0; p.lastScore = 0; } });
-    game.players.forEach((p) => { if (!game.answers.has(p.id)) { p.streak = 0; p.lastScore = 0; } });
+    wrong.forEach((pid) => {
+      const p = game.players.get(pid); if (!p) return;
+      if (scoredQ && game.economy && p.shieldNext) {
+        p.shieldNext = false; // perisai: pertahankan streak
+      } else {
+        p.streak = 0;
+      }
+      p.lastScore = 0;
+    });
+    game.players.forEach((p) => {
+      if (!game.answers.has(p.id)) { p.streak = 0; p.lastScore = 0; }
+      io.to(p.id).emit("game:coins", { coins: p.coins, x2: p.x2Next, shield: p.shieldNext });
+    });
 
     // kirim hasil personal (akurat untuk blank & reorder)
     game.answers.forEach((_ans, pid) => {
@@ -1313,16 +1446,26 @@ app.prepare().then(() => {
   function endGame(game: Game, io: Server, pin: string) {
     game.state = "ended";
     const lb = getLeaderboard(game);
+    // Total skor tim (mode tim)
+    let teamTotals;
+    if (game.teams) {
+      teamTotals = [0, 1].map((t) => ({
+        team: t,
+        name: TEAM_NAMES[t],
+        score: [...game.players.values()].filter((p) => p.team === t).reduce((s, p) => s + p.score, 0),
+      })).sort((a, b) => b.score - a.score);
+    }
     // Simpan laporan permanen (bertahan setelah restart)
     saveReport({
       pin, quizId: game.quiz.id, title: game.quiz.title,
       endedAt: Date.now(), playerCount: lb.length,
       players: [...game.players.values()]
         .sort((a, b) => b.score - a.score)
-        .map((p, i) => ({ rank: i + 1, name: p.name, score: p.score, correctCount: p.correctCount })),
+        .map((p, i) => ({ rank: i + 1, name: p.name, score: p.score, correctCount: p.correctCount, team: game.teams ? p.team : undefined })),
       questions: game.questionStats,
+      teamTotals,
     });
-    io.to(`game:${pin}`).emit("game:ended", { leaderboard: lb });
+    io.to(`game:${pin}`).emit("game:ended", { leaderboard: lb, teamTotals });
     setTimeout(() => games.delete(pin), 5 * 60 * 1000);
   }
 
