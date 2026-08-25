@@ -10,6 +10,7 @@ export interface Question {
   category: string;
   explanation: string;
   image?: string;       // optional image URL shown with the question
+  video?: string;       // optional YouTube URL (ditampilkan di layar host & solo)
   items?: string[];     // "reorder": correct order of items
   answers?: string[];   // "blank": accepted free-text answers
 }
@@ -74,6 +75,7 @@ export interface QuestionPayload {
   category: string;
   isLast: boolean;
   image?: string;
+  video?: string;
   shuffledItems?: string[]; // "reorder": items in randomized display order
 }
 
@@ -102,6 +104,7 @@ export interface AssignmentQuestion {
   options: string[];
   timeLimit: number;
   image?: string;
+  video?: string;
   itemsShuffled?: string[]; // "reorder": pre-shuffled for stable display
   // kunci jawaban — TIDAK PERNAH dikirim ke klien, hanya untuk penilaian server
   correctIndex?: number;
@@ -122,6 +125,7 @@ export interface Assignment {
   id: string;
   code: string;             // join code, e.g. "ABC123"
   title: string;
+  ownerKey?: string;        // pemilik tugas (guru) — daftar difilter per kunci ini
   createdAt: number;
   deadlineMs: number;       // epoch ms
   questions: AssignmentQuestion[];

@@ -952,7 +952,7 @@ app.prepare().then(() => {
           id: q.id, type: q.type, question: q.question, options: q.options,
           correctIndex: q.correctIndex, timeLimit: q.timeLimit,
           category: q.category, explanation: q.explanation,
-          image: q.image, items: q.items, answers: q.answers,
+          image: q.image, video: q.video, items: q.items, answers: q.answers,
         })),
       });
     });
@@ -1177,17 +1177,18 @@ app.prepare().then(() => {
 
     // ── Tugas / Homework asinkron ─────────────────────────────────────────────
     socket.on("assignment:create",
-      ({ quizId, hours }: { quizId: string; hours?: number }, cb: (r: object) => void) => {
+      ({ quizId, hours, ownerKey }: { quizId: string; hours?: number; ownerKey?: string }, cb: (r: object) => void) => {
         const quiz = quizzes.get(quizId);
         if (!quiz) return cb({ error: "Kuis tidak ditemukan" });
         const h = Math.max(1, Math.min(hours ?? 24, 24 * 30));
         const a: Assignment = {
           id: uuidv4(), code: generateCode(), title: quiz.title,
+          ownerKey: ownerKey || undefined,
           createdAt: Date.now(), deadlineMs: Date.now() + h * 3600_000,
           // tugas memakai 10 soal acak dari pool
           questions: buildSessionQuestions(quiz).map((q) => ({
             id: q.id, type: q.type, question: q.question, options: q.options,
-            timeLimit: q.timeLimit, image: q.image,
+            timeLimit: q.timeLimit, image: q.image, video: q.video,
             itemsShuffled: q.type === "reorder" ? shuffleArr([...(q.items ?? [])]) : undefined,
             correctIndex: q.correctIndex, items: q.items, answers: q.answers,
           })),
@@ -1198,8 +1199,10 @@ app.prepare().then(() => {
       }
     );
 
-    socket.on("assignment:list", (_data: unknown, cb: (r: object[]) => void) => {
-      cb(listAssignments().map((a) => ({
+    socket.on("assignment:list", ({ ownerKey }: { ownerKey?: string }, cb: (r: object[]) => void) => {
+      // punya key → lihat milik sendiri + lama tanpa pemilik; tanpa key → hanya tanpa pemilik
+      const mine = listAssignments().filter((a) => ownerKey ? (!a.ownerKey || a.ownerKey === ownerKey) : !a.ownerKey);
+      cb(mine.map((a) => ({
         id: a.id, code: a.code, title: a.title, createdAt: a.createdAt,
         deadlineMs: a.deadlineMs, resultCount: a.results.length, questionCount: a.questions.length,
       })));
@@ -1212,8 +1215,8 @@ app.prepare().then(() => {
       cb({
         ok: true, code: a.code, title: a.title, expired: Date.now() > a.deadlineMs,
         deadlineMs: a.deadlineMs,
-        questions: a.questions.map(({ id, type, question, options, timeLimit, image, itemsShuffled }) =>
-          ({ id, type, question, options, timeLimit, image, itemsShuffled })),
+        questions: a.questions.map(({ id, type, question, options, timeLimit, image, video, itemsShuffled }) =>
+          ({ id, type, question, options, timeLimit, image, video, itemsShuffled })),
       });
     });
 
@@ -1382,7 +1385,7 @@ app.prepare().then(() => {
       type: q.type, question: q.question, options:
         q.type === "reorder" && game.currentShuffled ? game.currentShuffled : q.options,
       timeLimit: q.timeLimit, category: q.category, isLast,
-      image: q.image, shuffledItems: game.currentShuffled,
+      image: q.image, video: q.video, shuffledItems: game.currentShuffled,
     });
 
     game.questionTimer = setTimeout(() => { game.questionTimer = null; revealResults(game, io, pin); }, q.timeLimit * 1000);

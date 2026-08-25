@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SiKuis — Platform Kuis Interaktif Indonesia
 
-## Getting Started
+Platform kuis real-time ala Kahoot untuk kelas, belajar mandiri, dan tugas online. Dibangun dengan Next.js 16 + Socket.IO + TypeScript.
 
-First, run the development server:
+**Live**: https://sikuis.com
+
+## Fitur
+
+### Game Live Multiplayer
+- Join instan via PIN 6-digit, tanpa akun & tanpa install
+- 7 tipe soal: pilihan ganda, benar/salah, urutkan (reorder), isian (auto-check), pendapat, rating bintang, teks bebas
+- Skor kecepatan + streak bonus, leaderboard live, podium top-3
+- **Mode Tim** — otomatis dibagi Tim Merah vs Biru, skor agregat
+- **Mode Koin & Power-Up** — kumpulkan koin, beli ×2 Poin atau Perisai Streak di sela soal
+- Word cloud untuk jawaban teks, confetti, sound effect, read-aloud (TTS)
+- Gambar & video YouTube di setiap soal
+
+### Ribuan Soal Selalu Acak
+- Setiap sesi mengambil **10 soal acak** dari pool besar — tidak pernah sama
+- Matematika & Tes IQ: generator prosedural (variasi praktis tak terbatas)
+- Kategori lain: bank soal AI yang tumbuh otomatis (ditanam di latar belakang)
+
+### AI Generator Gratis (tanpa API key)
+- Generator soal via model gratis OpenCode Zen — anonim, dengan rotasi model otomatis
+- Impor soal dari **teks tempel**, **PDF**, atau **CSV**
+- Fallback: Ollama lokal → pencarian bank soal
+
+### Tugas & PR Online
+- Guru membuat tugas dengan tenggat waktu dari kuis mana pun
+- Siswa mengerjakan mandiri via link `/assign/KODE`
+- Penilaian otomatis di server, peringkat + export CSV
+- Tugas terikat per guru (owner key) & auto-terhapus setelah tenggat + 12 jam
+
+### Belajar Mandiri
+- Mode Solo (skor kecepatan), Mode Latihan (santai + penjelasan)
+- **Ghost Mode** — lawan skor terbaikmu sendiri
+- Flashcards 3D dengan putaran ulang kartu sulit
+- **Review Cerdas** — spaced repetition Leitner, soal lemah muncul duluan
+- Tes IQ dengan profil 4 dimensi kognitif
+
+### Laporan
+- Hasil game live tersimpan permanen, buka via `/reports/PIN`
+- Analisis per pemain & ketuntasan per soal, export CSV
+
+## Menjalankan Lokal
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:4000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Build produksi:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm run start      # PORT mengikuti environment (Railway-ready)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Arsitektur
 
-## Learn More
+- `server.ts` — Socket.IO + Next.js dalam satu proses; state game in-memory
+- `lib/db.ts` — persistensi JSON (`data/db.json`): kuis kustom, tugas, laporan, bank soal AI
+- `lib/generators.ts` — generator soal prosedural matematika & logika
+- `lib/srs.ts` — spaced repetition (Leitner box)
+- `scripts/smoke.mjs` — 28 pengujian end-to-end (`node scripts/smoke.mjs`)
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Otomatis dari GitHub ke **Railway** (config di `railway.json`). Domain kustom: tambahkan CNAME ke domain Railway di panel DNS Anda.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Opsional: pasang Volume Railway ke `/app/data` agar data bertahan antar deploy.
 
-## Deploy on Vercel
+## AI (OpenCode Zen)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Berjalan anonim memakai model gratis Zen — tanpa konfigurasi. Untuk akses model lebih luas, simpan API key di `data/opencode.key` atau env `OPENCODE_API_KEY` (opsional).

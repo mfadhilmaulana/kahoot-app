@@ -8,6 +8,7 @@ import type { QuestionPayload, ResultsPayload, LBEntry } from "@/lib/types";
 import { playCorrect, playWrong, playPoll, playStart, playEnd, playTick } from "@/lib/sounds";
 import { speak } from "@/lib/tts";
 import { randomNickname } from "@/lib/nicknames";
+import { randomQuip } from "@/lib/quips";
 import { SiKuisLogoMark } from "@/components/icons";
 
 const AVATAR_COLORS = ["#EF4444","#F97316","#EAB308","#22C55E","#3B82F6","#8B5CF6","#EC4899","#14B8A6"];
@@ -93,6 +94,7 @@ export default function PlayPage() {
   const [puX2, setPuX2] = useState(false);
   const [puShield, setPuShield] = useState(false);
   const [shopMsg, setShopMsg] = useState("");
+  const [quip, setQuip] = useState("");
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -224,6 +226,7 @@ export default function PlayPage() {
   function handleAnswer(optIdx: number) {
     if (chosen !== null || phase !== "question") return;
     setChosen(optIdx);
+    setQuip(randomQuip());
     setPhase("answered");
     socketRef.current?.emit("player:answer", { pin, optionIndex: optIdx }, () => {});
   }
@@ -234,6 +237,7 @@ export default function PlayPage() {
     const text = openText.trim();
     if (!text) return;
     setChosen(-2);
+    setQuip(randomQuip());
     setPhase("answered");
     socketRef.current?.emit("player:openAnswer", { pin, text }, () => {});
   }
@@ -421,6 +425,7 @@ export default function PlayPage() {
               </span>
             </div>
             <p className="t-h3">Jawaban terkirim!</p>
+            <p style={{ color: "var(--accent)", fontSize: "0.9rem", fontWeight: 700, fontStyle: "italic", maxWidth: 320 }}>{quip}</p>
             <p style={{ color: "var(--text-dim)", fontSize: "0.875rem" }}>Menunggu pemain lain...</p>
           </div>
 

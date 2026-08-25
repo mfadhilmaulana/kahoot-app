@@ -7,12 +7,13 @@ import type { QuestionType } from "@/lib/types";
 import { playCorrect, playWrong, playPoll, playStart, playEnd, playTick } from "@/lib/sounds";
 import { speak } from "@/lib/tts";
 import { recordAnswer, smartOrder } from "@/lib/srs";
+import { toEmbedUrl } from "@/lib/video";
 import { SiKuisLogoMark, IconTarget, IconClock, IconStar, IconCheckCircle, QuizIconByID } from "@/components/icons";
 
 interface SoloQuestion {
   id: string; type: QuestionType; question: string; options: string[];
   correctIndex: number; timeLimit: number; category: string; explanation: string;
-  image?: string; items?: string[]; answers?: string[];
+  image?: string; video?: string; items?: string[]; answers?: string[];
 }
 interface SoloQuizMeta {
   id: string; title: string; icon: string; color: string;
@@ -495,6 +496,17 @@ export default function SoloPage() {
               objectFit: "contain", borderRadius: 12, border: "1px solid var(--border)",
               margin: "0.6rem auto 0", background: "#fff",
             }} />
+          )}
+          {currentQ.video && toEmbedUrl(currentQ.video) && (
+            <div style={{ maxWidth: 560, margin: "0.6rem auto 0", borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)" }}>
+              <iframe
+                src={toEmbedUrl(currentQ.video) ?? undefined}
+                title="Video soal"
+                style={{ width: "100%", aspectRatio: "16/9", display: "block" }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
           )}
         </div>
 

@@ -33,6 +33,16 @@ function deadlineInfo(deadlineMs: number): { text: string; expired: boolean } {
   return { text: days > 0 ? `Sisa ${days} hari ${hours} jam` : `Sisa ${hours} jam`, expired: false };
 }
 
+function getOwnerKey(): string {
+  if (typeof window === "undefined") return "";
+  let k = localStorage.getItem("sikuis:ownerKey");
+  if (!k) {
+    k = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem("sikuis:ownerKey", k);
+  }
+  return k;
+}
+
 export default function AssignmentsPage() {
   const router = useRouter();
   const socketRef = useRef<Socket | null>(null);
@@ -50,15 +60,22 @@ export default function AssignmentsPage() {
   useEffect(() => {
     const socket = getSocket();
     socketRef.current = socket;
+    const ownerKey = getOwnerKey();
     function loadAll() {
       socket.emit("quizzes:list", {}, (list: QuizMeta[]) => {
         setQuizzes(list);
         setQuizId((prev) => prev || list[0]?.id || "");
       });
-      socket.emit("assignment:list", {}, (list: AssignmentRow[]) => {
+      socket.emit("assignment:list", { ownerKey }, (list: AssignmentRow[]) => {
         setRows(list);
         setLoading(false);
       });
+      // banner dari redirect /quizzes?created=KODE
+      const created = new URLSearchParams(window.location.search).get("created");
+      if (created) {
+        setCreated({ code: created, link: `${window.location.origin}/assign/${created}` });
+        window.history.replaceState({}, "", "/assignments");
+      }
     }
     if (socket.connected) loadAll();
     else socket.once("connect", loadAll);
@@ -72,7 +89,7 @@ export default function AssignmentsPage() {
     if (!quizId || creating) return;
     setCreating(true);
     setError("");
-    socketRef.current?.emit("assignment:create", { quizId, hours }, (res: { ok?: boolean; code?: string; error?: string }) => {
+    socketRef.current?.emit("assignment:create", { quizId, hours, ownerKey: getOwnerKey() }, (res: { ok?: boolean; code?: string; error?: string }) => {
       setCreating(false);
       if (res.error || !res.code) { setError(res.error ?? "Gagal membuat tugas"); return; }
       setCreated({ code: res.code!, link: `${window.location.origin}/assign/${res.code}` });

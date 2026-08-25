@@ -7,6 +7,7 @@ import type { Socket } from "socket.io-client";
 import type { QuestionPayload, ResultsPayload, LBEntry } from "@/lib/types";
 import { playJoin, playStart, playEnd, playTick } from "@/lib/sounds";
 import { SiKuisLogoMark } from "@/components/icons";
+import { toEmbedUrl } from "@/lib/video";
 
 interface PlayerInfo { id: string; name: string; team?: number }
 
@@ -402,6 +403,17 @@ export default function HostGamePage() {
               borderRadius: 12, border: "1px solid var(--border)", marginBottom: "0.75rem", background: "#fff",
             }} />
           )}
+          {question.video && (
+            <div style={{ maxWidth: 720, width: "100%", marginBottom: "0.75rem", borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)" }}>
+              <iframe
+                src={toEmbedUrl(question.video) ?? undefined}
+                title="Video soal"
+                style={{ width: "100%", aspectRatio: "16/9", display: "block" }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          )}
 
           {isTextQ ? (
             <div className="card center" style={{ width: "100%", maxWidth: 720, padding: "2rem", textAlign: "center", background: "rgba(245,158,11,0.05)", borderColor: "rgba(245,158,11,0.25)" }}>
@@ -765,9 +777,14 @@ export default function HostGamePage() {
           </div>
         )}
 
-        <button onClick={() => router.push("/")} className="btn btn-primary btn-lg" style={{ minWidth: 180 }}>
-          Kembali ke Beranda
-        </button>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", justifyContent: "center" }}>
+          <button onClick={() => router.push(`/reports/${pin}`)} className="btn btn-surface btn-lg" style={{ minWidth: 170 }}>
+            Lihat Laporan
+          </button>
+          <button onClick={() => router.push("/")} className="btn btn-primary btn-lg" style={{ minWidth: 170 }}>
+            Kembali ke Beranda
+          </button>
+        </div>
       </main>
     );
   }

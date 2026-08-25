@@ -12,19 +12,20 @@ interface QuestionForm {
   correctIndex: number;
   timeLimit: number;
   image: string;      // URL gambar opsional
+  video?: string;     // URL YouTube opsional
   items: string[];    // tipe "reorder": urutan yang benar
   answers: string[];  // tipe "blank": jawaban yang diterima
   explanation?: string;
 }
 
 function emptyQ(type: QuestionType = "mc"): QuestionForm {
-  if (type === "tf")     return { type, question: "", options: ["Benar", "Salah"], correctIndex: 0, timeLimit: 20, image: "", items: [], answers: [] };
-  if (type === "poll")   return { type, question: "", options: ["", ""], correctIndex: -1, timeLimit: 30, image: "", items: [], answers: [] };
-  if (type === "rating") return { type, question: "", options: ["1","2","3","4","5"], correctIndex: -1, timeLimit: 20, image: "", items: [], answers: [] };
-  if (type === "open")   return { type, question: "", options: [], correctIndex: -1, timeLimit: 40, image: "", items: [], answers: [] };
-  if (type === "reorder")return { type, question: "", options: [], correctIndex: -1, timeLimit: 40, image: "", items: ["", "", ""], answers: [] };
-  if (type === "blank")  return { type, question: "", options: [], correctIndex: -1, timeLimit: 30, image: "", items: [], answers: [""] };
-  return { type, question: "", options: ["", "", "", ""], correctIndex: 0, timeLimit: 20, image: "", items: [], answers: [] };
+  if (type === "tf")     return { type, question: "", options: ["Benar", "Salah"], correctIndex: 0, timeLimit: 20, image: "", video: "", items: [], answers: [] };
+  if (type === "poll")   return { type, question: "", options: ["", ""], correctIndex: -1, timeLimit: 30, image: "", video: "", items: [], answers: [] };
+  if (type === "rating") return { type, question: "", options: ["1","2","3","4","5"], correctIndex: -1, timeLimit: 20, image: "", video: "", items: [], answers: [] };
+  if (type === "open")   return { type, question: "", options: [], correctIndex: -1, timeLimit: 40, image: "", video: "", items: [], answers: [] };
+  if (type === "reorder")return { type, question: "", options: [], correctIndex: -1, timeLimit: 40, image: "", video: "", items: ["", "", ""], answers: [] };
+  if (type === "blank")  return { type, question: "", options: [], correctIndex: -1, timeLimit: 30, image: "", video: "", items: [], answers: [""] };
+  return { type, question: "", options: ["", "", "", ""], correctIndex: 0, timeLimit: 20, image: "", video: "", items: [], answers: [] };
 }
 
 const MC_COLORS = ["#E21B3C","#1368CE","#26890C","#D89E00"];
@@ -91,6 +92,7 @@ export default function CreatePage() {
       correctIndex: q.correctIndex,
       timeLimit: q.timeLimit,
       image: "",
+      video: "",
       items: [],
       answers: [],
       explanation: "",
@@ -299,6 +301,7 @@ export default function CreatePage() {
             correctIndex: q.correctIndex,
             timeLimit: q.timeLimit,
             image: q.image.trim() || undefined,
+            video: q.video?.trim() || undefined,
             items: q.type === "reorder" ? q.items.map((x) => x.trim()).filter(Boolean) : undefined,
             answers: q.type === "blank" ? q.answers.map((x) => x.trim()).filter(Boolean) : undefined,
             explanation: q.explanation?.trim() || "",
@@ -546,6 +549,13 @@ export default function CreatePage() {
                 value={q.image}
                 onChange={(e) => setQ(qi, { image: e.target.value })}
                 placeholder="URL gambar (opsional) — https://..."
+                className="input mb-2"
+                style={{ fontSize: "0.78rem" }}
+              />
+              <input
+                value={q.video ?? ""}
+                onChange={(e) => setQ(qi, { video: e.target.value })}
+                placeholder="URL video YouTube (opsional) — ditampilkan di layar host"
                 className="input mb-4"
                 style={{ fontSize: "0.78rem" }}
               />
