@@ -14,17 +14,17 @@ type Phase = "intro" | "loading" | "testing" | "feedback" | "results";
 
 /* ── IQ Classification ───────────────────────────────────────────────────────── */
 const BANDS = [
-  { min: 130, label: "Sangat Superior", color: "#4F46E5", emoji: "💎", pct: 98,
+  { min: 130, label: "Sangat Superior", color: "#4F46E5", emoji: "", pct: 98,
     desc: "Kamu berada di 2% teratas populasi dunia. Kemampuan berpikir abstrak, analitis, dan kecepatan pemrosesan informasi kamu berada pada level tertinggi." },
-  { min: 120, label: "Superior", color: "#2563EB", emoji: "🏆", pct: 91,
+  { min: 120, label: "Superior", color: "#2563EB", emoji: "", pct: 91,
     desc: "Kamu masuk dalam 9% teratas. Penalaran logis dan pemecahan masalah kompleks adalah kekuatan utamamu. Potensi akademik dan profesionalmu sangat besar." },
-  { min: 110, label: "Di Atas Rata-rata", color: "#0891B2", emoji: "⭐", pct: 75,
+  { min: 110, label: "Di Atas Rata-rata", color: "#0891B2", emoji: "", pct: 75,
     desc: "Kamu berada di 25% teratas populasi. Kemampuan belajar yang cepat dan pemahaman mendalam membuatmu menonjol di berbagai bidang." },
-  { min: 90, label: "Rata-rata", color: "#16A34A", emoji: "✅", pct: 50,
+  { min: 90, label: "Rata-rata", color: "#16A34A", emoji: "", pct: 50,
     desc: "Kemampuan kognitif yang solid dan seimbang — tepat di tengah distribusi populasi. Dengan latihan konsisten, potensimu bisa terus berkembang." },
-  { min: 80, label: "Di Bawah Rata-rata", color: "#CA8A04", emoji: "📈", pct: 25,
+  { min: 80, label: "Di Bawah Rata-rata", color: "#CA8A04", emoji: "", pct: 25,
     desc: "Ada ruang yang besar untuk bertumbuh. Latihan soal, membaca, dan aktivitas kognitif aktif dapat meningkatkan kemampuanmu secara signifikan." },
-  { min: 0, label: "Terus Berkembang", color: "#EA580C", emoji: "💪", pct: 10,
+  { min: 0, label: "Terus Berkembang", color: "#EA580C", emoji: "", pct: 10,
     desc: "Setiap otak bisa dilatih dan berkembang. Konsistensi dalam belajar adalah kunci untuk meningkatkan kemampuan kognitif." },
 ];
 function getBand(iq: number) { return BANDS.find((b) => iq >= b.min) ?? BANDS[BANDS.length - 1]; }
@@ -184,7 +184,7 @@ export default function IQTestPage() {
             </div>
 
             <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", marginBottom: "1.25rem" }}>
-              ⚠️ Kerjakan sendiri tanpa bantuan. Hasil lebih akurat jika dikerjakan jujur.
+              Kerjakan sendiri tanpa bantuan. Hasil lebih akurat jika dikerjakan jujur.
             </p>
 
             <button onClick={startTest} style={{
@@ -434,7 +434,7 @@ function IQResults({ iq, band, abilities, correct, total, onRetry, onHome }: {
             background: `linear-gradient(135deg, ${band.color}, #2563EB)`,
             color: "#fff", fontWeight: 800, fontSize: "0.875rem",
           }}>
-            🔄 Ulangi Tes
+            Ulangi Tes
           </button>
           <button onClick={onHome} style={{
             flex: 1, padding: "0.875rem", borderRadius: 14, cursor: "pointer",

@@ -34,10 +34,10 @@ const TYPE_CONFIG: Record<QuestionType, { label: string; desc: string }> = {
   mc:      { label: "Pilihan Ganda", desc: "4 opsi · 1 jawaban benar" },
   tf:      { label: "Benar / Salah", desc: "2 opsi · 1 jawaban benar" },
   poll:    { label: "Pendapat",      desc: "Opsi bebas · Tidak ada jawaban benar" },
-  rating:  { label: "⭐ Rating",     desc: "Pemain beri rating 1-5 bintang" },
-  open:    { label: "✏️ Teks Bebas", desc: "Pemain ketik jawaban sendiri" },
-  reorder: { label: "🔢 Urutkan",    desc: "Pemain menyusun item ke urutan yang benar" },
-  blank:   { label: "📝 Isian",      desc: "Pemain mengetik jawaban · dicek otomatis" },
+  rating:  { label: "Rating",     desc: "Pemain beri rating 1-5 bintang" },
+  open:    { label: "Teks Bebas", desc: "Pemain ketik jawaban sendiri" },
+  reorder: { label: "Urutkan",    desc: "Pemain menyusun item ke urutan yang benar" },
+  blank:   { label: "Isian",      desc: "Pemain mengetik jawaban · dicek otomatis" },
 };
 
 interface AIQuestion {
@@ -327,7 +327,7 @@ export default function CreatePage() {
           ←
         </button>
         <div>
-          <h1 className="t-h3">✏️ Buat Kuis</h1>
+          <h1 className="t-h3">Buat Kuis</h1>
           <p style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>{questions.length} pertanyaan</p>
         </div>
       </div>
@@ -352,7 +352,7 @@ export default function CreatePage() {
             style={{ display: "flex", alignItems: "center", gap: "0.6rem", background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left", padding: 0 }}
           >
             <div className="center" style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg,#7C3AED,#2563EB)", flexShrink: 0 }}>
-              <span style={{ fontSize: "1rem" }}>✨</span>
+              <span style={{ fontSize: "1rem" }}></span>
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ fontWeight: 800, fontSize: "0.9rem", color: "var(--text)" }}>AI Question Generator</p>
@@ -383,7 +383,7 @@ export default function CreatePage() {
               </div>
 
               {aiError && (
-                <p style={{ color: "#DC2626", fontSize: "0.78rem", marginBottom: "0.5rem" }}>⚠️ {aiError}</p>
+                <p style={{ color: "#DC2626", fontSize: "0.78rem", marginBottom: "0.5rem" }}>{aiError}</p>
               )}
 
               {aiResults.length > 0 && (
@@ -397,9 +397,9 @@ export default function CreatePage() {
                         : aiEngine.startsWith("ollama") ? "rgba(124,58,237,0.12)" : "rgba(37,99,235,0.1)",
                       color: aiEngine.startsWith("bank") ? "var(--accent)" : "#7C3AED",
                     }}>
-                      {aiEngine.startsWith("zen") ? `🤖 OpenCode Zen (${aiEngine.split(":")[1] ?? "free"})`
-                        : aiEngine.startsWith("ollama") ? `🤖 AI lokal (${aiEngine.split(":")[1] ?? "ollama"})`
-                        : "📚 bank soal"}
+                      {aiEngine.startsWith("zen") ? `AI OpenCode Zen (${aiEngine.split(":")[1] ?? "free"})`
+                        : aiEngine.startsWith("ollama") ? `AI lokal (${aiEngine.split(":")[1] ?? "ollama"})`
+                        : "Bank soal"}
                     </span>
                   </p>
                   {aiResults.map((q) => {
@@ -448,7 +448,7 @@ export default function CreatePage() {
             style={{ display: "flex", alignItems: "center", gap: "0.6rem", background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left", padding: 0 }}
           >
             <div className="center" style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg,#059669,#2563EB)", flexShrink: 0 }}>
-              <span style={{ fontSize: "1rem" }}>📥</span>
+              <span style={{ fontSize: "0.8rem", fontWeight: 900, color: "#fff" }}>Impor</span>
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ fontWeight: 800, fontSize: "0.9rem", color: "var(--text)" }}>Impor Soal</p>
@@ -469,15 +469,15 @@ export default function CreatePage() {
               />
               <div className="row" style={{ gap: "0.5rem", marginTop: "0.6rem", flexWrap: "wrap" }}>
                 <button onClick={() => handleGenerateFromText()} disabled={importLoading !== "" || pasteText.trim().length < 60} className="btn btn-gradient" style={{ flexShrink: 0, opacity: pasteText.trim().length < 60 ? 0.5 : 1 }}>
-                  ✨ Buat Soal dari Teks
+                  Buat Soal dari Teks (AI)
                 </button>
                 <label className="btn btn-surface" style={{ cursor: "pointer", flexShrink: 0 }}>
-                  📄 Pilih PDF / TXT / CSV
+                  Pilih PDF / TXT / CSV
                   <input type="file" accept=".pdf,.txt,.csv" hidden onChange={(e) => handleImportFile(e.target.files?.[0])} />
                 </label>
               </div>
-              {importLoading && <p style={{ marginTop: "0.6rem", color: "var(--accent)", fontSize: "0.78rem", fontWeight: 700 }}>⏳ {importLoading}</p>}
-              {importError && <p style={{ marginTop: "0.6rem", color: "#DC2626", fontSize: "0.78rem", fontWeight: 600 }}>⚠️ {importError}</p>}
+              {importLoading && <p style={{ marginTop: "0.6rem", color: "var(--accent)", fontSize: "0.78rem", fontWeight: 700 }}>{importLoading}</p>}
+              {importError && <p style={{ marginTop: "0.6rem", color: "#DC2626", fontSize: "0.78rem", fontWeight: 600 }}>{importError}</p>}
               <details style={{ marginTop: "0.7rem" }}>
                 <summary style={{ color: "var(--text-muted)", fontSize: "0.72rem", cursor: "pointer" }}>Format CSV</summary>
                 <code style={{ display: "block", marginTop: "0.35rem", padding: "0.5rem 0.75rem", background: "var(--surface-2)", borderRadius: 8, fontSize: "0.68rem", color: "var(--text-dim)" }}>
@@ -545,7 +545,7 @@ export default function CreatePage() {
               <input
                 value={q.image}
                 onChange={(e) => setQ(qi, { image: e.target.value })}
-                placeholder="🖼️ URL gambar (opsional) — https://..."
+                placeholder="URL gambar (opsional) — https://..."
                 className="input mb-4"
                 style={{ fontSize: "0.78rem" }}
               />
@@ -596,7 +596,7 @@ export default function CreatePage() {
                 </div>
               ) : isOpen ? (
                 <div className="card-hi center mb-4" style={{ padding: "1rem", textAlign: "center" }}>
-                  <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>✏️</div>
+                  
                   <p style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>Pemain akan mengetik jawaban teks bebas mereka</p>
                 </div>
               ) : isReorder ? (
@@ -717,7 +717,7 @@ export default function CreatePage() {
               marginBottom: "0.5rem",
               display: "flex", alignItems: "center", gap: "0.5rem",
             }}>
-              <span style={{ fontSize: "0.95rem" }}>⚠️</span>
+              
               <p style={{ color: "#DC2626", fontSize: "0.82rem", fontWeight: 700, flex: 1 }}>{error}</p>
               <button onClick={() => setError("")} style={{ background: "none", border: "none", color: "#F87171", cursor: "pointer", fontSize: "1rem", padding: 0, lineHeight: 1 }}>×</button>
             </div>

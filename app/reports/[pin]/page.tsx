@@ -43,7 +43,7 @@ export default function ReportDetailPage({ params }: { params: Promise<{ pin: st
     return (
       <main className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)", padding: "2rem" }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔍</div>
+          
           <p style={{ color: "var(--text)", fontWeight: 700, marginBottom: "1rem" }}>{error}</p>
           <button onClick={() => router.push("/reports")} className="btn-surface">← Daftar laporan</button>
         </div>
@@ -94,7 +94,7 @@ export default function ReportDetailPage({ params }: { params: Promise<{ pin: st
         </div>
 
         {/* Peringkat pemain */}
-        <h2 style={{ fontWeight: 800, color: "var(--text)", fontSize: "1rem", marginBottom: "0.7rem" }}>🏆 Peringkat Pemain</h2>
+        <h2 style={{ fontWeight: 800, color: "var(--text)", fontSize: "1rem", marginBottom: "0.7rem" }}>Peringkat Pemain</h2>
         <div style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 14, overflowX: "auto", marginBottom: "1.75rem" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem", minWidth: 420 }}>
             <thead>
@@ -109,7 +109,7 @@ export default function ReportDetailPage({ params }: { params: Promise<{ pin: st
               {report.players.map((p) => (
                 <tr key={p.rank} style={{ borderTop: "1px solid var(--border)" }}>
                   <td style={{ padding: "0.6rem 0.9rem", fontWeight: 800, color: p.rank <= 3 ? ["#F59E0B", "#94A3B8", "#B45309"][p.rank - 1] : "var(--text-muted)" }}>
-                    {p.rank === 1 ? "🥇" : p.rank === 2 ? "🥈" : p.rank === 3 ? "🥉" : p.rank}
+                    {p.rank}
                   </td>
                   <td style={{ padding: "0.6rem 0.9rem", fontWeight: 700, color: "var(--text)" }}>{p.name}</td>
                   <td style={{ padding: "0.6rem 0.9rem", color: "var(--accent)", fontWeight: 800 }}>{p.score.toLocaleString("id-ID")}</td>
@@ -122,9 +122,9 @@ export default function ReportDetailPage({ params }: { params: Promise<{ pin: st
 
         {/* Analisis per soal */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.7rem", gap: "0.75rem", flexWrap: "wrap" }}>
-          <h2 style={{ fontWeight: 800, color: "var(--text)", fontSize: "1rem" }}>📈 Ketuntasan per Soal</h2>
+          <h2 style={{ fontWeight: 800, color: "var(--text)", fontSize: "1rem" }}>Ketuntasan per Soal</h2>
           <button onClick={exportCsv} className="btn-surface" style={{ padding: "0.35rem 0.85rem", fontSize: "0.72rem" }}>
-            ⬇️ Export CSV
+            Export CSV
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}>

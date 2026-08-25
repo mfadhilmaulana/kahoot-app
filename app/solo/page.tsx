@@ -86,7 +86,7 @@ function StarsResult({ pct }: { pct: number }) {
         <span key={s} className={s <= stars ? "a-starburst" : ""} style={{
           animationDelay: `${(s - 1) * 0.15}s`,
           filter: s <= stars ? "none" : "grayscale(1) opacity(0.3)",
-        }}>⭐</span>
+        }}>★</span>
       ))}
     </div>
   );
@@ -339,7 +339,7 @@ export default function SoloPage() {
               className={smartReview ? "btn btn-yellow" : "btn btn-surface"}
               style={{ flex: "0 0 auto", gap: "0.4rem", fontSize: "0.8rem" }}
             >
-              🔄 Review Cerdas {smartReview ? "· AKTIF" : ""}
+              Review Cerdas {smartReview ? "· AKTIF" : ""}
             </button>
             <span style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>
               Soal yang sering salah / belum dikuasai muncul lebih dulu (spaced repetition)
@@ -454,12 +454,12 @@ export default function SoloPage() {
           <div className="row" style={{ justifyContent: "space-between", marginBottom: "0.5rem" }}>
             <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 700 }}>
               {quiz.title} · {qIndex + 1}/{totalQuestions}
-              {playMode === "practice" && <span style={{ marginLeft: "0.35rem", color: "#10B981", fontSize: "0.68rem", fontWeight: 700 }}>✎ Latihan</span>}
+              {playMode === "practice" && <span style={{ marginLeft: "0.35rem", color: "#10B981", fontSize: "0.68rem", fontWeight: 700 }}>Latihan</span>}
             </span>
             <div className="row" style={{ gap: "0.75rem" }}>
               {ghostData && (
                 <span style={{ color: "var(--text-muted)", fontSize: "0.72rem", fontWeight: 600 }}>
-                  👻 {ghostData.score.toLocaleString()}
+                  {ghostData.score.toLocaleString()}
                 </span>
               )}
               <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 700 }}>
@@ -485,7 +485,7 @@ export default function SoloPage() {
               width: 28, height: 28, borderRadius: "50%",
               background: "var(--surface-2)", border: "1px solid var(--border-hi)",
               cursor: "pointer", fontSize: "0.78rem",
-            }}>🔊</button>
+            }}>Dengar</button>
             <p className="t-h3" style={{ lineHeight: 1.4, fontSize: "clamp(0.95rem,3.5vw,1.1rem)" }}>{currentQ.question}</p>
           </div>
           {currentQ.image && (
@@ -639,7 +639,7 @@ export default function SoloPage() {
                     <button key={star} onClick={() => submitAnswer(star - 1)} className="btn" style={{
                       width: 60, height: 60, fontSize: "1.75rem", padding: 0,
                       background: "var(--surface)", border: "2px solid var(--border-hi)", borderRadius: "50%",
-                    }}>⭐</button>
+                    }}>★</button>
                   ))}
                 </div>
               </div>
@@ -685,7 +685,7 @@ export default function SoloPage() {
     const mcTfAnswers = answers.filter((a) => SCORED_TYPES.includes(quiz.questions[a.questionIndex]?.type));
     const mcTfCorrect = mcTfAnswers.filter((a) => a.isCorrect).length;
     const pct = mcTfAnswers.length > 0 ? Math.round((mcTfCorrect / mcTfAnswers.length) * 100) : 100;
-    const grade = pct >= 90 ? "Luar Biasa! 🎉" : pct >= 70 ? "Bagus! 👏" : pct >= 50 ? "Cukup Baik 👍" : "Terus Berlatih 💪";
+    const grade = pct >= 90 ? "Luar Biasa!" : pct >= 70 ? "Bagus!" : pct >= 50 ? "Cukup Baik" : "Terus Berlatih";
 
     // Save solo score as ghost (only in solo mode to keep ghost meaningful)
     if (playMode === "solo" && currentQuizId) {
@@ -739,7 +739,7 @@ export default function SoloPage() {
           }}>
             <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
               <div className="row" style={{ gap: "0.5rem" }}>
-                <span style={{ fontSize: "1.2rem" }}>👻</span>
+                <span style={{ fontSize: "0.95rem" }}>Ghost</span>
                 <div>
                   <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontWeight: 600 }}>Ghost — {ghostData.date}</p>
                   <p style={{ fontSize: "0.85rem", color: "var(--text-dim)", fontWeight: 700 }}>{ghostData.score.toLocaleString()} poin</p>
@@ -777,10 +777,10 @@ export default function SoloPage() {
 
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", justifyContent: "center" }}>
           <button onClick={() => { setPhase("select"); setQuiz(null); setAnswers([]); setQIndex(0); }} className="btn btn-gradient btn-lg">
-            🔄 Coba Quiz Lain
+            Coba Quiz Lain
           </button>
           <button onClick={() => quiz && selectQuiz(quiz.id, playMode)} className="btn btn-surface btn-lg">
-            🔁 Ulangi Quiz Ini
+            Ulangi Quiz Ini
           </button>
           <button onClick={() => router.push("/")} className="btn btn-ghost btn-lg">← Beranda</button>
         </div>

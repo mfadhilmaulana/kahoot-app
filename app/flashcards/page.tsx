@@ -135,16 +135,16 @@ export default function FlashcardsPage() {
           position: "relative", overflow: "hidden",
         }}>
           <div style={{ position: "absolute", top: -40, right: -40, width: 180, height: 180, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
-          <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>🃏</div>
+          
           <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem,4vw,2rem)", fontWeight: 900, marginBottom: "0.5rem" }}>Mode Flashcard</h2>
           <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "0.9rem", maxWidth: 400, margin: "0 auto" }}>
             Pelajari soal dan jawaban satu per satu. Tandai yang sudah tahu — ulangi yang belum.
           </p>
           <div style={{ display: "flex", justifyContent: "center", gap: "1.5rem", marginTop: "1.25rem", flexWrap: "wrap" }}>
             {[
-              { icon: "🔄", text: "Flip untuk jawaban" },
-              { icon: "✅", text: "Tandai yang Tahu" },
-              { icon: "📚", text: "Ulangi yang Belum" },
+              { icon: null, text: "Flip untuk jawaban" },
+              { icon: null, text: "Tandai yang Tahu" },
+              { icon: null, text: "Ulangi yang Belum" },
             ].map((i) => (
               <div key={i.text} style={{ color: "rgba(255,255,255,0.85)", fontSize: "0.78rem", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.35rem" }}>
                 <span>{i.icon}</span>{i.text}
@@ -262,7 +262,7 @@ export default function FlashcardsPage() {
                     ))}
                   </div>
                 )}
-                <p style={{ color: "var(--text-muted)", fontSize: "0.7rem", marginTop: "auto", paddingTop: "1rem" }}>🔄 ketuk untuk balik</p>
+                <p style={{ color: "var(--text-muted)", fontSize: "0.7rem", marginTop: "auto", paddingTop: "1rem" }}>ketuk untuk balik</p>
               </div>
 
               {/* Back — Answer */}
@@ -327,7 +327,7 @@ export default function FlashcardsPage() {
     return (
       <main className="min-h-screen col items-center justify-center px-4 text-center" style={{ background: "var(--bg)", paddingTop: "2rem", paddingBottom: "2rem", gap: "0" }}>
         <div className="a-popin" style={{ maxWidth: 440, width: "100%" }}>
-          <div style={{ fontSize: "3.5rem", marginBottom: "0.75rem" }}>🎯</div>
+          
           <h2 className="t-h2 mb-1">Putaran {round} selesai!</h2>
           <p style={{ color: "var(--text-dim)", marginBottom: "2rem", fontSize: "0.9rem" }}>
             Kamu sudah menjawab semua {knew.length + learning.length} kartu
@@ -353,7 +353,7 @@ export default function FlashcardsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
             {learning.length > 0 && (
               <button onClick={reviewLearning} className="btn btn-gradient btn-lg" style={{ display: "flex", alignItems: "center", gap: "0.45rem", justifyContent: "center" }}>
-                🔄 Ulangi {learning.length} Kartu Belum Tahu
+                Ulangi {learning.length} Kartu Belum Tahu
               </button>
             )}
             <button onClick={() => setPhase("done")} className="btn btn-surface btn-lg">
@@ -375,14 +375,14 @@ export default function FlashcardsPage() {
       <main className="min-h-screen col items-center justify-center px-4 text-center" style={{ background: "var(--bg)", paddingTop: "2rem", paddingBottom: "2rem" }}>
         <div className="a-popin" style={{ maxWidth: 440, width: "100%" }}>
           <SiKuisLogoMark size={48} id="fc-done-logo" />
-          <h2 className="t-h2 mb-1" style={{ marginTop: "1rem" }}>Sesi Selesai! 🎉</h2>
+          <h2 className="t-h2 mb-1" style={{ marginTop: "1rem" }}>Sesi Selesai!</h2>
           <p style={{ color: "var(--text-dim)", marginBottom: "1.5rem" }}>{quizTitle}</p>
 
           {/* Stars */}
           <div className="row center mb-4" style={{ gap: "0.5rem", fontSize: "2.5rem" }}>
             {[1, 2, 3].map((s) => (
               <span key={s} className={s <= stars ? "a-starburst" : ""}
-                style={{ animationDelay: `${(s - 1) * 0.15}s`, filter: s <= stars ? "none" : "grayscale(1) opacity(0.28)" }}>⭐</span>
+                style={{ animationDelay: `${(s - 1) * 0.15}s`, filter: s <= stars ? "none" : "grayscale(1) opacity(0.28)" }}>★</span>
             ))}
           </div>
 

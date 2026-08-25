@@ -148,7 +148,7 @@ export default function QuizzesPage() {
       {error && (
         <div style={{ maxWidth: 900, margin: "1rem auto 0", padding: "0 1.25rem" }}>
           <div style={{ padding: "0.7rem 1rem", background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.25)", borderRadius: 12, color: "#DC2626", fontSize: "0.82rem", fontWeight: 600 }}>
-            ⚠️ {error}
+            {error}
           </div>
         </div>
       )}
@@ -162,7 +162,7 @@ export default function QuizzesPage() {
           </div>
         ) : visible.length === 0 ? (
           <div style={{ textAlign: "center", padding: "4rem 0" }}>
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🔍</div>
+            
             <p style={{ color: "var(--text-dim)", fontWeight: 600, marginBottom: "0.75rem" }}>Tidak ada kuis yang cocok</p>
             <button onClick={() => { setSearch(""); setFilter("Semua"); }} style={{ color: "var(--accent)", background: "none", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.875rem" }}>
               Reset filter
@@ -266,7 +266,7 @@ export default function QuizzesPage() {
                             cursor: "pointer",
                           }}
                         >
-                          📋 Tugas
+                          Tugas
                         </button>
                       </div>
                     </div>

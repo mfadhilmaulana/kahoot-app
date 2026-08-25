@@ -80,7 +80,7 @@ export default function ReportsPage() {
           <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Memuat...</p>
         ) : reports.length === 0 ? (
           <div style={{ textAlign: "center", padding: "3rem 0", color: "var(--text-dim)" }}>
-            <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem" }}>📊</div>
+            <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem" }}></div>
             <p style={{ fontWeight: 600, fontSize: "0.85rem" }}>Belum ada laporan. Selesaikan satu game live dulu!</p>
           </div>
         ) : (
@@ -108,10 +108,10 @@ export default function ReportsPage() {
                   <p style={{ fontWeight: 800, color: "var(--text)", fontSize: "0.88rem", margin: "0.35rem 0 0.5rem" }}>{r.title}</p>
                   <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
                     <span style={{ fontSize: "0.65rem", fontWeight: 700, color: "var(--text-dim)", background: "var(--surface-3)", borderRadius: 40, padding: "0.15rem 0.55rem" }}>
-                      👥 {r.playerCount} pemain
+                      {r.playerCount} pemain
                     </span>
                     <span style={{ fontSize: "0.65rem", fontWeight: 700, color: avgCorrect >= 60 ? "#16A34A" : avgCorrect >= 40 ? "#CA8A04" : "#DC2626", background: (avgCorrect >= 60 ? "#16A34A" : avgCorrect >= 40 ? "#CA8A04" : "#DC2626") + "18", borderRadius: 40, padding: "0.15rem 0.55rem" }}>
-                      ✅ rata-rata {avgCorrect}%
+                      rata-rata {avgCorrect}%
                     </span>
                     <span style={{ fontSize: "0.65rem", fontWeight: 700, color: "var(--text-dim)", background: "var(--surface-3)", borderRadius: 40, padding: "0.15rem 0.55rem" }}>
                       {r.questions.length} soal

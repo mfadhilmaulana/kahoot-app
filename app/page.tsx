@@ -18,7 +18,6 @@ const NAV_TABS = [
   { label: "Flashcards",  Icon: IconStar,    iconBg: "#8B5CF6", href: "/flashcards" },
   { label: "Tes IQ",      Icon: IconTarget,  iconBg: "#4F46E5", href: "/iq"         },
   { label: "Tugas & PR",  Icon: IconAward,   iconBg: "#7C3AED", href: "/assignments"},
-  { label: "Laporan",     Icon: IconBarChart,iconBg: "#0D9488", href: "/reports"    },
   { label: "Host Game",   Icon: IconPlay,    iconBg: "#2563EB", href: "/quizzes"    },
   { label: "Buat Kuis",   Icon: IconCode,    iconBg: "#EF4444", href: "/create"     },
 ];
@@ -35,7 +34,6 @@ const FEATURES = [
   { Icon: IconCode,       title: "AI Generator + Gambar",    desc: "Generator soal bertenaga OpenCode Zen (gratis). Tambahkan URL gambar di setiap soal.", color: "#0891B2", bg: "rgba(8,145,178,0.10)" },
   { Icon: IconGlobe,      title: "Tugas & PR Online",        desc: "Buat kuis jadi tugas dengan tenggat waktu. Siswa kerjakan mandiri, hasil + export CSV.", color: "#16A34A", bg: "rgba(22,163,74,0.10)"   },
   { Icon: IconUsers,      title: "Bergabung Instan",         desc: "Tanpa akun, tanpa download. Masukkan PIN 6-digit dan langsung main dalam 5 detik.", color: "#EC4899", bg: "rgba(236,72,153,0.10)"  },
-  { Icon: IconBarChart,   title: "Laporan Permanen",         desc: "Hasil tiap game live tersimpan — analisis per pemain & per soal, export CSV.", color: "#0D9488", bg: "rgba(13,148,136,0.10)" },
   { Icon: IconGift,       title: "Review Cerdas (SRS)",      desc: "Spaced repetition ala Leitner: soal yang sering salah muncul lebih dulu saat belajar.", color: "#22C55E", bg: "rgba(34,197,94,0.10)" },
 ];
 
@@ -284,7 +282,7 @@ export default function HomePage() {
       }}>
         <div style={{ maxWidth: 800, margin: "0 auto", display: "flex", justifyContent: "space-around", flexWrap: "wrap", gap: "1rem" }}>
           {[
-            { value: "150+", label: "Soal Edukatif", Icon: IconBrain },
+            { value: "Ribuan+", label: "Soal Selalu Acak", Icon: IconBrain },
             { value: "13",   label: "Kategori Kuis",  Icon: IconGlobe },
             { value: "5",    label: "Tipe Soal",       Icon: IconBarChart },
             { value: "∞",    label: "Pemain / Game",   Icon: IconUsers },
@@ -539,7 +537,7 @@ export default function HomePage() {
           </span>
         </div>
         <p style={{ color: "rgba(255,255,255,0.28)", fontSize: "0.72rem", lineHeight: 1.7 }}>
-          Gratis selamanya · Real-time multiplayer · Tugas & laporan · 150+ soal · 13 kategori
+          Gratis selamanya · Real-time multiplayer · Tugas & PR · Ribuan soal acak · 13 kategori
         </p>
         <div style={{ marginTop: "0.75rem", display: "flex", justifyContent: "center", gap: "1.5rem", flexWrap: "wrap" }}>
           {[

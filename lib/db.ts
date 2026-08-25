@@ -9,6 +9,7 @@ interface DBShape {
   customQuizzes: Record<string, Quiz>;
   assignments: Record<string, Assignment>;
   reports: Record<string, GameReport>;
+  aiQuestions: Record<string, Quiz["questions"]>; // bank soal AI per quizId (tumbuh bertahap)
 }
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -18,7 +19,7 @@ let cache: DBShape | null = null;
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 function emptyDb(): DBShape {
-  return { customQuizzes: {}, assignments: {}, reports: {} };
+  return { customQuizzes: {}, assignments: {}, reports: {}, aiQuestions: {} };
 }
 
 function load(): DBShape {
@@ -60,14 +61,28 @@ export function saveCustomQuiz(quiz: Quiz): void {
 }
 
 // ── Tugas ─────────────────────────────────────────────────────────────────────
+// Tugas kedaluwarsa otomatis dibersihkan (12 jam setelah tenggat)
+function purgeExpiredAssignments(): void {
+  const db = load();
+  const cutoff = Date.now() - 12 * 3600_000;
+  let changed = false;
+  for (const code of Object.keys(db.assignments)) {
+    if (db.assignments[code].deadlineMs < cutoff) { delete db.assignments[code]; changed = true; }
+  }
+  if (changed) scheduleSave();
+}
+
 export function saveAssignment(a: Assignment): void {
+  purgeExpiredAssignments();
   load().assignments[a.code] = a;
   scheduleSave();
 }
 export function getAssignment(code: string): Assignment | undefined {
+  purgeExpiredAssignments();
   return load().assignments[code?.toUpperCase()];
 }
 export function listAssignments(): Assignment[] {
+  purgeExpiredAssignments();
   return Object.values(load().assignments).sort((a, b) => b.createdAt - a.createdAt);
 }
 export function addAssignmentResult(code: string, result: AssignmentResult): boolean {
@@ -97,4 +112,15 @@ export function listReports(limit = 30): GameReport[] {
   return Object.values(load().reports)
     .sort((a, b) => b.endedAt - a.endedAt)
     .slice(0, limit);
+}
+
+// ── Bank soal AI (tumbuh bertahap, dipakai untuk randomisasi soal) ────────────
+export function getAiQuestions(quizId: string): Quiz["questions"] {
+  return load().aiQuestions[quizId] ?? [];
+}
+export function addAiQuestions(quizId: string, questions: Quiz["questions"]): void {
+  const db = load();
+  if (!db.aiQuestions[quizId]) db.aiQuestions[quizId] = [];
+  db.aiQuestions[quizId].push(...questions);
+  scheduleSave();
 }

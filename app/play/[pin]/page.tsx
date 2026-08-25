@@ -241,7 +241,7 @@ export default function PlayPage() {
   function buyPowerUp(type: "x2" | "shield") {
     setShopMsg("");
     socketRef.current?.emit("player:buyPowerUp", { pin, type }, (res: { ok?: boolean; error?: string }) => {
-      setShopMsg(res.ok ? "✓ Terpasang untuk soal berikutnya!" : `⚠️ ${res.error ?? "Gagal"}`);
+      setShopMsg(res.ok ? "✓ Terpasang untuk soal berikutnya!" : `${res.error ?? "Gagal"}`);
       setTimeout(() => setShopMsg(""), 2500);
     });
   }
@@ -283,7 +283,7 @@ export default function PlayPage() {
               fontSize: "0.75rem", fontWeight: 700, cursor: "pointer",
               margin: "0 auto 0.9rem", display: "block",
             }}>
-              🎲 Nama acak
+              Nama acak
             </button>
             {joinError && (
               <p style={{ color: "#DC2626", textAlign: "center", fontSize: "0.82rem", fontWeight: 600, marginBottom: "0.75rem" }}>{joinError}</p>
@@ -314,7 +314,7 @@ export default function PlayPage() {
           <p style={{ color: "var(--accent)", fontWeight: 700, marginBottom: "0.3rem" }}>Berhasil bergabung!</p>
           {myTeam !== undefined && (
             <p style={{ color: myTeam === 0 ? "#DC2626" : "#2563EB", fontWeight: 800, marginBottom: "0.3rem" }}>
-              🚩 Kamu di Tim {myTeam === 0 ? "Merah" : "Biru"}
+              Kamu di Tim {myTeam === 0 ? "Merah" : "Biru"}
             </p>
           )}
           {quizTitle && (
@@ -375,12 +375,12 @@ export default function PlayPage() {
         <div className="col items-center pt-3 pb-1" style={{ gap: "0.2rem" }}>
           <CircleTimer timeLeft={timeLeft} timeLimit={question.timeLimit} />
           <p className="t-label mt-1">{question.index + 1} / {question.total}</p>
-          {(isPoll || isRating) && <span className="badge" style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>{isRating ? "⭐ Rating" : "Pendapat"}</span>}
-          {(isOpen || isBlank) && <span className="badge" style={{ background: "rgba(245,158,11,0.12)", color: "#D97706" }}>{isBlank ? "📝 Isi Jawaban" : "✏️ Jawaban Terbuka"}</span>}
-          {isReorderQ && <span className="badge" style={{ background: "rgba(124,58,237,0.12)", color: "#7C3AED" }}>🔢 Urutkan</span>}
+          {(isPoll || isRating) && <span className="badge" style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>{isRating ? "Rating" : "Pendapat"}</span>}
+          {(isOpen || isBlank) && <span className="badge" style={{ background: "rgba(245,158,11,0.12)", color: "#D97706" }}>{isBlank ? "Isi Jawaban" : "Jawaban Terbuka"}</span>}
+          {isReorderQ && <span className="badge" style={{ background: "rgba(124,58,237,0.12)", color: "#7C3AED" }}>Urutkan</span>}
           {gameOpts.economy && (
             <span className="badge" style={{ background: "rgba(202,138,4,0.15)", color: "#CA8A04", fontWeight: 900 }}>
-              🪙 {coins}{puX2 ? " · ×2 siap" : ""}{puShield ? " · 🛡️ siap" : ""}
+              {coins}{puX2 ? " · ×2 siap" : ""}{puShield ? " · perisai siap" : ""}
             </span>
           )}
         </div>
@@ -393,7 +393,7 @@ export default function PlayPage() {
               width: 30, height: 30, borderRadius: "50%",
               background: "var(--surface-2)", border: "1px solid var(--border-hi)",
               cursor: "pointer", fontSize: "0.8rem",
-            }}>🔊</button>
+            }}>Dengar</button>
             <p className="t-h3" style={{ lineHeight: 1.4, fontSize: "clamp(0.95rem, 3.5vw, 1.1rem)" }}>{question.question}</p>
           </div>
           {question.image && (
@@ -463,7 +463,7 @@ export default function PlayPage() {
                   boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                   transition: "all 120ms ease",
                 }}>
-                  ⭐
+                  ★
                 </button>
               ))}
             </div>
@@ -569,7 +569,7 @@ export default function PlayPage() {
               <h2 className="t-h2 mb-1">{isRating ? "Rating terkirim!" : results.type === "open" ? "Jawaban tercatat!" : "Terima kasih!"}</h2>
               {isRating && results.ratingAvg !== undefined && (
                 <p style={{ color: "var(--text-dim)", fontSize: "0.875rem" }}>
-                  Rating rata-rata: <span style={{ fontWeight: 700, color: "var(--accent)" }}>{"⭐".repeat(Math.round(results.ratingAvg))} ({results.ratingAvg}/5)</span>
+                  Rating rata-rata: <span style={{ fontWeight: 700, color: "var(--accent)" }}>{"★".repeat(Math.round(results.ratingAvg))} ({results.ratingAvg}/5)</span>
                 </p>
               )}
               {results.type === "open" && (
@@ -630,13 +630,13 @@ export default function PlayPage() {
         {/* Toko power-up (mode koin) */}
         {gameOpts.economy && (
           <div className="card a-fadeup d-2 mb-3" style={{ padding: "0.8rem 1rem", textAlign: "left", maxWidth: 380, width: "100%", position: "relative", zIndex: 1, borderColor: "rgba(202,138,4,0.4)" }}>
-            <p className="t-label mb-2">🪙 {coins.toLocaleString()} koin — toko power-up</p>
+            <p className="t-label mb-2">{coins.toLocaleString()} koin — toko power-up</p>
             <div style={{ display: "flex", gap: "0.5rem" }}>
               <button onClick={() => buyPowerUp("x2")} disabled={puX2 || coins < 300} className="btn btn-surface" style={{ flex: 1, fontSize: "0.72rem", padding: "0.45rem 0.3rem", opacity: puX2 || coins < 300 ? 0.5 : 1 }}>
-                ✌️ ×2 Poin<br /><span style={{ fontSize: "0.62rem", color: "#CA8A04" }}>300 🪙 {puX2 ? "· aktif" : ""}</span>
+                ×2 Poin<br /><span style={{ fontSize: "0.62rem", color: "#CA8A04" }}>300 {puX2 ? "· aktif" : ""}</span>
               </button>
               <button onClick={() => buyPowerUp("shield")} disabled={puShield || coins < 200} className="btn btn-surface" style={{ flex: 1, fontSize: "0.72rem", padding: "0.45rem 0.3rem", opacity: puShield || coins < 200 ? 0.5 : 1 }}>
-                🛡️ Perisai Streak<br /><span style={{ fontSize: "0.62rem", color: "#CA8A04" }}>200 🪙 {puShield ? "· aktif" : ""}</span>
+                Perisai Streak<br /><span style={{ fontSize: "0.62rem", color: "#CA8A04" }}>200 {puShield ? "· aktif" : ""}</span>
               </button>
             </div>
             {shopMsg && <p style={{ marginTop: "0.45rem", fontSize: "0.7rem", fontWeight: 700, color: shopMsg.startsWith("✓") ? "#16A34A" : "#D97706" }}>{shopMsg}</p>}
@@ -668,7 +668,7 @@ export default function PlayPage() {
         <div className="a-popin mb-5">
           {rank !== null && rank <= 3 && (
             <div style={{ fontSize: "2rem", fontWeight: 900, color: "var(--accent)", marginBottom: "0.4rem" }}>
-              {["🥇","🥈","🥉"][rank - 1]} #{rank}
+              Peringkat #{rank}
             </div>
           )}
           <div className="center mb-3" style={{
@@ -693,7 +693,7 @@ export default function PlayPage() {
                 background: t.team === 0 ? "rgba(220,38,38,0.08)" : "rgba(37,99,235,0.08)",
                 border: `2px solid ${teamTotals[0].team === t.team ? "#F59E0B" : "var(--border)"}`,
               }}>
-                <p style={{ fontSize: "1.4rem", margin: 0 }}>{teamTotals[0].team === t.team ? "🏆" : "🚩"}</p>
+                <p style={{ fontSize: "1.4rem", margin: 0 }}>{teamTotals[0].team === t.team ? "" : ""}</p>
                 <p style={{ fontWeight: 900, fontSize: "0.8rem", color: t.team === 0 ? "#DC2626" : "#2563EB", margin: "0.1rem 0" }}>Tim {t.name}</p>
                 <p style={{ fontWeight: 900, color: "var(--text)", margin: 0 }}>{t.score.toLocaleString()}</p>
                 {myTeam === t.team && <p style={{ fontSize: "0.62rem", color: "var(--text-muted)", fontWeight: 700, margin: 0 }}>(tim kamu)</p>}

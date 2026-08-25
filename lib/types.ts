@@ -34,6 +34,7 @@ export interface QuizMeta {
   color: string;
   difficulty: Quiz["difficulty"];
   questionCount: number;
+  infinite?: boolean; // bank soal prosedural (ribuan variasi)
   estimatedMins: number;
   types: QuestionType[];
   source?: "builtin" | "custom";

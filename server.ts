@@ -11,11 +11,17 @@ import {
   getCustomQuizzes, saveCustomQuiz,
   saveAssignment, getAssignment, listAssignments, addAssignmentResult,
   saveReport, getReport, listReports,
+  getAiQuestions, addAiQuestions,
 } from "./lib/db";
+import { generateProceduralBatch, isProceduralQuiz } from "./lib/generators";
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
 const handle = app.getRequestHandler();
+
+process.on("uncaughtException", (e) => {
+  console.error("[fatal] uncaughtException:\n" + (e.stack ?? e));
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Game state
@@ -689,6 +695,34 @@ function isScoredType(t: QuestionType): boolean {
   return t === "mc" || t === "tf" || t === "blank" || t === "reorder";
 }
 
+// ── Sesi soal acak: base + bank AI + prosedural → diacak, ambil 10 ───────────
+const SESSION_SIZE = 10;
+function buildSessionQuestions(quiz: Quiz): Question[] {
+  const pool: Question[] = [...quiz.questions, ...getAiQuestions(quiz.id)];
+  if (isProceduralQuiz(quiz.id)) pool.push(...generateProceduralBatch(quiz.id, 300));
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, Math.min(SESSION_SIZE, pool.length));
+}
+
+// ── Penanam bank soal AI di latar belakang (gratis, anonim) ───────────────────
+const AI_BANK_TARGET = 120;
+async function seedAiBanks(): Promise<void> {
+  const builtins = [scienceQuiz, historyIdQuiz, digitalQuiz, healthQuiz, envQuiz, generalQuiz, economicsQuiz, bahasaQuiz, sportsQuiz, psychologyQuiz, geographyQuiz];
+  for (const quiz of builtins) {
+    let guard = 14; // batas batch per quiz per boot (ramah rate-limit)
+    while (getAiQuestions(quiz.id).length < AI_BANK_TARGET && guard-- > 0) {
+      const ai = await aiChainFromPrompt(QUESTION_PROMPT(quiz.title, 8), 8).catch(() => null);
+      if (!ai?.drafts.length) break;
+      addAiQuestions(quiz.id, draftsToQuestions(ai.drafts, quiz.title) as unknown as Question[]);
+      await new Promise((r) => setTimeout(r, 4000));
+    }
+  }
+  console.log("  📚  Penanaman bank soal AI selesai untuk sesi ini.");
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // AI generator — OpenCode Zen (model gratis) → Ollama lokal → bank soal
 // ─────────────────────────────────────────────────────────────────────────────
@@ -906,14 +940,15 @@ app.prepare().then(() => {
 
   io.on("connection", (socket) => {
 
-    // solo: get full quiz data with correct answers (client-side solo play)
+    // solo: get session data (10 soal acak) with correct answers (client-side solo play)
     socket.on("quiz:getSoloData", ({ quizId }: { quizId: string }, cb: (r: object) => void) => {
       const quiz = quizzes.get(quizId);
       if (!quiz) return cb({ error: "Kuis tidak ditemukan" });
+      const session = buildSessionQuestions(quiz);
       cb({
         id: quiz.id, title: quiz.title, icon: quiz.icon, color: quiz.color,
         category: quiz.category, difficulty: quiz.difficulty, description: quiz.description,
-        questions: quiz.questions.map((q) => ({
+        questions: session.map((q) => ({
           id: q.id, type: q.type, question: q.question, options: q.options,
           correctIndex: q.correctIndex, timeLimit: q.timeLimit,
           category: q.category, explanation: q.explanation,
@@ -994,15 +1029,19 @@ app.prepare().then(() => {
     // list quizzes
     socket.on("quizzes:list", (_data: unknown, cb: (list: object[]) => void) => {
       const customs = getCustomQuizzes();
-      const list = Array.from(quizzes.values()).map((q) => ({
-        id: q.id, title: q.title, description: q.description,
-        category: q.category, icon: q.icon, color: q.color,
-        difficulty: q.difficulty,
-        questionCount: q.questions.length,
-        estimatedMins: Math.ceil(q.questions.reduce((s, x) => s + x.timeLimit, 0) / 60) + Math.ceil(q.questions.length * 0.5),
-        types: [...new Set(q.questions.map((x) => x.type))],
-        source: customs[q.id] ? ("custom" as const) : ("builtin" as const),
-      }));
+      const list = Array.from(quizzes.values()).map((q) => {
+        const poolSize = q.questions.length + getAiQuestions(q.id).length;
+        return {
+          id: q.id, title: q.title, description: q.description,
+          category: q.category, icon: q.icon, color: q.color,
+          difficulty: q.difficulty,
+          questionCount: isProceduralQuiz(q.id) ? Math.max(poolSize, 5000) : poolSize,
+          infinite: isProceduralQuiz(q.id),
+          estimatedMins: Math.ceil(Math.min(poolSize, 10) * 0.5) + 2,
+          types: [...new Set(q.questions.map((x) => x.type))],
+          source: customs[q.id] ? ("custom" as const) : ("builtin" as const),
+        };
+      });
       cb(list);
     });
 
@@ -1145,7 +1184,8 @@ app.prepare().then(() => {
         const a: Assignment = {
           id: uuidv4(), code: generateCode(), title: quiz.title,
           createdAt: Date.now(), deadlineMs: Date.now() + h * 3600_000,
-          questions: quiz.questions.map((q) => ({
+          // tugas memakai 10 soal acak dari pool
+          questions: buildSessionQuestions(quiz).map((q) => ({
             id: q.id, type: q.type, question: q.question, options: q.options,
             timeLimit: q.timeLimit, image: q.image,
             itemsShuffled: q.type === "reorder" ? shuffleArr([...(q.items ?? [])]) : undefined,
@@ -1303,8 +1343,10 @@ app.prepare().then(() => {
   function makeGame(quiz: Quiz, hostId: string, opts?: { teams?: boolean; economy?: boolean }): string {
     let pin = generatePin();
     while (games.has(pin)) pin = generatePin();
+    // setiap game mendapat 10 soal acak dari pool besar
+    const sessionQuiz: Quiz = { ...quiz, questions: buildSessionQuestions(quiz) };
     games.set(pin, {
-      pin, quiz, hostSocketId: hostId,
+      pin, quiz: sessionQuiz, hostSocketId: hostId,
       players: new Map(), state: "lobby",
       currentQuestionIndex: -1, questionStartTime: 0,
       answers: new Map(), openAnswers: new Map(),
@@ -1470,5 +1512,9 @@ app.prepare().then(() => {
   }
 
   const PORT = parseInt(process.env.PORT || "3000");
-  httpServer.listen(PORT, () => console.log(`\n  🎯  SiKuis — http://localhost:${PORT}\n`));
+  httpServer.listen(PORT, () => {
+    console.log(`\n  🎯  SiKuis — http://localhost:${PORT}\n`);
+    // tanam bank soal AI di latar belakang (tidak menahan startup)
+    setTimeout(() => { seedAiBanks().catch(() => {}); }, 5000);
+  });
 });

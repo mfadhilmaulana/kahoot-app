@@ -125,7 +125,7 @@ export default function AssignPage({ params }: { params: Promise<{ code: string 
   if (loadError && !data) {
     return (
       <main className="min-h-screen " style={{ background: "var(--bg)", padding: "2rem" }}>
-        <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>😕</div>
+        
         <p style={{ color: "var(--text)", fontWeight: 700, marginBottom: "0.5rem", textAlign: "center" }}>{loadError}</p>
         <button onClick={() => router.push("/assignments")} className="btn-primary">Lihat daftar tugas</button>
       </main>
@@ -147,7 +147,7 @@ export default function AssignPage({ params }: { params: Promise<{ code: string 
       }}>
         <SiKuisLogoMark size={28} id={`asg-${data.code}`} />
         <div>
-          <p style={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem" }}>📝 {data.title}</p>
+          <p style={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem" }}>{data.title}</p>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.7rem" }}>
             Kode tugas {data.code} · tenggat {new Date(data.deadlineMs).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
           </p>
@@ -157,11 +157,11 @@ export default function AssignPage({ params }: { params: Promise<{ code: string 
       <div style={{ maxWidth: 640, margin: "0 auto", padding: "1.5rem 1.25rem 4rem" }}>
         {phase === "join" && (
           <section style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "1.5rem", textAlign: "center" }}>
-            <p style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🧑‍🎓</p>
+            
             <h1 style={{ color: "var(--text)", fontWeight: 900, fontSize: "1.15rem", marginBottom: "0.35rem" }}>Masuk ke Tugas</h1>
             <p style={{ color: "var(--text-dim)", fontSize: "0.8rem", marginBottom: "1.25rem" }}>
               {data.questions.length} soal · kerjakan dengan tenang tanpa tekanan waktu
-              {data.expired && <span style={{ color: "#DC2626", fontWeight: 700 }}> · ⚠️ Tenggat sudah lewat (jawaban mungkin ditolak)</span>}
+              {data.expired && <span style={{ color: "#DC2626", fontWeight: 700 }}> · Tenggat sudah lewat (jawaban mungkin ditolak)</span>}
             </p>
             <input
               value={name} onChange={(e) => setName(e.target.value)}
@@ -173,7 +173,7 @@ export default function AssignPage({ params }: { params: Promise<{ code: string 
               background: "none", border: "none", color: "var(--accent)",
               fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", marginBottom: "0.9rem",
             }}>
-              🎲 Pakai nama acak
+              Pakai nama acak
             </button>
             <br />
             <button onClick={startRun} disabled={!name.trim()} className="btn-primary" style={{ width: "100%", opacity: name.trim() ? 1 : 0.5 }}>
@@ -201,7 +201,7 @@ export default function AssignPage({ params }: { params: Promise<{ code: string 
                 <button title="Dengarkan soal" onClick={() => speak(q.question)} style={{
                   flexShrink: 0, background: "var(--surface-3)", border: "1px solid var(--border-hi)",
                   borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: "0.85rem",
-                }}>🔊</button>
+                }}>Dengar</button>
               </div>
 
               {q.image && (
@@ -283,7 +283,7 @@ export default function AssignPage({ params }: { params: Promise<{ code: string 
               ) : (
                 <button onClick={() => { commitCurrent(); setTimeout(handleSubmit, 30); }} disabled={!answeredState(q) || submitting}
                   className="btn-primary" style={{ flex: 2, opacity: answeredState(q) && !submitting ? 1 : 0.45 }}>
-                  {submitting ? "Mengirim..." : "✅ Kirim Jawaban"}
+                  {submitting ? "Mengirim..." : "Kirim Jawaban"}
                 </button>
               )}
             </div>
@@ -292,7 +292,7 @@ export default function AssignPage({ params }: { params: Promise<{ code: string 
 
         {phase === "done" && result && (
           <section style={{ background: "var(--surface)", border: "1.5px solid rgba(22,163,74,0.4)", borderRadius: 16, padding: "2rem 1.5rem", textAlign: "center" }}>
-            <p style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>🎉</p>
+            
             <h1 style={{ color: "var(--text)", fontWeight: 900, fontSize: "1.25rem", marginBottom: "0.25rem" }}>Jawaban Terkirim!</h1>
             <p style={{ color: "var(--text-dim)", fontSize: "0.82rem", marginBottom: "1.25rem" }}>Semangat belajarnya keren, {name.trim()}!</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.6rem", marginBottom: "1.25rem" }}>
@@ -307,7 +307,7 @@ export default function AssignPage({ params }: { params: Promise<{ code: string 
                 </div>
               ))}
             </div>
-            <button onClick={() => router.push("/")} className="btn-surface" style={{ width: "100%" }}>🏠 Kembali ke Beranda</button>
+            <button onClick={() => router.push("/")} className="btn-surface" style={{ width: "100%" }}>Kembali ke Beranda</button>
           </section>
         )}
       </div>

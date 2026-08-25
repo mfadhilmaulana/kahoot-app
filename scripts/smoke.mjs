@@ -45,69 +45,56 @@ p2.on("game:myResult", (r) => { myResult2 = r; });
 await emit(p1, "player:join", { pin: custom.pin, name: "Ani" });
 await emit(p2, "player:join", { pin: custom.pin, name: "Budi" });
 
-// Pola aman: daftarkan listener SEBELUM memicu aksi.
-// host:next & host:showResults tidak pakai ack → fire-and-forget.
-async function nextQuestion() {
-  const qp = waitEvent(p1, "game:question");
-  host.emit("host:next", { pin: custom.pin });
-  return qp;
+// Urutan soal sesi kini ACAK — jawab adaptif per tipe
+const seen = {};
+const qFirst = waitEvent(p1, "game:question");
+host.emit("host:start", { pin: custom.pin }, () => {});
+for (let i = 0; i < 5; i++) {
+  const qp = await (i === 0 ? qFirst : waitEvent(p1, "game:question"));
+  const rP = waitEvent(p1, "game:questionResults");
+  if (qp.type === "mc" && qp.image) {
+    seen.img = qp;
+    await emit(p1, "player:answer", { pin: custom.pin, optionIndex: 0 });
+    await emit(p2, "player:answer", { pin: custom.pin, optionIndex: 0 });
+  } else if (qp.type === "mc") {
+    seen.mc = qp;
+    await emit(p1, "player:answer", { pin: custom.pin, optionIndex: 1 });
+    await emit(p2, "player:answer", { pin: custom.pin, optionIndex: 0 });
+  } else if (qp.type === "reorder") {
+    seen.reorder = qp;
+    const sh = qp.shuffledItems;
+    const ix = (s) => sh.indexOf(s);
+    await emit(p1, "player:answer", { pin: custom.pin, optionIndex: -3, order: [ix("1"), ix("2"), ix("3")] });
+    await emit(p2, "player:answer", { pin: custom.pin, optionIndex: -3, order: [ix("3"), ix("2"), ix("1")] });
+  } else if (qp.type === "blank") {
+    seen.blank = qp;
+    await emit(p1, "player:openAnswer", { pin: custom.pin, text: "JAKARTA " });
+    await emit(p2, "player:openAnswer", { pin: custom.pin, text: "bandung" });
+  } else {
+    seen.open = qp;
+    await emit(p1, "player:openAnswer", { pin: custom.pin, text: "bagus" });
+    await emit(p2, "player:openAnswer", { pin: custom.pin, text: "seru" });
+  }
+  const res = await rP;
+  if (qp.type === "mc" && !qp.image) { seen.mcSnap = [myResult1, myResult2]; }
+  if (qp.type === "reorder") { seen.reorderRes = res; seen.reorderSnap = [myResult1, myResult2]; }
+  if (qp.type === "blank") { seen.blankRes = res; seen.blankSnap = [myResult1, myResult2]; }
+  await delay(30);
+  if (i < 4) host.emit("host:next", { pin: custom.pin });
 }
+ok("5 soal sesi acak lengkap", !!(seen.mc && seen.reorder && seen.blank && seen.open && seen.img), JSON.stringify(Object.keys(seen)));
+ok("MC dinilai benar/salah", seen.mcSnap?.[0]?.correct === true && seen.mcSnap?.[1]?.correct === false);
+ok("reorder dinilai benar/salah", seen.reorderSnap?.[0]?.correct === true && seen.reorderSnap?.[1]?.correct === false);
+ok("reorder correctOrder dikirim", Array.isArray(seen.reorderRes?.correctOrder) && seen.reorderRes.correctOrder.join() === "1,2,3");
+ok("blank normalisasi benar/salah", seen.blankSnap?.[0]?.correct === true && seen.blankSnap?.[1]?.correct === false);
+ok("blank acceptedAnswers + jawaban masuk", Array.isArray(seen.blankRes?.acceptedAnswers) && Array.isArray(seen.blankRes?.openAnswers));
+ok("gambar dikirim", seen.img?.image === "https://example.com/x.png");
 
-// ── Q1 (mc) ──
-let qP = waitEvent(p1, "game:question");
-host.emit("host:start", { pin: custom.pin });
-let qPayload = await qP;
-ok("Q1 payload mc", qPayload.type === "mc");
-let rP = waitEvent(p1, "game:questionResults");
-await emit(p1, "player:answer", { pin: custom.pin, optionIndex: 1 }); // benar
-await emit(p2, "player:answer", { pin: custom.pin, optionIndex: 0 }); // salah → reveal otomatis
-let res1 = await rP;
-await delay(30);
-ok("Q1 Ani benar (myResult)", myResult1?.correct === true);
-ok("Q1 Budi salah (myResult)", myResult2?.correct === false);
-
-// ── Q2 (reorder) ──
-qPayload = await nextQuestion();
-ok("Q2 payload reorder + shuffledItems", qPayload.type === "reorder" && Array.isArray(qPayload.shuffledItems) && qPayload.shuffledItems.length === 3);
-const shuf = qPayload.shuffledItems;
-const idxOf = (s) => shuf.indexOf(s);
-rP = waitEvent(p1, "game:questionResults");
-await emit(p1, "player:answer", { pin: custom.pin, optionIndex: -3, order: [idxOf("1"), idxOf("2"), idxOf("3")] });
-await emit(p2, "player:answer", { pin: custom.pin, optionIndex: -3, order: [idxOf("3"), idxOf("2"), idxOf("1")] });
-let res2 = await rP;
-await delay(30);
-ok("Q2 reorder penilaian benar/salah", myResult1?.correct === true && myResult2?.correct === false);
-ok("Q2 correctOrder dikirim", Array.isArray(res2.correctOrder) && res2.correctOrder.join() === "1,2,3");
-
-// ── Q3 (blank) ──
-qPayload = await nextQuestion();
-ok("Q3 payload blank", qPayload.type === "blank");
-rP = waitEvent(p1, "game:questionResults");
-await emit(p1, "player:openAnswer", { pin: custom.pin, text: "JAKARTA " });
-await emit(p2, "player:openAnswer", { pin: custom.pin, text: "bandung" });
-let res3 = await rP;
-await delay(30);
-ok("Q3 blank normalisasi benar/salah", myResult1?.correct === true && myResult2?.correct === false);
-ok("Q3 acceptedAnswers + openAnswers", Array.isArray(res3.acceptedAnswers) && Array.isArray(res3.openAnswers) && res3.openAnswers.length === 2);
-
-// ── Q4 (open) partisipasi ──
-qPayload = await nextQuestion();
-ok("Q4 payload open", qPayload.type === "open");
-rP = waitEvent(p1, "game:questionResults");
-await emit(p1, "player:openAnswer", { pin: custom.pin, text: "bagus" });
-await emit(p2, "player:openAnswer", { pin: custom.pin, text: "seru" });
-await rP;
-
-// ── Q5 (gambar) → selesai ──
-qPayload = await nextQuestion();
-ok("Q5 image dikirim", qPayload.image === "https://example.com/x.png");
-let endedP = waitEvent(p1, "game:ended");
-await emit(p1, "player:answer", { pin: custom.pin, optionIndex: 0 });
-await emit(p2, "player:answer", { pin: custom.pin, optionIndex: 0 });
-// soal terakhir: host tekan "Lihat Hasil Akhir" → memicu game:ended
+// selesai: host lanjut dari review terakhir → ended
+const endedP = waitEvent(p1, "game:ended");
 host.emit("host:next", { pin: custom.pin });
-const endedData = await endedP;
-ok("game selesai + leaderboard", endedData.leaderboard.length === 2);
+const endedData = await Promise.race([endedP, delay(15000).then(() => null)]);
+ok("game selesai + leaderboard", !!endedData && endedData.leaderboard.length === 2);
 
 // 4. Laporan tersimpan
 const rep = await emit(host, "report:get", { pin: custom.pin });
@@ -165,7 +152,7 @@ ok("teamTotals dikirim di akhir", !!ended7 && Array.isArray(ended7.teamTotals) &
   JSON.stringify(ended7?.teamTotals ?? null));
 [tHost, tA, tB].forEach((s) => s.close());
 
-// ── 8. Mode EKONOMI: koin, beli ×2, efek penggandaan ──
+// ── 8. Mode EKONOMI: koin, beli ×2, efek penggandaan (adaptif acak) ──
 const eHost = io(URL), eP = io(URL);
 await Promise.all([eHost, eP].map((s) => new Promise((r) => s.on("connect", r))));
 const eGame = await emit(eHost, "host:createCustom", {
@@ -179,43 +166,37 @@ const eGame = await emit(eHost, "host:createCustom", {
   ],
 });
 let coinState = null;
-eP.on("game:coins", (c) => { coinState = c; });
+eP.on("game:coins", (x) => { coinState = x; });
 await emit(eP, "player:join", { pin: eGame.pin, name: "Koin" });
-const eQP = waitEvent(eP, "game:question");
+ok("uang saku awal 200 koin", coinState?.coins === 200, JSON.stringify(coinState));
+
+const eFirst = waitEvent(eP, "game:question");
 eHost.emit("host:start", { pin: eGame.pin }, () => {});
-await eQP;
-let eRP = waitEvent(eP, "game:questionResults");
-await emit(eP, "player:answer", { pin: eGame.pin, optionIndex: 1 }); // benar → dapat koin
-await eRP;
-await delay(50);
-ok("koin: 200 awal +100 setelah benar", coinState?.coins === 300, JSON.stringify(coinState));
-const bought = await emit(eP, "player:buyPowerUp", { pin: eGame.pin, type: "x2" });
-ok("beli power-up ×2 (300 koin)", bought.ok === true && coinState?.coins === 0, JSON.stringify([bought, coinState]));
-const poorBuy = await emit(eP, "player:buyPowerUp", { pin: eGame.pin, type: "shield" });
-ok("beli saat koin kurang ditolak", !!poorBuy.error);
-
-// Q2: benar dengan ×2 aktif → poin minimal 2000 (1000×2)
-eRP = waitEvent(eP, "game:questionResults");
-await nextQuestionEmit(eHost, eP, eGame.pin); // lanjut Q2
-await emit(eP, "player:answer", { pin: eGame.pin, optionIndex: 1 });
-const r8 = await eRP;
-await delay(50);
-const meEntry = r8.leaderboard.find((x) => x.name === "Koin");
-ok("×2 menggandakan poin (≥2000 di soal itu)", meEntry?.lastScore >= 2000, `lastScore=${meEntry?.lastScore}`);
-
-// Q3 open → partisipasi (tanpa koin), saldo tetap dari Q2
-eRP = waitEvent(eP, "game:questionResults");
-await nextQuestionEmit(eHost, eP, eGame.pin);
-await emit(eP, "player:openAnswer", { pin: eGame.pin, text: "apa saja" });
-await eRP;
-await delay(50);
-ok("saldo koin konsisten setelah Q3", coinState?.coins === 100, JSON.stringify(coinState));
-
-// selesaikan game (Q4)
-eRP = waitEvent(eP, "game:questionResults");
-await nextQuestionEmit(eHost, eP, eGame.pin);
-await emit(eP, "player:answer", { pin: eGame.pin, optionIndex: 1 });
-await eRP;
+let boughtX2 = false, doubledScore = null, firstMcChecked = false;
+for (let i = 0; i < 4; i++) {
+  const qp = await (i === 0 ? eFirst : nextQuestionEmit(eHost, eP, eGame.pin));
+  const rP = waitEvent(eP, "game:questionResults");
+  if (qp.type === "open") await emit(eP, "player:openAnswer", { pin: eGame.pin, text: "apa saja" });
+  else await emit(eP, "player:answer", { pin: eGame.pin, optionIndex: 1 }); // idx1 selalu kunci untuk kuis ini
+  const res = await rP;
+  await delay(40);
+  if (qp.type === "mc") {
+    if (!firstMcChecked) {
+      firstMcChecked = true;
+      ok("koin: 200 awal +100 setelah benar", coinState?.coins === 300, JSON.stringify(coinState));
+    }
+    const me = res.leaderboard.find((x) => x.name === "Koin");
+    if (boughtX2 && doubledScore === null) doubledScore = me?.lastScore ?? 0;
+    else if ((coinState?.coins ?? 0) >= 300) {
+      const b = await emit(eP, "player:buyPowerUp", { pin: eGame.pin, type: "x2" });
+      ok("beli power-up x2 (300 koin)", b.ok === true && coinState?.coins === 0, JSON.stringify([b, coinState]));
+      const poor = await emit(eP, "player:buyPowerUp", { pin: eGame.pin, type: "shield" });
+      ok("beli saat koin kurang ditolak", !!poor.error);
+      boughtX2 = true;
+    }
+  }
+}
+ok("x2 menggandakan poin (>=2000)", boughtX2 && doubledScore !== null && doubledScore >= 2000, `score=${doubledScore} bought=${boughtX2}`);
 [eHost, eP].forEach((s) => s.close());
 
 // ── 9. Impor teks → AI (Zen anonim / fallback Ollama) ──

@@ -123,14 +123,14 @@ export default function AssignmentsPage() {
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "1.5rem 1.25rem 4rem" }}>
         {/* Buat tugas */}
         <section style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "1.25rem", marginBottom: "1.5rem" }}>
-          <h2 style={{ fontWeight: 800, color: "var(--text)", fontSize: "1rem", marginBottom: "0.9rem" }}>📋 Buat Tugas Baru</h2>
+          <h2 style={{ fontWeight: 800, color: "var(--text)", fontSize: "1rem", marginBottom: "0.9rem" }}>Buat Tugas Baru</h2>
           <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
             <select value={quizId} onChange={(e) => setQuizId(e.target.value)} className="input"
-              style={{ flex: "2 1 220px", fontSize: "0.85rem", height: 40 }}>
-              {quizzes.map((q) => <option key={q.id} value={q.id}>{q.icon} {q.title} ({q.questionCount} soal)</option>)}
+              style={{ flex: "2 1 220px", fontSize: "0.85rem", height: 40, padding: "0.4rem 0.75rem", color: "var(--text)", lineHeight: 1.5 }}>
+              {quizzes.map((q) => <option key={q.id} value={q.id}>{q.title}</option>)}
             </select>
             <select value={hours} onChange={(e) => setHours(Number(e.target.value))} className="input"
-              style={{ flex: "1 1 110px", fontSize: "0.85rem", height: 40 }}>
+              style={{ flex: "1 1 110px", fontSize: "0.85rem", height: 40, padding: "0.4rem 0.75rem", color: "var(--text)", lineHeight: 1.5 }}>
               {HOURS_OPTIONS.map((o) => <option key={o.h} value={o.h}>Tenggat: {o.label}</option>)}
             </select>
             <button onClick={handleCreate} disabled={creating || !quizId} style={{
@@ -142,18 +142,18 @@ export default function AssignmentsPage() {
               {creating ? "Membuat..." : "Buat Tugas"}
             </button>
           </div>
-          {error && <p style={{ color: "#DC2626", fontSize: "0.78rem", fontWeight: 600, marginTop: "0.6rem" }}>⚠️ {error}</p>}
+          {error && <p style={{ color: "#DC2626", fontSize: "0.78rem", fontWeight: 600, marginTop: "0.6rem" }}>{error}</p>}
           {created && (
             <div style={{ marginTop: "0.9rem", padding: "0.9rem 1rem", background: "rgba(22,163,74,0.08)", border: "1px solid rgba(22,163,74,0.3)", borderRadius: 12 }}>
               <p style={{ color: "#16A34A", fontWeight: 800, fontSize: "0.85rem", marginBottom: "0.4rem" }}>
-                ✅ Tugas dibuat! Kode: <span style={{ fontSize: "1.05rem", letterSpacing: "0.12em" }}>{created.code}</span>
+                Tugas dibuat! Kode: <span style={{ fontSize: "1.05rem", letterSpacing: "0.12em" }}>{created.code}</span>
               </p>
               <p style={{ color: "var(--text-dim)", fontSize: "0.75rem", wordBreak: "break-all", marginBottom: "0.5rem" }}>{created.link}</p>
               <button onClick={() => navigator.clipboard?.writeText(created.link)} style={{
                 background: "var(--surface-3)", border: "1px solid var(--border-hi)", borderRadius: 40,
                 padding: "0.3rem 0.8rem", color: "var(--text)", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer",
               }}>
-                🔗 Salin link untuk siswa
+                Salin link untuk siswa
               </button>
             </div>
           )}
@@ -167,7 +167,7 @@ export default function AssignmentsPage() {
           <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Memuat...</p>
         ) : rows.length === 0 ? (
           <div style={{ textAlign: "center", padding: "2.5rem 0", color: "var(--text-dim)" }}>
-            <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem" }}>📭</div>
+            <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem" }}></div>
             <p style={{ fontWeight: 600, fontSize: "0.85rem" }}>Belum ada tugas. Buat yang pertama di atas!</p>
           </div>
         ) : (
@@ -227,7 +227,7 @@ export default function AssignmentsPage() {
                             borderRadius: 40, padding: "0.35rem 0.85rem", color: "var(--text)",
                             fontSize: "0.72rem", fontWeight: 700, cursor: "pointer",
                           }}>
-                            ⬇️ Export CSV
+                            Export CSV
                           </button>
                         </>
                       )}

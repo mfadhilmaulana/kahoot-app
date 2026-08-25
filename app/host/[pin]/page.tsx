@@ -168,7 +168,7 @@ export default function HostGamePage() {
 
           {/* "Join at" instruction */}
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "1rem" }}>
-            🌐 Buka <span style={{ color: "#fff" }}>sikuis.com</span> lalu masukkan kode
+            Buka <span style={{ color: "#fff" }}>sikuis.com</span> lalu masukkan kode
           </p>
 
           {/* PIN display */}
@@ -211,7 +211,7 @@ export default function HostGamePage() {
             color: opts.teams ? "#fff" : "var(--text-dim)",
             border: `1.5px solid ${opts.teams ? "#DC2626" : "var(--border)"}`,
           }}>
-            🚩 Mode Tim {opts.teams ? "· AKTIF" : ""}
+            Mode Tim {opts.teams ? "· AKTIF" : ""}
           </button>
           <button onClick={() => toggleOpt("economy")} className="btn" style={{
             padding: "0.45rem 0.9rem", fontSize: "0.78rem", fontWeight: 800, borderRadius: 40,
@@ -219,7 +219,7 @@ export default function HostGamePage() {
             color: opts.economy ? "#fff" : "var(--text-dim)",
             border: `1.5px solid ${opts.economy ? "#CA8A04" : "var(--border)"}`,
           }}>
-            🪙 Mode Koin & Power-Up {opts.economy ? "· AKTIF" : ""}
+            Mode Koin & Power-Up {opts.economy ? "· AKTIF" : ""}
           </button>
         </div>
 
@@ -267,7 +267,7 @@ export default function HostGamePage() {
                     }} />
                   ))}
                   <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: "2rem" }}>👥</span>
+                    <span style={{ fontSize: "2rem" }}></span>
                   </div>
                 </div>
                 <div style={{ textAlign: "center" }}>
@@ -292,7 +292,7 @@ export default function HostGamePage() {
                       color: "#fff", fontSize: "0.8rem", fontWeight: 900,
                       boxShadow: `0 2px 8px ${avatarColor(p.name)}44`,
                     }}>
-                      {p.team === 0 ? "🚩" : p.team === 1 ? "🚩" : p.name[0].toUpperCase()}
+                      {p.name[0].toUpperCase()}
                     </div>
                     <span style={{ color: "var(--text)", fontWeight: 600, fontSize: "0.8rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                       {p.name}
@@ -358,22 +358,22 @@ export default function HostGamePage() {
             </p>
             {(isPoll || isRating) && (
               <span className="badge" style={{ background: "var(--accent-dim)", color: "var(--accent)", marginTop: "0.25rem", display: "inline-block" }}>
-                {isRating ? "⭐ Rating" : "Pendapat"}
+                {isRating ? "Rating" : "Pendapat"}
               </span>
             )}
             {isOpen && (
               <span className="badge" style={{ background: "rgba(245,158,11,0.12)", color: "#D97706", marginTop: "0.25rem", display: "inline-block" }}>
-                ✏️ Teks Bebas
+                Teks Bebas
               </span>
             )}
             {isBlank && (
               <span className="badge" style={{ background: "rgba(245,158,11,0.12)", color: "#D97706", marginTop: "0.25rem", display: "inline-block" }}>
-                📝 Isi Jawaban
+                Isi Jawaban
               </span>
             )}
             {isReorderQ && (
               <span className="badge" style={{ background: "rgba(124,58,237,0.12)", color: "#7C3AED", marginTop: "0.25rem", display: "inline-block" }}>
-                🔢 Urutkan
+                Urutkan
               </span>
             )}
           </div>
@@ -405,7 +405,7 @@ export default function HostGamePage() {
 
           {isTextQ ? (
             <div className="card center" style={{ width: "100%", maxWidth: 720, padding: "2rem", textAlign: "center", background: "rgba(245,158,11,0.05)", borderColor: "rgba(245,158,11,0.25)" }}>
-              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>{isBlank ? "📝" : "✏️"}</div>
+              
               <p style={{ color: "var(--text-dim)", fontSize: "1rem" }}>Pemain mengetik jawaban mereka...</p>
               <p style={{ color: "var(--text-muted)", fontSize: "0.82rem", marginTop: "0.5rem" }}>{answerCount} dari {players.length} sudah menjawab</p>
             </div>
@@ -428,7 +428,7 @@ export default function HostGamePage() {
           ) : isRating ? (
             <div className="card center" style={{ width: "100%", maxWidth: 720, padding: "2rem", textAlign: "center" }}>
               <div className="row center" style={{ gap: "1rem", fontSize: "2.5rem", marginBottom: "1rem" }}>
-                {[1,2,3,4,5].map((s) => <span key={s}>⭐</span>)}
+                {[1,2,3,4,5].map((s) => <span key={s}>★</span>)}
               </div>
               <p style={{ color: "var(--text-dim)", fontSize: "1rem" }}>Pemain memilih rating 1-5</p>
               <p style={{ color: "var(--text-muted)", fontSize: "0.82rem", marginTop: "0.5rem" }}>{answerCount} dari {players.length} sudah memberikan rating</p>
@@ -557,7 +557,7 @@ export default function HostGamePage() {
             return (
               <div className="px-4 py-3" style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
                 <div className="card" style={{ padding: "1.25rem 1.5rem" }}>
-                  <p className="t-label mb-2 text-center">☁️ Word Cloud — {results.openAnswers.length} jawaban</p>
+                  <p className="t-label mb-2 text-center">Word Cloud — {results.openAnswers.length} jawaban</p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem 0.8rem", justifyContent: "center", alignItems: "baseline" }}>
                     {words.map(([w, n], i) => {
                       const scale = Math.sqrt(n / max);
@@ -594,7 +594,7 @@ export default function HostGamePage() {
             {results.ratingAvg !== undefined && (
               <div className="card center mb-3" style={{ padding: "1rem", textAlign: "center" }}>
                 <div style={{ fontSize: "2.5rem", fontWeight: 900, color: "var(--accent)", lineHeight: 1 }}>{results.ratingAvg}</div>
-                <div style={{ fontSize: "1.5rem", marginTop: "0.25rem" }}>{"⭐".repeat(Math.round(results.ratingAvg))}</div>
+                <div style={{ fontSize: "1.5rem", marginTop: "0.25rem" }}>{"★".repeat(Math.round(results.ratingAvg))}</div>
                 <p style={{ color: "var(--text-muted)", fontSize: "0.78rem", marginTop: "0.25rem" }}>Rating rata-rata</p>
               </div>
             )}
@@ -612,7 +612,7 @@ export default function HostGamePage() {
                         animationDelay: `${i * 0.07}s`,
                       }} />
                     </div>
-                    <span style={{ color: "var(--text-muted)", fontSize: "0.7rem" }}>{"⭐".repeat(i + 1)}</span>
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.7rem" }}>{"★".repeat(i + 1)}</span>
                   </div>
                 );
               })}
@@ -662,7 +662,7 @@ export default function HostGamePage() {
             <p className="t-label text-center mb-2 mt-2">Peringkat Sementara</p>
             <div className="col" style={{ gap: "0.4rem" }}>
               {results.leaderboard.slice(0, 3).map((e, i) => {
-                const medals = ["🥇","🥈","🥉"];
+                const medals = ["","",""];
                 return (
                   <div key={e.id} className="card row" style={{ gap: "0.6rem", padding: "0.6rem 0.875rem" }}>
                     <span style={{ width: 24, fontSize: "1rem" }}>{medals[i]}</span>
@@ -696,7 +696,7 @@ export default function HostGamePage() {
       { bg: "rgba(234,179,8,0.12)",  border: "rgba(234,179,8,0.35)" },
       { bg: "rgba(180,83,9,0.1)",    border: "rgba(180,83,9,0.25)" },
     ];
-    const medals = ["🥇","🥈","🥉"];
+    const medals = ["","",""];
 
     return (
       <main className="min-h-screen col items-center px-4 pt-8 pb-10 safe-bottom" style={{ background: "linear-gradient(150deg, #EFF6FF, #DBEAFE)" }}>
@@ -707,7 +707,7 @@ export default function HostGamePage() {
               <span style={{ color: "var(--text)" }}>Si</span><span style={{ color: "var(--accent)" }}>Kuis</span>
             </div>
           </div>
-          <h2 className="t-h2 mb-1">🎉 Game Selesai!</h2>
+          <h2 className="t-h2 mb-1">Game Selesai!</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>Peringkat akhir</p>
         </div>
 
@@ -719,7 +719,7 @@ export default function HostGamePage() {
                 background: t.team === 0 ? "rgba(220,38,38,0.08)" : "rgba(37,99,235,0.08)",
                 border: `2px solid ${teamTotals[0].team === t.team ? "#F59E0B" : t.team === 0 ? "rgba(220,38,38,0.4)" : "rgba(37,99,235,0.4)"}`,
               }}>
-                <p style={{ fontSize: "1.6rem", margin: 0 }}>{teamTotals[0].team === t.team ? "🏆" : "🚩"}</p>
+                <p style={{ fontSize: "1.6rem", margin: 0 }}>{teamTotals[0].team === t.team ? "Juara" : ""}</p>
                 <p style={{ fontWeight: 900, color: t.team === 0 ? "#DC2626" : "#2563EB", fontSize: "0.95rem", margin: "0.15rem 0" }}>Tim {t.name}</p>
                 <p style={{ fontWeight: 900, fontSize: "1.3rem", color: "var(--text)", margin: 0 }}>{t.score.toLocaleString()}</p>
               </div>
