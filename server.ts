@@ -14,6 +14,11 @@ import {
   getAiQuestions, addAiQuestions,
 } from "./lib/db";
 import { generateProceduralBatch, isProceduralQuiz } from "./lib/generators";
+import { mtkSd, ipaSd } from "./lib/extra-sd1";
+import { bindoSd, ppknSd } from "./lib/extra-sd2";
+import { mtkSmp, ipaSmp, ipsSmp, bingSmp } from "./lib/extra-smp";
+import { fisika, kimia, biologiSma, bingSma, informatikaSma } from "./lib/extra-sma";
+import { akuntansi, manajemen, hukumDasar, statistika, anatomi, algoritma } from "./lib/extra-kuliah";
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -643,8 +648,22 @@ const geographyQuiz: Quiz = {
 // ─────────────────────────────────────────────────────────────────────────────
 // Register all quizzes (+ muat kuis kustom yang tersimpan di db.json)
 // ─────────────────────────────────────────────────────────────────────────────
-[scienceQuiz, historyIdQuiz, mathQuiz, digitalQuiz, healthQuiz, envQuiz, generalQuiz, economicsQuiz, bahasaQuiz, sportsQuiz, iqQuiz, psychologyQuiz, geographyQuiz]
-  .forEach((q) => quizzes.set(q.id, q));
+const LEVEL_BY_ID: Record<string, string> = {
+  science: "SMA", "history-id": "SMP", math: "SMP", digital: "SMA", health: "SMP",
+  environment: "SMP", general: "Umum", economics: "SMA", bahasa: "SMP", sports: "Umum",
+  iq: "Umum", psychology: "Kuliah", geography: "SMP",
+};
+
+[
+  scienceQuiz, historyIdQuiz, mathQuiz, digitalQuiz, healthQuiz, envQuiz, generalQuiz,
+  economicsQuiz, bahasaQuiz, sportsQuiz, iqQuiz, psychologyQuiz, geographyQuiz,
+  mtkSd, ipaSd, bindoSd, ppknSd,
+  mtkSmp, ipaSmp, ipsSmp, bingSmp,
+  fisika, kimia, biologiSma, bingSma, informatikaSma,
+  akuntansi, manajemen, hukumDasar, statistika, anatomi, algoritma,
+].forEach((qq) => {
+  quizzes.set(qq.id, { ...qq, level: (qq.level ?? LEVEL_BY_ID[qq.id]) as Quiz["level"] });
+});
 
 for (const [id, custom] of Object.entries(getCustomQuizzes())) {
   quizzes.set(id, custom);
@@ -710,7 +729,13 @@ function buildSessionQuestions(quiz: Quiz): Question[] {
 // ── Penanam bank soal AI di latar belakang (gratis, anonim) ───────────────────
 const AI_BANK_TARGET = 120;
 async function seedAiBanks(): Promise<void> {
-  const builtins = [scienceQuiz, historyIdQuiz, digitalQuiz, healthQuiz, envQuiz, generalQuiz, economicsQuiz, bahasaQuiz, sportsQuiz, psychologyQuiz, geographyQuiz];
+  const builtins = [
+    scienceQuiz, historyIdQuiz, digitalQuiz, healthQuiz, envQuiz, generalQuiz, economicsQuiz,
+    bahasaQuiz, sportsQuiz, psychologyQuiz, geographyQuiz,
+    mtkSd, ipaSd, bindoSd, ppknSd, mtkSmp, ipaSmp, ipsSmp, bingSmp,
+    kimia, biologiSma, bingSma, informatikaSma,
+    akuntansi, manajemen, hukumDasar, statistika, anatomi, algoritma,
+  ];
   for (const quiz of builtins) {
     let guard = 14; // batas batch per quiz per boot (ramah rate-limit)
     while (getAiQuestions(quiz.id).length < AI_BANK_TARGET && guard-- > 0) {
@@ -1035,6 +1060,7 @@ app.prepare().then(() => {
           id: q.id, title: q.title, description: q.description,
           category: q.category, icon: q.icon, color: q.color,
           difficulty: q.difficulty,
+          level: q.level ?? "Umum",
           questionCount: isProceduralQuiz(q.id) ? Math.max(poolSize, 5000) : poolSize,
           infinite: isProceduralQuiz(q.id),
           estimatedMins: Math.ceil(Math.min(poolSize, 10) * 0.5) + 2,

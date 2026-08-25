@@ -15,6 +15,8 @@ export interface Question {
   answers?: string[];   // "blank": accepted free-text answers
 }
 
+export type QuizLevel = "SD" | "SMP" | "SMA" | "Kuliah" | "Umum";
+
 export interface Quiz {
   id: string;
   title: string;
@@ -23,6 +25,7 @@ export interface Quiz {
   icon: string;
   color: string;        // hex
   difficulty: "Mudah" | "Sedang" | "Sulit";
+  level?: QuizLevel;    // jenjang pendidikan
   questions: Question[];
 }
 
@@ -34,6 +37,7 @@ export interface QuizMeta {
   icon: string;
   color: string;
   difficulty: Quiz["difficulty"];
+  level?: Quiz["level"];
   questionCount: number;
   infinite?: boolean; // bank soal prosedural (ribuan variasi)
   estimatedMins: number;

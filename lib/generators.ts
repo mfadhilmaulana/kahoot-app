@@ -236,8 +236,51 @@ function iqQuestion(): Question {
   }
 }
 
+// ── FISIKA (prosedural) ───────────────────────────────────────────────────────
+function fisikaQuestion(): Question {
+  const t = ri(1, 5);
+  switch (t) {
+    case 1: { // v = s/t
+      const v = ri(2, 30), tt = ri(2, 20);
+      const s = v * tt;
+      const { options, correctIndex } = optionSet(v, [v + 2, v - 1, s / (tt + 1)]);
+      return mc(`Benda menempuh ${s} m dalam ${tt} s. Kecepatan rata-ratanya?`, options, correctIndex,
+        `v = s/t = ${s}/${tt} = ${v} m/s.`, "Fisika", 20);
+    }
+    case 2: { // F = ma
+      const m = ri(2, 20), a = ri(1, 10);
+      const f = m * a;
+      const { options, correctIndex } = optionSet(f, [m + a, f + m, f - a]);
+      return mc(`Benda bermassa ${m} kg dipercepat ${a} m/s^2. Besar gayanya?`, options, correctIndex,
+        `F = m x a = ${m} x ${a} = ${f} N.`, "Fisika", 20);
+    }
+    case 3: { // massa jenis
+      const v = ri(2, 10), rho = pick([2, 5, 8, 10]);
+      const m = v * rho;
+      const { options, correctIndex } = optionSet(m, [m + v, m - rho, v * rho + 10]);
+      return mc(`Benda volumenya ${v} m^3 dengan massa ${m} kg. Massa jenisnya?`, options, correctIndex,
+        `rho = m/V = ${m}/${v} = ${rho} kg/m^3.`, "Fisika", 25);
+    }
+    case 4: { // Ek = 1/2 m v^2
+      const m = pick([1, 2, 4, 5]), v = ri(2, 10);
+      const ek = 0.5 * m * v * v;
+      const { options, correctIndex } = optionSet(ek, [m * v, ek + m, ek - v]);
+      return mc(`Energi kinetik benda ${m} kg yang bergerak ${v} m/s adalah?`, options, correctIndex,
+        `Ek = 1/2 m v^2 = 1/2 x ${m} x ${v}^2 = ${ek} J.`, "Fisika", 25);
+    }
+    default: { // konversi km/jam → m/s
+      const kms = ri(2, 18) * 5;
+      const ms = kms / 3.6;
+      const rounded = Math.round(ms * 10) / 10;
+      const { options, correctIndex } = optionSet(rounded, [kms * 3.6, rounded + 5, rounded - 2]);
+      return mc(`${kms} km/jam = ... m/s?`, options, correctIndex,
+        `Bagi 3,6: ${kms} : 3,6 = ${rounded} m/s.`, "Fisika", 20);
+    }
+  }
+}
+
 export function generateProceduralBatch(quizId: string, count: number): Question[] {
-  const gen = quizId === "math" ? mathQuestion : quizId === "iq" ? iqQuestion : null;
+  const gen = quizId === "math" ? mathQuestion : quizId === "iq" ? iqQuestion : quizId === "fisika" ? fisikaQuestion : null;
   if (!gen) return [];
   const out: Question[] = [];
   for (let i = 0; i < count; i++) out.push(gen());
@@ -245,5 +288,5 @@ export function generateProceduralBatch(quizId: string, count: number): Question
 }
 
 export function isProceduralQuiz(quizId: string): boolean {
-  return quizId === "math" || quizId === "iq";
+  return quizId === "math" || quizId === "iq" || quizId === "fisika";
 }

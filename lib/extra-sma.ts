@@ -1,0 +1,66 @@
+import { mc, tf, quiz } from "./extra-sd1";
+
+export const fisika = quiz("fisika", "Fisika SMA", "SMA", "atom", "#2563EB", "Sedang", "Fisika",
+  "Kinematika, hukum Newton, energi, gelombang, dan listrik jenjang SMA",
+  [
+    mc("Mobil menempuh 100 m dalam 10 s. Kecepatan rata-ratanya?", ["5 m/s", "10 m/s", "20 m/s", "100 m/s"], 1, 20, "Fisika", "v = s/t = 100/10 = 10 m/s."),
+    mc("Satuan gaya dalam SI adalah?", ["Joule", "Watt", "Newton", "Pascal"], 2, 15, "Fisika", "Gaya diukur dalam newton (N) = kg.m/s^2."),
+    mc("Benda 5 kg dipercepat 2 m/s^2. Gayanya (F = ma)?", ["2,5 N", "7 N", "10 N", "25 N"], 2, 20, "Fisika", "F = m x a = 5 x 2 = 10 N."),
+    mc("Energi kinetik benda 2 kg bergerak 3 m/s adalah?", ["6 J", "9 J", "12 J", "18 J"], 1, 25, "Fisika", "Ek = 1/2 m v^2 = 1/2 x 2 x 9 = 9 J."),
+    tf("Massa jenis = massa dibagi volume.", true, 15, "Fisika", "Benar, rho = m/V (kg/m^3)."),
+    mc("Usaha bernilai nol ketika?", ["Gaya besar", "Benda bergerak", "Gaya sejajar perpindahan", "Gaya tegak lurus perpindahan"], 3, 25, "Fisika", "W = F x s x cos(theta); theta 90 derajat → cos = 0 → W = 0."),
+    mc("Frekuensi gelombang 50 Hz dengan panjang gelombang 4 m. Cepat rambatnya?", ["12,5 m/s", "54 m/s", "200 m/s", "46 m/s"], 2, 25, "Fisika", "v = lambda x f = 4 x 50 = 200 m/s."),
+    mc("Alat yang mengubah energi kimia menjadi listrik adalah?", ["Transformator", "Baterai", "Dinamo", "Kabel"], 1, 20, "Fisika", "Baterai (sel volta) mengubah energi kimia → listrik."),
+  ]);
+
+export const kimia = quiz("kimia", "Kimia SMA", "SMA", "hex", "#EC4899", "Sedang", "Kimia",
+  "Struktur atom, ikatan kimia, stoikiometri, dan reaksi jenjang SMA",
+  [
+    mc("Jumlah proton atom natrium (Na, Z=11) adalah?", ["11", "12", "23", "22"], 0, 15, "Kimia", "Nomor atom = jumlah proton = 11."),
+    mc("Ikatan yang terbentuk antara logam dan non-logam adalah?", ["Kovalen", "Ion", "Logam", "Hidrogen"], 1, 20, "Kimia", "Serah-terima elektron → ikatan ion (contoh NaCl)."),
+    mc("Rumus kimia air adalah?", ["CO2", "H2O", "O2", "NaCl"], 1, 10, "Kimia", "Air = 2 atom H + 1 atom O = H2O."),
+    mc("Massa molar air (H2O) adalah sekitar?", ["16 g/mol", "18 g/mol", "20 g/mol", "36 g/mol"], 1, 20, "Kimia", "H=1 x2 + O=16 → 18 g/mol."),
+    tf("Reaksi pembakaran menghasilkan energi (eksoterm).", true, 15, "Kimia", "Benar, pembakaran melepaskan kalor."),
+    mc("Larutan yang pH-nya kurang dari 7 bersifat?", ["Basa", "Asam", "Netral", "Buffer"], 1, 15, "Kimia", "pH < 7 asam; pH = 7 netral; pH > 7 basa."),
+    mc("Partikel subatom yang bermuatan negatif adalah?", ["Proton", "Neutron", "Elektron", "Nukleon"], 2, 15, "Kimia", "Elektron bermuatan -1, mengelilingi inti."),
+    mc("Isotop adalah atom dengan proton sama tetapi berbeda dalam?", ["Elektron", "Neutron", "Muatan", "Ukuran"], 1, 20, "Kimia", "Isotop: proton sama, neutron berbeda (contoh C-12 dan C-14)."),
+  ]);
+
+export const biologiSma = quiz("biologi-sma", "Biologi SMA", "SMA", "dna", "#16A34A", "Sedang", "Biologi",
+  "Sel, genetika, ekosistem, dan sistem organ jenjang SMA",
+  [
+    mc("Asam nukleat pembawa informasi genetik adalah?", ["ATP", "DNA", "Protein", "Lemak"], 1, 15, "Biologi", "DNA menyimpan dan mewariskan sifat."),
+    mc("Proses pembelahan sel pada sel tubuh (somatik) disebut?", ["Meiosis", "Mitosis", "Oogenesis", "Fotosintesis"], 1, 20, "Biologi", "Mitosis menghasilkan 2 sel anak identik."),
+    mc("Penyusun dinding sel tumbuhan adalah?", ["Kitin", "Selulosa", "Peptidoglikan", "Kolesterol"], 1, 20, "Biologi", "Selulosa memberi kekakuan dinding sel tumbuhan."),
+    tf("Enzim bekerja spesifik pada substrat tertentu.", true, 15, "Biologi", "Benar, prinsip kunci-gembok."),
+    mc("Hubungan simbiosis antara kupu-kupu dan bunga adalah?", ["Parasitisme", "Komensalisme", "Mutualisme", "Kompetisi"], 2, 20, "Biologi", "Keduanya untung: kupu-kupu dapat nektar, bunga terbantu penyerbukan."),
+    mc("Organ ekskresi yang menyaring darah adalah?", ["Hati", "Ginjal", "Paru-paru", "Kulit"], 1, 15, "Biologi", "Ginjal menyaring darah membentuk urine."),
+    mc("Kromosom manusia berjumlah pasangan?", ["21", "22", "23", "46"], 2, 15, "Biologi", "23 pasang (46 buah)."),
+    mc("Golongan darah yang bisa menjadi donor universal adalah?", ["A", "B", "AB", "O"], 3, 15, "Biologi", "Golongan O tidak punya antigen A/B → donor universal."),
+  ]);
+
+export const bingSma = quiz("bing-sma", "Bahasa Inggris SMA", "SMA", "globe", "#6366F1", "Sedang", "Bahasa Inggris",
+  "Tenses, reading comprehension, dan vocabulary jenjang SMA",
+  [
+    mc("Choose the correct sentence:", ["He don't like coffee.", "He doesn't likes coffee.", "He doesn't like coffee.", "He not like coffee."], 2, 20, "Bahasa Inggris", "Negative simple present: doesn't + base verb."),
+    mc("The letter ___ yesterday.", ["is sent", "was sent", "were sent", "sent"], 1, 20, "Bahasa Inggris", "Past passive: was + V3."),
+    mc("'Although' memiliki makna yang sama dengan?", ["Because", "However", "Even though", "Therefore"], 2, 15, "Bahasa Inggris", "Although = even though (pertentangan)."),
+    tf("'Information' is an uncountable noun.", true, 15, "Bahasa Inggris", "Correct: information tidak punya bentuk jamak dengan -s."),
+    mc("If I ___ rich, I would travel the world.", ["am", "was", "were", "will be"], 2, 25, "Bahasa Inggris", "Conditional type 2: If + were, would + V1."),
+    mc("'Look forward to' berarti?", ["Melihat ke belakang", "Menantikan", "Melihat ke atas", "Menolak"], 1, 15, "Bahasa Inggris", "Look forward to = menantikan sesuatu dengan senang."),
+    mc("Passive voice: 'They built the bridge in 1990' →", ["The bridge is built in 1990.", "The bridge was built in 1990.", "The bridge built in 1990.", "The bridge were built in 1990."], 1, 25, "Bahasa Inggris", "Past passive: was + built (V3)."),
+    mc("'Reliable' artinya?", ["Bisa dipercaya", "Suka menunda", "Cerdas", "Kuat"], 0, 15, "Bahasa Inggris", "Reliable = dapat diandalkan/dipercaya."),
+  ]);
+
+export const informatikaSma = quiz("informatika-sma", "Informatika SMA", "SMA", "code", "#0EA5E9", "Sedang", "Informatika",
+  "Algoritma, pemrograman dasar, jaringan, dan berpikir komputasional",
+  [
+    mc("Urutan langkah logis untuk menyelesaikan masalah disebut?", ["Program", "Algoritma", "Data", "Kompilasi"], 1, 15, "Informatika", "Algoritma = langkah sistematis penyelesaian masalah."),
+    mc("Nilai variabel x setelah: x = 5; x = x + 3;", ["5", "3", "8", "15"], 2, 15, "Informatika", "x diperbarui menjadi 5 + 3 = 8."),
+    mc("Struktur data 'FIFO' (masuk pertama keluar pertama) adalah?", ["Stack", "Queue", "Tree", "Graph"], 1, 20, "Informatika", "Queue = antrean, First In First Out."),
+    tf("HTML digunakan untuk struktur halaman web.", true, 15, "Informatika", "Benar; CSS untuk tampilan, JS untuk interaksi."),
+    mc("Bilangan biner 1011 bernilai desimal?", ["9", "10", "11", "13"], 2, 25, "Informatika", "8+0+2+1 = 11."),
+    mc("Perangkat yang menghubungkan jaringan lokal ke internet adalah?", ["Switch", "Router", "Monitor", "Printer"], 1, 15, "Informatika", "Router meneruskan paket antar jaringan."),
+    mc("Perulangan dalam pemrograman disebut?", ["Looping", "Listing", "Linking", "Loading"], 0, 10, "Informatika", "Loop = for, while, do-while."),
+    mc("Sistem bilangan yang dipakai komputer adalah?", ["Desimal", "Biner", "Oktal", "Heksadesimal"], 1, 15, "Informatika", "Komputer memakai biner (0 dan 1)."),
+  ]);

@@ -11,6 +11,7 @@ const DIFF_COLOR: Record<string, string> = {
   Mudah: "#16A34A", Sedang: "#CA8A04", Sulit: "#DC2626",
 };
 const FILTERS = ["Semua", "Mudah", "Sedang", "Sulit"];
+const LEVELS = ["Semua", "SD", "SMP", "SMA", "Kuliah", "Umum"];
 const TYPE_LABEL: Record<string, string> = {
   mc: "PG", tf: "B/S", poll: "Pendapat", rating: "Rating", open: "Teks", reorder: "Urutkan", blank: "Isian",
 };
@@ -23,6 +24,7 @@ export default function QuizzesPage() {
   const [creating, setCreating] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("Semua");
+  const [level, setLevel] = useState("Semua");
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -62,6 +64,7 @@ export default function QuizzesPage() {
 
   const visible = quizzes.filter((q) => {
     if (filter !== "Semua" && q.difficulty !== filter) return false;
+    if (level !== "Semua" && (q as { level?: string }).level !== level) return false;
     if (search && !q.title.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
@@ -128,6 +131,21 @@ export default function QuizzesPage() {
             className="input"
             style={{ flex: "1 1 140px", fontSize: "0.82rem", height: 34 }}
           />
+          <div style={{ display: "flex", gap: "0.3rem", width: "100%" }}>
+            <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", alignSelf: "center" }}>Jenjang:</span>
+            {LEVELS.map((lv) => (
+              <button key={lv} onClick={() => setLevel(lv)} style={{
+                padding: "0.28rem 0.65rem", fontSize: "0.72rem", fontWeight: 700,
+                borderRadius: 40, border: "1.5px solid",
+                cursor: "pointer", transition: "all 100ms",
+                background: level === lv ? "#7C3AED" : "transparent",
+                borderColor: level === lv ? "#7C3AED" : "var(--border-hi)",
+                color: level === lv ? "#fff" : "var(--text-dim)",
+              }}>
+                {lv}
+              </button>
+            ))}
+          </div>
           <div style={{ display: "flex", gap: "0.3rem" }}>
             {FILTERS.map((f) => (
               <button key={f} onClick={() => setFilter(f)} style={{
@@ -221,6 +239,15 @@ export default function QuizzesPage() {
                       }}>
                         {quiz.difficulty.toUpperCase()}
                       </span>
+                      {(quiz as { level?: string }).level && (
+                        <span style={{
+                          fontSize: "0.6rem", fontWeight: 800, flexShrink: 0,
+                          color: "#7C3AED", background: "rgba(124,58,237,0.10)",
+                          borderRadius: 40, padding: "0.12rem 0.45rem",
+                        }}>
+                          {(quiz as { level?: string }).level}
+                        </span>
+                      )}
                     </div>
                     <p style={{ color: "var(--text-dim)", fontSize: "0.72rem", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "0.55rem" }}>
                       {quiz.description}

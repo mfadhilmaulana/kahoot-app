@@ -537,7 +537,7 @@ export default function HomePage() {
           </span>
         </div>
         <p style={{ color: "rgba(255,255,255,0.28)", fontSize: "0.72rem", lineHeight: 1.7 }}>
-          Gratis selamanya · Real-time multiplayer · Tugas & PR · Ribuan soal acak · 13 kategori
+          Gratis selamanya · Real-time multiplayer · Tugas & PR · Ribuan soal acak · 30+ kategori SD s.d. Kuliah
         </p>
         <div style={{ marginTop: "0.75rem", display: "flex", justifyContent: "center", gap: "1.5rem", flexWrap: "wrap" }}>
           {[

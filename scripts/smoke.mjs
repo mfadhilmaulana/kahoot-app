@@ -19,7 +19,7 @@ console.log("— Semua socket terhubung —");
 
 // 1. Daftar kuis
 const list = await emit(host, "quizzes:list", {});
-ok("quizzes:list → 13 kuis bawaan", Array.isArray(list) && list.length >= 13, `got ${list?.length}`);
+ok("quizzes:list → 32 kuis bawaan", Array.isArray(list) && list.length >= 32, `got ${list?.length}`);
 ok("source flag ada", list.every((q) => q.source === "builtin" || q.source === "custom"));
 
 // 2. Kuis kustom dengan tipe baru + gambar
