@@ -23,7 +23,7 @@ interface SoloQuizMeta {
 interface QuizCard {
   id: string; title: string; description: string;
   category: string; icon: string; color: string;
-  difficulty: string; questionCount: number; estimatedMins: number;
+  difficulty: string; level?: string; questionCount: number; estimatedMins: number;
 }
 interface Answer { questionIndex: number; chosen: number | null; openText?: string; isCorrect: boolean; earned: number; }
 
@@ -405,6 +405,11 @@ export default function SoloPage() {
                       <span style={{ fontSize: "0.6rem", fontWeight: 800, flexShrink: 0, color: DIFF_COLOR[q.difficulty], background: DIFF_COLOR[q.difficulty] + "18", borderRadius: 40, padding: "0.12rem 0.45rem" }}>
                         {q.difficulty.toUpperCase()}
                       </span>
+                      {q.level && (
+                        <span style={{ fontSize: "0.6rem", fontWeight: 800, flexShrink: 0, color: "#7C3AED", background: "rgba(124,58,237,0.10)", borderRadius: 40, padding: "0.12rem 0.45rem" }}>
+                          {q.level === "SMA" ? "SMA/SMK" : q.level}
+                        </span>
+                      )}
                     </div>
                     <p style={{ color: "var(--text-dim)", fontSize: "0.72rem", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "0.4rem" }}>{q.description}</p>
                     <span style={{ color: "var(--text-muted)", fontSize: "0.68rem", fontWeight: 600 }}>

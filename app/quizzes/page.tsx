@@ -11,7 +11,7 @@ const DIFF_COLOR: Record<string, string> = {
   Mudah: "#16A34A", Sedang: "#CA8A04", Sulit: "#DC2626",
 };
 const FILTERS = ["Semua", "Mudah", "Sedang", "Sulit"];
-const LEVELS = ["Semua", "SD", "SMP", "SMA", "Kuliah", "Umum"];
+const LEVELS = ["Semua", "SD", "SMP", "SMA/SMK", "Kuliah", "Umum"];
 const TYPE_LABEL: Record<string, string> = {
   mc: "PG", tf: "B/S", poll: "Pendapat", rating: "Rating", open: "Teks", reorder: "Urutkan", blank: "Isian",
 };
@@ -64,10 +64,16 @@ export default function QuizzesPage() {
 
   const visible = quizzes.filter((q) => {
     if (filter !== "Semua" && q.difficulty !== filter) return false;
-    if (level !== "Semua" && (q as { level?: string }).level !== level) return false;
+    if (level !== "Semua") { const lv = (q as { level?: string }).level ?? ""; if ((level === "SMA/SMK" ? "SMA" : level) !== lv) return false; }
     if (search && !q.title.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
+
+  const LEVEL_ORDER = ["SD", "SMP", "SMA", "Kuliah", "Umum"] as const;
+  const LEVEL_LABEL: Record<string, string> = { SD: "Jenjang SD", SMP: "Jenjang SMP", SMA: "Jenjang SMA / SMK", Kuliah: "Jenjang Kuliah", Umum: "Umum & Tes Diri" };
+  const groups: Array<{ lv: string; items: QuizMeta[] }> = level === "Semua"
+    ? LEVEL_ORDER.map((lv) => ({ lv, items: visible.filter((x) => (x as { level?: string }).level === lv) })).filter((g) => g.items.length > 0)
+    : [{ lv: level, items: visible }];
 
   return (
     <main className="min-h-screen" style={{ background: "var(--bg)" }}>
@@ -186,13 +192,20 @@ export default function QuizzesPage() {
               Reset filter
             </button>
           </div>
-        ) : (
+        ) : groups.map((g) => (
+            <div key={g.lv} style={{ marginBottom: "2rem" }}>
+              <p style={{ fontWeight: 900, color: "var(--text)", fontSize: "0.95rem", margin: "0 0 0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                {LEVEL_LABEL[g.lv] ?? g.lv}
+                <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--text-muted)", background: "var(--surface-3)", borderRadius: 40, padding: "0.1rem 0.55rem" }}>{g.items.length} kuis</span>
+                <span style={{ flex: 1, height: 1, background: "var(--border)" }} />
+              </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(280px,100%), 1fr))", gap: "0.75rem" }}>
-            {visible.map((quiz, i) => {
+            {g.items.map((quiz, i) => {
               const isCreating = creating === quiz.id;
               return (
                 <div
                   key={quiz.id}
+                  // eslint-disable-next-line react-hooks/refs -- handler event, bukan akses render
                   onClick={() => handleCreate(quiz.id)}
                   className="a-fadeup"
                   style={{
@@ -245,6 +258,15 @@ export default function QuizzesPage() {
                           color: "#7C3AED", background: "rgba(124,58,237,0.10)",
                           borderRadius: 40, padding: "0.12rem 0.45rem",
                         }}>
+                          {(quiz as { level?: string }).level === "SMA" ? "SMA/SMK" : (quiz as { level?: string }).level}
+                        </span>
+                      )}
+                      {(quiz as { level?: string }).level && (
+                        <span style={{
+                          fontSize: "0.6rem", fontWeight: 800, flexShrink: 0,
+                          color: "#7C3AED", background: "rgba(124,58,237,0.10)",
+                          borderRadius: 40, padding: "0.12rem 0.45rem",
+                        }}>
                           {(quiz as { level?: string }).level}
                         </span>
                       )}
@@ -283,6 +305,7 @@ export default function QuizzesPage() {
                           }
                         </div>
                         <button
+                          // eslint-disable-next-line react-hooks/refs -- handler event, bukan akses render
                           onClick={(e) => { e.stopPropagation(); handleCreateAssignment(quiz.id); }}
                           title="Buat tugas (PR) dari kuis ini"
                           style={{
@@ -302,7 +325,8 @@ export default function QuizzesPage() {
               );
             })}
           </div>
-        )}
+            </div>
+        ))}
       </div>
     </main>
   );

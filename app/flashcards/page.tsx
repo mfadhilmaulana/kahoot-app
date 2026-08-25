@@ -10,7 +10,7 @@ import {
 
 interface QuizCard {
   id: string; title: string; icon: string; color: string;
-  category: string; difficulty: string; questionCount: number;
+  category: string; difficulty: string; level?: string; questionCount: number;
 }
 interface Flashcard {
   question: string; answer: string; explanation: string; allOptions?: string[]; image?: string;

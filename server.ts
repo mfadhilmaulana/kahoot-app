@@ -14,11 +14,16 @@ import {
   getAiQuestions, addAiQuestions,
 } from "./lib/db";
 import { generateProceduralBatch, isProceduralQuiz } from "./lib/generators";
+import { englishGrammarQuestion, englishVocabQuestion } from "./lib/gen-english";
+import { kimiaQuestion, statistikaQuestion, akuntansiQuestion } from "./lib/gen-sains";
+import { kritisQuestion } from "./lib/gen-kritis";
 import { mtkSd, ipaSd } from "./lib/extra-sd1";
 import { bindoSd, ppknSd } from "./lib/extra-sd2";
 import { mtkSmp, ipaSmp, ipsSmp, bingSmp } from "./lib/extra-smp";
 import { fisika, kimia, biologiSma, bingSma, informatikaSma } from "./lib/extra-sma";
 import { akuntansi, manajemen, hukumDasar, statistika, anatomi, algoritma } from "./lib/extra-kuliah";
+import { bingGrammar, bingVocab, bingReading, bingWriting } from "./lib/extra-english";
+import { kritisQuiz } from "./lib/extra-kritis-quiz";
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -661,9 +666,27 @@ const LEVEL_BY_ID: Record<string, string> = {
   mtkSmp, ipaSmp, ipsSmp, bingSmp,
   fisika, kimia, biologiSma, bingSma, informatikaSma,
   akuntansi, manajemen, hukumDasar, statistika, anatomi, algoritma,
+  bingGrammar, bingVocab, bingReading, bingWriting,
+  kritisQuiz,
 ].forEach((qq) => {
   quizzes.set(qq.id, { ...qq, level: (qq.level ?? LEVEL_BY_ID[qq.id]) as Quiz["level"] });
 });
+
+// Generator prosedural per kuis → ribuan soal unik tanpa perlu bank
+const PROC_GEN: Record<string, () => Question> = {
+  math: () => generateProceduralBatch("math", 1)[0],
+  iq: () => generateProceduralBatch("iq", 1)[0],
+  fisika: () => generateProceduralBatch("fisika", 1)[0],
+  "bing-grammar": englishGrammarQuestion,
+  "bing-vocab": englishVocabQuestion,
+  kimia: kimiaQuestion,
+  statistika: statistikaQuestion,
+  akuntansi: akuntansiQuestion,
+  kritis: kritisQuestion,
+};
+function isProc(id: string): boolean {
+  return !!PROC_GEN[id] || isProceduralQuiz(id);
+}
 
 for (const [id, custom] of Object.entries(getCustomQuizzes())) {
   quizzes.set(id, custom);
@@ -718,7 +741,12 @@ function isScoredType(t: QuestionType): boolean {
 const SESSION_SIZE = 10;
 function buildSessionQuestions(quiz: Quiz): Question[] {
   const pool: Question[] = [...quiz.questions, ...getAiQuestions(quiz.id)];
-  if (isProceduralQuiz(quiz.id)) pool.push(...generateProceduralBatch(quiz.id, 300));
+  const gen = PROC_GEN[quiz.id];
+  if (gen) {
+    for (let i = 0; i < 300; i++) pool.push(gen());
+  } else if (isProceduralQuiz(quiz.id)) {
+    pool.push(...generateProceduralBatch(quiz.id, 300));
+  }
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -735,6 +763,7 @@ async function seedAiBanks(): Promise<void> {
     mtkSd, ipaSd, bindoSd, ppknSd, mtkSmp, ipaSmp, ipsSmp, bingSmp,
     kimia, biologiSma, bingSma, informatikaSma,
     akuntansi, manajemen, hukumDasar, statistika, anatomi, algoritma,
+    bingReading, bingWriting,
   ];
   for (const quiz of builtins) {
     let guard = 14; // batas batch per quiz per boot (ramah rate-limit)
@@ -1061,8 +1090,8 @@ app.prepare().then(() => {
           category: q.category, icon: q.icon, color: q.color,
           difficulty: q.difficulty,
           level: q.level ?? "Umum",
-          questionCount: isProceduralQuiz(q.id) ? Math.max(poolSize, 5000) : poolSize,
-          infinite: isProceduralQuiz(q.id),
+          questionCount: isProc(q.id) ? Math.max(poolSize, 5000) : poolSize,
+          infinite: isProc(q.id),
           estimatedMins: Math.ceil(Math.min(poolSize, 10) * 0.5) + 2,
           types: [...new Set(q.questions.map((x) => x.type))],
           source: customs[q.id] ? ("custom" as const) : ("builtin" as const),
