@@ -156,8 +156,20 @@ export default function FlashcardsPage() {
         {/* Quiz list */}
         <div style={{ maxWidth: 720, margin: "0 auto", padding: "1.5rem 1rem" }}>
           <p className="t-label mb-3">Pilih Kuis</p>
+          {(() => {
+            const LV = ["SD", "SMP", "SMA", "Kuliah", "Umum"];
+            const LBL: Record<string, string> = { SD: "Jenjang SD", SMP: "Jenjang SMP", SMA: "Jenjang SMA / SMK", Kuliah: "Jenjang Kuliah", Umum: "Umum & Tes Diri" };
+            const all = quizList.filter((q) => q.questionCount > 0);
+            const groups: Array<{ lv: string; items: QuizCard[] }> = LV.map((lv) => ({ lv, items: all.filter((x) => x.level === lv) })).filter((g) => g.items.length > 0);
+            return groups.map((g) => (
+              <div key={g.lv} style={{ marginBottom: "1.75rem" }}>
+                <p style={{ fontWeight: 900, color: "var(--text)", fontSize: "0.9rem", margin: "0 0 0.7rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  {LBL[g.lv]}
+                  <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--text-muted)", background: "var(--surface-3)", borderRadius: 40, padding: "0.1rem 0.55rem" }}>{g.items.length} kuis</span>
+                  <span style={{ flex: 1, height: 1, background: "var(--border)" }} />
+                </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(310px,100%),1fr))", gap: "0.75rem" }}>
-            {quizList.filter((q) => q.questionCount > 0).map((q, i) => (
+            {g.items.map((q, i) => (
               <button key={q.id} onClick={() => startQuiz(q)} className="a-fadeup" style={{
                 animationDelay: `${i * 0.04}s`,
                 background: "var(--surface)", border: "1.5px solid var(--border)",
@@ -188,6 +200,9 @@ export default function FlashcardsPage() {
               </button>
             ))}
           </div>
+              </div>
+            ));
+          })()}
         </div>
       </main>
     );

@@ -178,10 +178,23 @@ export default function HomePage() {
           <p className="a-fadeup d-2" style={{
             color: "rgba(255,255,255,0.62)", fontSize: "clamp(0.85rem, 2.5vw, 1rem)",
             fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
-            marginBottom: "2rem",
+            marginBottom: "1rem",
           }}>
             Platform Kuis Interaktif Indonesia
           </p>
+
+          {/* Jenjang chips - semua level, bukan cuma anak SD */}
+          <div className="a-fadeup d-2" style={{ display: "flex", justifyContent: "center", gap: "0.45rem", flexWrap: "wrap", marginBottom: "1.75rem" }}>
+            {["SD", "SMP", "SMA/SMK", "Kuliah", "Umum"].map((lv) => (
+              <span key={lv} style={{
+                background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.22)",
+                borderRadius: 40, padding: "0.28rem 0.85rem",
+                color: "#fff", fontSize: "0.75rem", fontWeight: 800,
+              }}>
+                {lv}
+              </span>
+            ))}
+          </div>
 
           {/* PIN card */}
           <div className="a-fadeup d-3 pin-card">

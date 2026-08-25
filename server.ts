@@ -24,6 +24,7 @@ import { fisika, kimia, biologiSma, bingSma, informatikaSma } from "./lib/extra-
 import { akuntansi, manajemen, hukumDasar, statistika, anatomi, algoritma } from "./lib/extra-kuliah";
 import { bingGrammar, bingVocab, bingReading, bingWriting } from "./lib/extra-english";
 import { kritisQuiz } from "./lib/extra-kritis-quiz";
+import { factShuffleQuestion } from "./lib/gen-facts";
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -746,6 +747,9 @@ function buildSessionQuestions(quiz: Quiz): Question[] {
     for (let i = 0; i < 300; i++) pool.push(gen());
   } else if (isProceduralQuiz(quiz.id)) {
     pool.push(...generateProceduralBatch(quiz.id, 300));
+  } else if (!quiz.id.startsWith("custom-") && quiz.category !== "Kustom") {
+    // kuis fakta: variasi tak terbatas dari soal inti + bank AI
+    for (let i = 0; i < 300; i++) pool.push(factShuffleQuestion(quiz, pool));
   }
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -1090,8 +1094,8 @@ app.prepare().then(() => {
           category: q.category, icon: q.icon, color: q.color,
           difficulty: q.difficulty,
           level: q.level ?? "Umum",
-          questionCount: isProc(q.id) ? Math.max(poolSize, 5000) : poolSize,
-          infinite: isProc(q.id),
+          questionCount: q.category !== "Kustom" ? Math.max(poolSize, 5000) : poolSize,
+          infinite: q.category !== "Kustom",
           estimatedMins: Math.ceil(Math.min(poolSize, 10) * 0.5) + 2,
           types: [...new Set(q.questions.map((x) => x.type))],
           source: customs[q.id] ? ("custom" as const) : ("builtin" as const),

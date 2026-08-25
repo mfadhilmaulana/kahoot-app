@@ -374,9 +374,19 @@ export default function SoloPage() {
               <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid var(--surface-3)", borderTopColor: "var(--accent)", animation: "spinRing 0.8s linear infinite" }}/>
               <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>Memuat kuis...</p>
             </div>
-          ) : (
+          ) : (() => {
+            const LV = ["SD", "SMP", "SMA", "Kuliah", "Umum"];
+            const LBL: Record<string, string> = { SD: "Jenjang SD", SMP: "Jenjang SMP", SMA: "Jenjang SMA / SMK", Kuliah: "Jenjang Kuliah", Umum: "Umum & Tes Diri" };
+            const groups: Array<{ lv: string; items: QuizCard[] }> = LV.map((lv) => ({ lv, items: quizList.filter((x) => x.level === lv) })).filter((g) => g.items.length > 0);
+            return groups.map((g) => (
+              <div key={g.lv} style={{ marginBottom: "2rem" }}>
+                <p style={{ fontWeight: 900, color: "var(--text)", fontSize: "0.95rem", margin: "0 0 0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  {LBL[g.lv]}
+                  <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--text-muted)", background: "var(--surface-3)", borderRadius: 40, padding: "0.1rem 0.55rem" }}>{g.items.length} kuis</span>
+                  <span style={{ flex: 1, height: 1, background: "var(--border)" }} />
+                </p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))", gap: "0.875rem" }}>
-              {quizList.map((q, i) => (
+              {g.items.map((q, i) => (
                 <button key={q.id} onClick={() => selectQuiz(q.id, playMode)}
                   disabled={phase === "loading"}
                   className="a-fadeup"
@@ -419,7 +429,9 @@ export default function SoloPage() {
                 </button>
               ))}
             </div>
-          )}
+              </div>
+            ));
+          })()}
         </div>
       </main>
     );
