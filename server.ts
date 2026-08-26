@@ -24,7 +24,7 @@ import { fisika, kimia, biologiSma, bingSma, informatikaSma } from "./lib/extra-
 import { akuntansi, manajemen, hukumDasar, statistika, anatomi, algoritma } from "./lib/extra-kuliah";
 import { bingGrammar, bingVocab, bingReading, bingWriting } from "./lib/extra-english";
 import { kritisQuiz } from "./lib/extra-kritis-quiz";
-import { factShuffleQuestion } from "./lib/gen-facts";
+import { factVariations } from "./lib/gen-facts";
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -741,21 +741,17 @@ function isScoredType(t: QuestionType): boolean {
 // ── Sesi soal acak: base + bank AI + prosedural → diacak, ambil 10 ───────────
 const SESSION_SIZE = 10;
 function buildSessionQuestions(quiz: Quiz): Question[] {
-  const pool: Question[] = [...quiz.questions, ...getAiQuestions(quiz.id)];
+  const bank: Question[] = [...quiz.questions, ...getAiQuestions(quiz.id)];
   const gen = PROC_GEN[quiz.id];
   if (gen) {
-    for (let i = 0; i < 300; i++) pool.push(gen());
-  } else if (isProceduralQuiz(quiz.id)) {
-    pool.push(...generateProceduralBatch(quiz.id, 300));
-  } else if (!quiz.id.startsWith("custom-") && quiz.category !== "Kustom") {
-    // kuis fakta: variasi tak terbatas dari soal inti + bank AI
-    for (let i = 0; i < 300; i++) pool.push(factShuffleQuestion(quiz, pool));
+    // prosedural murni: 10 soal acak langsung dari generator
+    const out: Question[] = [];
+    for (let i = 0; i < SESSION_SIZE; i++) out.push(gen());
+    return out;
   }
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  return pool.slice(0, Math.min(SESSION_SIZE, pool.length));
+  // kuis fakta: SATU variasi per soal inti per sesi (tanpa pengulangan teks),
+  // pool variasi mencakup soal inti + bank AI
+  return factVariations(quiz, bank, SESSION_SIZE);
 }
 
 // ── Penanam bank soal AI di latar belakang (gratis, anonim) ───────────────────

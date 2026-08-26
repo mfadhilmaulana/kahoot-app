@@ -37,6 +37,11 @@ export const biologiSma = quiz("biologi-sma", "Biologi SMA", "SMA", "dna", "#16A
     mc("Organ ekskresi yang menyaring darah adalah?", ["Hati", "Ginjal", "Paru-paru", "Kulit"], 1, 15, "Biologi", "Ginjal menyaring darah membentuk urine."),
     mc("Kromosom manusia berjumlah pasangan?", ["21", "22", "23", "46"], 2, 15, "Biologi", "23 pasang (46 buah)."),
     mc("Golongan darah yang bisa menjadi donor universal adalah?", ["A", "B", "AB", "O"], 3, 15, "Biologi", "Golongan O tidak punya antigen A/B → donor universal."),
+    mc("Fotosintesis terjadi di organel?", ["Mitokondria", "Kloroplas", "Ribosom", "Vakuola"], 1, 15, "Biologi", "Kloroplas mengandung klorofil penangkap cahaya."),
+    mc("Molekul yang membawa kode genetik ke ribosom untuk sintesis protein adalah?", ["DNA", "mRNA", "ATP", "Enzim"], 1, 20, "Biologi", "mRNA (RNA duta) mentranskripsi kode dari DNA."),
+    mc("Perhatikan: 'Ular memakan tikus.' Ular berperan sebagai?", ["Produsen", "Konsumen I", "Konsumen II", "Decomposer"], 2, 20, "Biologi", "Ular makan konsumen I (tikus) → konsumen tingkat II."),
+    mc("Pertumbuhan pada tumbuhan terjadi di jaringan?", ["Xilem", "Floem", "Meristem", "Kambium"], 2, 20, "Biologi", "Jaringan meristem selalu membelah (titik tumbuh)."),
+    tf("Asam lambung memiliki pH basa.", false, 15, "Biologi", "Salah - asam lambung sangat asam (pH 1,5-3,5)."),
   ]);
 
 export const bingSma = quiz("bing-sma", "Bahasa Inggris SMA", "SMA", "globe", "#6366F1", "Sedang", "Bahasa Inggris",
@@ -50,6 +55,13 @@ export const bingSma = quiz("bing-sma", "Bahasa Inggris SMA", "SMA", "globe", "#
     mc("'Look forward to' berarti?", ["Melihat ke belakang", "Menantikan", "Melihat ke atas", "Menolak"], 1, 15, "Bahasa Inggris", "Look forward to = menantikan sesuatu dengan senang."),
     mc("Passive voice: 'They built the bridge in 1990' →", ["The bridge is built in 1990.", "The bridge was built in 1990.", "The bridge built in 1990.", "The bridge were built in 1990."], 1, 25, "Bahasa Inggris", "Past passive: was + built (V3)."),
     mc("'Reliable' artinya?", ["Bisa dipercaya", "Suka menunda", "Cerdas", "Kuat"], 0, 15, "Bahasa Inggris", "Reliable = dapat diandalkan/dipercaya."),
+    mc("She has been ___ here since 2020.", ["work", "works", "working", "worked"], 2, 20, "Bahasa Inggris", "Present perfect continuous: has been + V-ing."),
+    mc("'Furthermore' digunakan untuk?", ["Menambah poin", "Memberi contoh", "Menunjukkan waktu", "Menyimpulkan"], 0, 15, "Bahasa Inggris", "Furthermore = selain itu (menambah argumen)."),
+    mc("Neither the teacher nor the students ___ ready.", ["is", "are", "was", "be"], 1, 25, "Bahasa Inggris", "Neither...nor → verbo mengikuti subjek terdekat (students → are)."),
+    mc("Antonym of 'generous' is?", ["Kind", "Stingy", "Wealthy", "Polite"], 1, 15, "Bahasa Inggris", "Stingy = pelit, lawan generous."),
+    mc("'The more you practice, the better you get.' Pola kalimat ini disebut?", ["Passive voice", "Double comparative", "Reported speech", "Conditional"], 1, 25, "Bahasa Inggris", "The + comparative, the + comparative."),
+    mc("Reported speech: 'I am tired,' he said. → He said he ___ tired.", ["is", "was", "were", "has been"], 1, 25, "Bahasa Inggris", "Indirect speech mundur satu tense: am → was."),
+    mc("'Apply for a job' artinya?", ["Melamar pekerjaan", "Membuat pekerjaan", "Menghentikan kerja", "Menaikkan jabatan"], 0, 15, "Bahasa Inggris", "Apply for = melamar."),
   ]);
 
 export const informatikaSma = quiz("informatika-sma", "Informatika SMA", "SMA", "code", "#0EA5E9", "Sedang", "Informatika",
@@ -63,4 +75,11 @@ export const informatikaSma = quiz("informatika-sma", "Informatika SMA", "SMA", 
     mc("Perangkat yang menghubungkan jaringan lokal ke internet adalah?", ["Switch", "Router", "Monitor", "Printer"], 1, 15, "Informatika", "Router meneruskan paket antar jaringan."),
     mc("Perulangan dalam pemrograman disebut?", ["Looping", "Listing", "Linking", "Loading"], 0, 10, "Informatika", "Loop = for, while, do-while."),
     mc("Sistem bilangan yang dipakai komputer adalah?", ["Desimal", "Biner", "Oktal", "Heksadesimal"], 1, 15, "Informatika", "Komputer memakai biner (0 dan 1)."),
+    mc("Kondisi IF-ELSE dalam pemrograman digunakan untuk?", ["Pengulangan", "Percabangan", "Deklarasi", "Komentar"], 1, 15, "Informatika", "IF-ELSE memilih jalur berdasarkan kondisi."),
+    mc("Perangkat penyimpanan permanen (non-volatile) adalah?", ["RAM", "Cache", "SSD", "Register"], 2, 20, "Informatika", "SSD menyimpan data meski listrik mati."),
+    mc("Protokol untuk mengirim halaman web adalah?", ["FTP", "SMTP", "HTTP", "SSH"], 2, 15, "Informatika", "HTTP/HTTPS untuk web; SMTP untuk email."),
+    mc("Algoritma yang mencoba semua kemungkinan disebut?", ["Greedy", "Brute force", "Divide and conquer", "Rekursi"], 1, 20, "Informatika", "Brute force = uji semua kombinasi sampai ketemu."),
+    tf("Komentar kode tidak dieksekusi oleh program.", true, 15, "Informatika", "Benar - komentar hanya untuk manusia membaca kode."),
+    mc("Fungsi dari 'loop for' adalah?", ["Menyimpan data", "Mengulang blok kode", "Mengurutkan data", "Menghapus variabel"], 1, 15, "Informatika", "For mengulang kode dengan jumlah iterasi tertentu."),
+    mc("Domain .gov digunakan oleh?", ["Perusahaan", "Lembaga pemerintah", "Universitas", "Organisasi"], 1, 15, "Informatika", ".gov = government (pemerintah); .edu = pendidikan."),
   ]);

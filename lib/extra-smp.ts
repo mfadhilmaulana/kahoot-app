@@ -11,6 +11,15 @@ export const mtkSmp = quiz("mtk-smp", "Matematika SMP", "SMP", "sigma", "#059669
     tf("Luas lingkaran = pi x r x r.", true, 15, "Matematika", "Benar, L = pi r^2."),
     mc("Nilai dari 2^3 x 2^2 adalah?", ["16", "32", "64", "8"], 1, 15, "Matematika", "Pangkat dijumlah: 2^(3+2) = 2^5 = 32."),
     mc("Median dari data 4, 7, 5, 8, 6 adalah?", ["5", "6", "7", "8"], 1, 20, "Matematika", "Urutkan: 4,5,6,7,8 → nilai tengah = 6."),
+    mc("Luas segitiga dengan alas 12 cm dan tinggi 7 cm?", ["42 cm²", "84 cm²", "38 cm²", "19 cm²"], 0, 20, "Matematika", "L = 1/2 x 12 x 7 = 42 cm²."),
+    mc("Jika -3 < x < 5, x bilangan bulat, maka x bisa bernilai?", ["5", "-3", "0", "-4"], 2, 20, "Matematika", "0 berada di antara -3 dan 5 (pilihan lain di luar rentang)."),
+    mc("Harga 3 buku Rp21.000. Harga 7 buku?", ["Rp42.000", "Rp49.000", "Rp56.000", "Rp63.000"], 1, 25, "Matematika", "1 buku = 7.000 → 7 buku = 49.000."),
+    mc("Sederhanakan: 5a + 3b - 2a + b = ?", ["3a + 4b", "7a + 2b", "3a + 2b", "10ab"], 0, 20, "Matematika", "Gabung sejenis: (5a-2a) + (3b+b) = 3a + 4b."),
+    mc("Sudut pelurus dari sudut 65° adalah?", ["25°", "115°", "155°", "245°"], 1, 20, "Matematika", "Pelurus = 180° - 65° = 115°."),
+    mc("Volume balok 8 cm x 5 cm x 4 cm adalah?", ["160 cm³", "120 cm³", "17 cm³", "200 cm³"], 0, 20, "Matematika", "V = p x l x t = 8 x 5 x 4 = 160 cm³."),
+    mc("Bilangan berikut yang merupakan bilangan rasional?", ["√2", "0,75", "π", "√3"], 1, 20, "Matematika", "0,75 = 3/4 → bisa dinyatakan sebagai pecahan."),
+    mc("Konversi 2,5 jam ke menit adalah?", ["120 menit", "135 menit", "150 menit", "250 menit"], 2, 15, "Matematika", "2,5 x 60 = 150 menit."),
+    tf("Hasil dari (-4) + 7 adalah 3.", true, 15, "Matematika", "Benar, 7 - 4 = 3."),
   ]);
 
 export const ipaSmp = quiz("ipa-smp", "IPA SMP", "SMP", "flask", "#10B981", "Sedang", "IPA",
@@ -24,6 +33,13 @@ export const ipaSmp = quiz("ipa-smp", "IPA SMP", "SMP", "flask", "#10B981", "Sed
     mc("Bunyi tidak dapat merambat melalui?", ["Udara", "Air", "Besi", "Ruang hampa"], 3, 20, "IPA", "Bunyi butuh medium; ruang hampa tidak punya partikel."),
     mc("Rumus hukum Ohm adalah?", ["V = I x R", "V = I / R", "I = V x R", "R = V x I"], 0, 15, "IPA", "Tegangan = arus x hambatan."),
     mc("Zat yang diperlukan tumbuhan untuk fotosintesis, selain air dan cahaya?", ["Oksigen", "Nitrogen", "Karbon dioksida", "Hidrogen"], 2, 20, "IPA", "CO2 dari udara masuk lewat stomata daun."),
+    mc("Perubahan energi pada kipas angka listrik adalah?", ["Listrik → kimia", "Listrik → gerak", "Gerak → listrik", "Cahaya → listrik"], 1, 20, "IPA", "Motor listrik mengubah energi listrik menjadi energi gerak."),
+    mc("Bagian mata yang mengatur banyaknya cahaya masuk adalah?", ["Retina", "Pupil", "Kornea", "Lensa"], 1, 20, "IPA", "Pupil membesar/mengecil mengatur cahaya."),
+    mc("Penyakit akibat kekurangan vitamin C disebut?", ["Rachitisme", "Skorbut", "Beriberi", "Anemia"], 1, 20, "IPA", "Skorbut: gusi berdarah, luka sulit sembuh."),
+    mc("Alat kontrasepsi pada tumbuhan untuk penyerbukan oleh serangga adalah?", ["Mahkota bunga", "Akar", "Batang", "Duri"], 0, 25, "IPA", "Mahkota bunga warna-warni & harum menarik serangga."),
+    mc("Satuan hambatan listrik adalah?", ["Volt", "Ampere", "Ohm", "Watt"], 2, 15, "IPA", "Hambatan (R) diukur dalam ohm."),
+    mc("Ciri-ciri hidup makhluk hidup antara lain bernapas, bergerak, dan?", ["Berkembang biak", "Berwarna", "Berbau", "Berbunyi"], 0, 15, "IPA", "Ciri hidup: bernapas, bergerak, tumbuh, berkembang biak, dll."),
+    mc("Gempa bumi terjadi karena?", ["Hujan deras", "Pergerakan lempeng bumi", "Fase bulan", "Angin kencang"], 1, 20, "IPA", "Lempeng tektonik bergerak dan saling bertabrakan."),
   ]);
 
 export const ipsSmp = quiz("ips-smp", "IPS SMP", "SMP", "globe2", "#F97316", "Mudah", "IPS",
@@ -37,6 +53,13 @@ export const ipsSmp = quiz("ips-smp", "IPS SMP", "SMP", "globe2", "#F97316", "Mu
     mc("Kegiatan menghasilkan barang/jasa disebut?", ["Konsumsi", "Distribusi", "Produksi", "Investasi"], 2, 15, "IPS", "Produksi = menghasilkan; konsumsi = memakai; distribusi = menyalurkan."),
     mc("Masuknya budaya asing tanpa merusak budaya lokal adalah contoh?", ["Asimilasi", "Akomodasi", "Difusi", "Akulturasi"], 3, 25, "IPS", "Akulturasi = pertukaran budaya tanpa menghilangkan ciri asli."),
     mc("Waktu Indonesia bagian barat (WIB) adalah UTC berapa?", ["+7", "+8", "+9", "+6"], 0, 15, "IPS", "WIB = UTC+7, WITA = UTC+8, WIT = UTC+9."),
+    mc("Sungai terpanjang di Indonesia adalah?", ["Kapuas", "Mahakam", "Musi", "Bengawan Solo"], 0, 25, "IPS", "Kapuas di Kalimantan Barat, ±1.143 km."),
+    mc("Pahlawan dari Aceh yang berjuang melawan Belanda adalah?", ["Cut Nyak Dhien", "Pattimura", "Sultan Hasanuddin", "Sisingamangaraja"], 0, 20, "IPS", "Cut Nyak Dhien, tebusan Perang Aceh."),
+    mc("Kegiatan menjual barang ke luar negeri disebut?", ["Impor", "Ekspor", "Distribusi", "Konsumsi"], 1, 15, "IPS", "Ekspor = menjual keluar; impor = membeli dari luar."),
+    mc("Candi Prambanan dibangun untuk menyembah?", ["Buddha", "Hindu", "Konghucu", "Kristen"], 1, 20, "IPS", "Prambanan adalah candi Hindu terbesar di Indonesia."),
+    mc("Pulau terbesar di Indonesia adalah?", ["Jawa", "Sumatra", "Kalimantan", "Papua"], 2, 20, "IPS", "Kalimantan (bagian Indonesia) adalah pulau terluas."),
+    tf("Sumpah Pemuda dirayakan setiap 28 Oktober.", true, 15, "IPS", "Benar, Sumpah Pemuda 28 Oktober 1928."),
+    mc("Mata pencaharian utama masyarakat di daerah pesisir umumnya?", ["Bertani", "Nelayan", "Berternak", "Berdagang kayu"], 1, 15, "IPS", "Wilayah pesisir → mata pencaharian dominan nelayan."),
   ]);
 
 export const bingSmp = quiz("bing-smp", "Bahasa Inggris SMP", "SMP", "chat", "#8B5CF6", "Mudah", "Bahasa Inggris",
@@ -50,4 +73,11 @@ export const bingSmp = quiz("bing-smp", "Bahasa Inggris SMP", "SMP", "chat", "#8
     mc("I ___ my homework yesterday.", ["do", "does", "did", "doing"], 2, 15, "Bahasa Inggris", "Yesterday menandakan past tense → did."),
     mc("'How much' digunakan untuk menanyakan?", ["Benda dapat dihitung", "Benda tak dapat dihitung", "Waktu", "Tempat"], 1, 20, "Bahasa Inggris", "How much untuk uncountable (air, uang); how many untuk countable."),
     mc("Arrange: 'is / my / This / book' →", ["This is my book.", "My book this is.", "Is this my book.", "Book my is this."], 0, 20, "Bahasa Inggris", "Pola: Subject + be + noun → This is my book."),
+    mc("What time is it? (07.30)", ["It is half past seven.", "It is seven o'clock.", "It is half past six.", "It is a quarter past seven."], 0, 20, "Bahasa Inggris", "07.30 = half past seven."),
+    mc("'Library' adalah tempat untuk?", ["Berobat", "Membaca buku", "Berbelanja", "Berolahraga"], 1, 15, "Bahasa Inggris", "Library = perpustakaan."),
+    mc("Choose the correct plural: 'One child, two ___'", ["childs", "children", "childes", "childrens"], 1, 20, "Bahasa Inggris", "Child punya bentuk jamak tak beraturan: children."),
+    mc("The sun ___ in the east.", ["rise", "rises", "rising", "rose"], 1, 15, "Bahasa Inggris", "Fakta umum + subjek tunggal → rises."),
+    mc("'Would you like some tea?' Cara menjawab sopan:", ["No!", "Yes, please.", "I don't want.", "Give me."], 1, 20, "Bahasa Inggris", "Yes, please = menerima dengan sopan."),
+    tf("'Wednesday' adalah hari Selasa dalam bahasa Inggris.", false, 15, "Bahasa Inggris", "Salah - Wednesday = hari Rabu."),
+    mc("My birthday is ___ May.", ["at", "on", "in", "to"], 2, 20, "Bahasa Inggris", "Bulan memakai preposisi 'in' (in May)."),
   ]);

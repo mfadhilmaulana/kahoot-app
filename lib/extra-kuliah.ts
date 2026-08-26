@@ -11,6 +11,10 @@ export const akuntansi = quiz("akuntansi", "Akuntansi Dasar", "Kuliah", "ledger"
     mc("Depresiasi garis lurus: aset Rp10 juta, residu Rp1 juta, umur 3 tahun. Beban/tahun?", ["Rp2 juta", "Rp3 juta", "Rp3,5 juta", "Rp4 juta"], 1, 30, "Akuntansi", "(10-1)/3 = 3 juta per tahun."),
     mc("Pencatatan pendapatan saat diterima kas, terlepas kewajiban serah jasa, disebut?", ["Akrual", "Kas basis", "Deferral", "Matching"], 1, 25, "Akuntansi", "Basis kas: pendapatan dicatat saat kas diterima."),
     mc("Rumus laba bersih adalah?", ["Pendapatan + Beban", "Pendapatan - Beban", "Aset - Pendapatan", "Ekuitas + Liabilitas"], 1, 15, "Akuntansi", "Laba bersih = pendapatan - beban."),
+    mc("Akun yang bertambah dengan kredit adalah?", ["Kas", "Peralatan", "Utang Bank", "Beban Listrik"], 2, 20, "Akuntansi", "Liabilitas (utang) bertambah di sisi kredit."),
+    mc("Jurnal untuk pembelian peralatan secara kredit adalah?", ["Peralatan (D) - Kas (K)", "Peralatan (D) - Utang (K)", "Kas (D) - Peralatan (K)", "Utang (D) - Peralatan (K)"], 1, 25, "Akuntansi", "Peralatan bertambah (debit), utang bertambah (kredit)."),
+    tf("Neraca menampilkan posisi keuangan pada tanggal tertentu.", true, 15, "Akuntansi", "Benar - balance sheet = snapshot pada satu titik waktu."),
+    mc("HPP (Harga Pokok Penjualan) = ?", ["Persediaan awal - pembelian", "Persediaan awal + pembelian - persediaan akhir", "Penjualan - laba", "Pendapatan + beban"], 1, 25, "Akuntansi", "HPP = persediaan awal + pembelian - persediaan akhir."),
   ]);
 
 export const manajemen = quiz("manajemen", "Manajemen Dasar", "Kuliah", "chart", "#7C3AED", "Mudah", "Manajemen",
@@ -23,7 +27,9 @@ export const manajemen = quiz("manajemen", "Manajemen Dasar", "Kuliah", "chart",
     mc("Struktur organisasi yang mengelompokkan berdasarkan fungsi (marketing, HR, keuangan) disebut?", ["Matriks", "Fungsional", "Divisional", "Jaringan"], 1, 20, "Manajemen", "Struktur fungsional mengelompokkan per keahlian."),
     mc("Tahap pengendalian yang membandingkan kinerja dengan standar disebut?", ["Perencanaan", "Pengukuran & evaluasi", "Pengorganisasian", "Perekrutan"], 1, 20, "Manajemen", "Controlling: standar → ukur → koreksi."),
     mc("4P dalam bauran pemasaran adalah?", ["People, Process, Product, Price", "Product, Price, Place, Promotion", "Plan, Price, Position, People", "Product, Profit, Place, Public"], 1, 15, "Manajemen", "Marketing mix klasik McCarthy."),
-    mc("Motivasi teori hierarki kebutuhan dikemukakan oleh?", ["Frederick Taylor", "Abraham Maslow", "Peter Drucker", "Henri Fayol"], 1, 20, "Manajemen", "Maslow: fisiologis → rasa aman → sosial → penghargaan → aktualisasi."),
+    mc("Motivasi teori hierarki kebutuhan dikemukakan oleh?", ["Frederick Taylor", "Abraham Maslow", "Peter Drucker", "Henri Fayol"], 1, 20, "Manajemen", "Maslow: fisiologis, rasa aman, sosial, penghargaan, aktualisasi."),
+    mc("Proses menentukan tujuan dan cara mencapainya disebut?", ["Pengorganisasian", "Perencanaan", "Pengawasan", "Perekrutan"], 1, 15, "Manajemen", "Planning = merumuskan tujuan dan strategi."),
+    mc("Pembagian tugas menjadi unit-unit kerja disebut?", ["Pengarahan", "Pengorganisasian", "Pengendalian", "Penganggaran"], 1, 15, "Manajemen", "Organizing = menyusun struktur dan pembagian tugas."),
   ]);
 
 export const hukumDasar = quiz("hukum-dasar", "Hukum Dasar", "Kuliah", "scale", "#DC2626", "Sedang", "Hukum",
@@ -37,6 +43,9 @@ export const hukumDasar = quiz("hukum-dasar", "Hukum Dasar", "Kuliah", "scale", 
     mc("Delik yang ancamannya di bawah 5 tahun termasuk?", ["Kejahatan", "Pelanggaran", "Tindak pidana korporasi", "Delik politik"], 1, 25, "Hukum", "KUHP lama membagi kejahatan & pelanggaran."),
     mc("Norma yang sanksinya paling tegas dan dipaksakan negara adalah norma?", ["Agama", "Kesopanan", "Kesusilaan", "Hukum"], 3, 15, "Hukum", "Norma hukum bersanksi tegas dari negara."),
     mc("Perjanjian yang sah memenuhi syarat pasal 1320 KUHPerdata, KECUALI?", ["Sepakat", "Cakap hukum", "Suatu hal tertentu", "Disaksikan notaris"], 3, 25, "Hukum", "Syarat sah: sepakat, cakap, hal tertentu, sebab halal — notaris bukan syarat umum."),
+    mc("Hukum yang berlaku pada waktu tertentu dan wilayah tertentu disebut?", ["Hukum privat", "Hukum publik", "Hukum positif", "Hukum adat"], 2, 20, "Hukum", "Hukum positif = berlaku saat ini di wilayah tertentu."),
+    mc("Asas 'fiat justitia ruat caelum' berarti?", ["Hukum demi keadilan walau langit runtuh", "Hukum adalah perintah", "Tiada pidana tanpa aturan", "Hakim itu lembam"], 0, 25, "Hukum", "Keadilan harus ditegakkan apa pun yang terjadi."),
+    mc("Badan peradilan yang menguji undang-undang terhadap UUD adalah?", ["MA", "MK", "KY", "Pengadilan Negeri"], 1, 20, "Hukum", "Mahkamah Konstitusi menguji UU terhadap konstitusi."),
   ]);
 
 export const statistika = quiz("statistika", "Statistika Dasar", "Kuliah", "bars", "#0EA5E9", "Sedang", "Statistika",
@@ -63,6 +72,10 @@ export const anatomi = quiz("anatomi", "Anatomi & Fisiologi Dasar", "Kuliah", "h
     mc("Surfactant paru diproduksi oleh sel?", ["Alveolar tipe I", "Alveolar tipe II", "Makrofag", "Bronkiolus"], 1, 30, "Kedokteran", "Sel alveolar tipe II memproduksi surfaktan menurunkan tegangan permukaan."),
     mc("Jumlah tulang pada tubuh manusia dewasa adalah?", ["186", "196", "206", "216"], 2, 15, "Kedokteran", "206 tulang; bayi sekitar 300 yang menyatu."),
     mc("Vitamin yang disintesis oleh bakteri usus dan berperan pembekuan darah?", ["Vitamin A", "Vitamin B12", "Vitamin C", "Vitamin K"], 3, 25, "Kedokteran", "Vitamin K penting faktor koagulasi."),
+    mc("Denyut nadi normal orang dewasa per menit adalah?", ["40-60", "60-100", "100-140", "140-180"], 1, 15, "Kedokteran", "Normal 60-100x/menit saat istirahat."),
+    mc("Hormon yang menurunkan kadar gula darah adalah?", ["Glukagon", "Insulin", "Adrenalin", "Kortisol"], 1, 15, "Kedokteran", "Insulin membantu sel menyerap glukosa."),
+    mc("Bagian jantung yang menerima darah bersih dari paru-paru adalah?", ["Atrium kanan", "Atrium kiri", "Ventrikel kanan", "Ventrikel kiri"], 1, 25, "Kedokteran", "Atrium kiri menerima darah oksigen dari vena pulmonal."),
+    tf("Sistem saraf pusat terdiri dari otak dan sumsum tulang belakang.", true, 15, "Kedokteran", "Benar - CNS = brain + spinal cord."),
   ]);
 
 export const algoritma = quiz("algoritma", "Algoritma & Pemrograman", "Kuliah", "terminal", "#0F172A", "Sedang", "Informatika",
@@ -76,4 +89,8 @@ export const algoritma = quiz("algoritma", "Algoritma & Pemrograman", "Kuliah", 
     mc("Paradigma yang memandang program sebagai interaksi objek adalah?", ["Prosedural", "Fungsional", "OOP", "Logika"], 2, 15, "Informatika", "OOP: encapsulation, inheritance, polymorphism."),
     mc("Worst-case quick sort adalah O(?).", ["n", "n log n", "n^2", "log n"], 2, 25, "Informatika", "Pivot terburuk (terurut) → O(n^2)."),
     mc("Proses menemukan dan memperbaiki kesalahan program disebut?", ["Compiling", "Debugging", "Deploying", "Documenting"], 1, 10, "Informatika", "Debugging = menghilangkan bug."),
+    mc("Untuk menyimpan nilai yang tidak berubah, dipakai?", ["Variabel", "Konstanta", "Fungsi", "Array"], 1, 15, "Informatika", "Konstanta (const) nilainya tetap."),
+    mc("Kompleksitas O(n^2) contohnya pada algoritma?", ["Binary search", "Bubble sort", "Hash lookup", "Pencarian linier"], 1, 25, "Informatika", "Bubble sort membandingkan semua pasangan → O(n^2)."),
+    tf("Git digunakan untuk version control kode.", true, 15, "Informatika", "Benar - Git melacak perubahan kode sumber."),
+    mc("SQL digunakan untuk?", ["Menggambar UI", "Mengelola basis data", "Membuat animasi", "Kompilasi program"], 1, 15, "Informatika", "SQL = Structured Query Language untuk database."),
   ]);

@@ -11,6 +11,14 @@ export const bindoSd = quiz("bindo-sd", "Bahasa Indonesia SD", "SD", "book", "#0
     tf("Kata 'buku' diawali huruf konsonan.", true, 10, "Bahasa", "Benar, huruf b adalah konsonan."),
     mc("Sinonim kata 'pandai' adalah?", ["Bodoh", "Cerdas", "Malas", "Lemah"], 1, 10, "Bahasa", "Pandai sama makna dengan cerdas."),
     mc("Melanjutkan pantun: 'Jangan lupa belajar rajin, agar kamu menjadi ...'", ["gembira", "cerdas", "kaya", "terkenal"], 1, 20, "Bahasa", "Isi pantun tentang belajar → menjadi cerdas."),
+    mc('Lawan kata dari "panjang" adalah?', ["Pendek", "Tinggi", "Berat", "Lebar"], 0, 10, "Bahasa", "Panjang berlawanan dengan pendek."),
+    mc("Kalimat perintah contohnya adalah?", ["Siapa namamu?", "Cuci tanganmu sekarang!", "Bunga itu indah.", "Aku ke sekolah."], 1, 15, "Bahasa", "Kalimat perintah diakhiri tanda seru."),
+    mc('"Rina membaca buku di perpustakaan." Kata kerjanya adalah?', ["Rina", "membaca", "buku", "perpustakaan"], 1, 15, "Bahasa", "Kata kerja (verba) = membaca."),
+    tf("Nama hari dalam satu minggu ada 30.", false, 10, "Bahasa", "Salah - nama hari hanya 7: Senin sampai Minggu."),
+    mc("Huruf pertama nama orang dan kota ditulis dengan huruf?", ["Kecil", "Kapital", "Miring", "Bebas"], 1, 10, "Bahasa", "Nama orang, kota, dan awal kalimat ditulis kapital."),
+    mc("Kelompok kata yang semua merupakan nama hewan adalah?", ["Kucing, merpati, ikan", "Mawar, melati, anggrek", "Meja, kursi, lemari", "Guru, dokter, pilot"], 0, 15, "Bahasa", "Kucing, merpati, dan ikan adalah hewan."),
+    mc("Tulisan pengalaman sehari-hari yang dicatat pribadi disebut?", ["Diari", "Pantun", "Berita", "Iklan"], 0, 15, "Bahasa", "Diari/catatan harian berisi pengalaman pribadi."),
+    mc("Sinonim kata 'gembira' adalah?", ["Sedih", "Senang", "Marah", "Takut"], 1, 10, "Bahasa", "Gembira = senang (makna sama)."),
   ]);
 
 export const ppknSd = quiz("ppkn-sd", "PPKn SD", "SD", "shield", "#DC2626", "Mudah", "PPKn",
@@ -24,4 +32,11 @@ export const ppknSd = quiz("ppkn-sd", "PPKn SD", "SD", "shield", "#DC2626", "Mud
     mc("Sebelum bermain, kembali ke rumah pukul 6 sore. Ini contoh?", ["Hukum alam", "Kesepakatan/aturan", "Kebiasaan hewan", "Takdir"], 1, 15, "PPKn", "Aturan dibuat kesepakatan agar semua tertib."),
     mc("Lagu kebangsaan Indonesia adalah?", ["Indonesia Raya", "Garuda Pancasila", "Hari Merdeka", "Satu Nusa Satu Bangsa"], 0, 10, "PPKn", "Indonesia Raya ciptaan W.R. Supratman."),
     mc("Sikap saat lagu kebangsaan dinyanyikan adalah?", ["Bercakap-cakap", "Berdiri tegap", "Duduk santai", "Main ponsel"], 1, 10, "PPKn", "Berdiri tegap sebagai bentuk penghormatan."),
+    mc("Perilaku membersihkan kelas bersama-sama termasuk pengamalan sila?", ["Ke-1", "Ke-2", "Ke-3", "Ke-5"], 2, 20, "PPKn", "Gotong royong = pengamalan sila ke-3, Persatuan Indonesia."),
+    mc("Lambang sila ke-5 Pancasila adalah?", ["Pohon beringin", "Kepala banteng", "Padi dan kapas", "Bintang"], 2, 15, "PPKn", "Padi dan kapas melambangkan keadilan sosial."),
+    mc("Jika menemukan dompet di jalan, sikap yang benar?", ["Dibawa pulang", "Dibuang", "Diserahkan ke pemilik/polisi", "Dilempar"], 2, 15, "PPKn", "Menyerahkan barang temuan = perilaku jujur dan bertanggung jawab."),
+    mc("Upacara bendera dilaksanakan setiap?", ["Senin", "Rabu", "Jumat", "Minggu"], 0, 10, "PPKn", "Upacara bendera wajib setiap hari Senin."),
+    mc("Contoh sikap musyawarah di kelas adalah?", ["Yang paling keras menang", "Duduk diam saja", "Bergantian menyampaikan pendapat", "Keluar kelas"], 2, 15, "PPKn", "Musyawarah = bertukar pendapat untuk mufakat."),
+    tf("Garuda Pancasila adalah lambang negara Indonesia.", true, 10, "PPKn", "Benar, burung Garuda dengan perisai Pancasila."),
+    mc("Proklamasi Kemerdekaan dibacakan pada tanggal?", ["17 Agustus 1945", "1 Juni 1945", "28 Oktober 1928", "10 November 1945"], 0, 15, "PPKn", "17 Agustus 1945 oleh Ir. Soekarno didampingi Moh. Hatta."),
   ]);
