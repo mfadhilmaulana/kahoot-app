@@ -295,9 +295,9 @@ export default function HomePage() {
       }}>
         <div style={{ maxWidth: 800, margin: "0 auto", display: "flex", justifyContent: "space-around", flexWrap: "wrap", gap: "1rem" }}>
           {[
-            { value: "Ribuan+", label: "Soal Selalu Acak", Icon: IconBrain },
-            { value: "13",   label: "Kategori Kuis",  Icon: IconGlobe },
-            { value: "5",    label: "Tipe Soal",       Icon: IconBarChart },
+            { value: "5000+", label: "Soal per Kategori", Icon: IconBrain },
+            { value: "40+",   label: "Kategori SD–Kuliah",  Icon: IconGlobe },
+            { value: "7",    label: "Tipe Soal",       Icon: IconBarChart },
             { value: "∞",    label: "Pemain / Game",   Icon: IconUsers },
           ].map(({ value, label, Icon }) => (
             <div key={label} style={{ textAlign: "center", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.15rem" }}>
@@ -377,7 +377,7 @@ export default function HomePage() {
               Belajar kapan saja,<br />tanpa perlu teman
             </h2>
             <p style={{ color: "rgba(255,255,255,0.78)", fontSize: "0.97rem", lineHeight: 1.7, marginBottom: "1.75rem", maxWidth: 380 }}>
-              Mode Solo SiKuis memungkinkan kamu berlatih dari 13 kategori kuis — termasuk Tes IQ dan Psikologi. Skor instan, penjelasan mendalam, dan rating bintang setelah selesai.
+              Mode Solo SiKuis memungkinkan kamu berlatih dari 40+ kategori kuis SD, SMP, SMA/SMK, Kuliah & Umum — termasuk Matematika, Fisika, Kimia, Biologi, Bahasa Inggris, Akuntansi, Hukum, Statistika & Tes IQ. Skor instan, penjelasan mendalam, dan rating bintang setelah selesai. Alternatif Quizizz & Kahoot gratis untuk belajar mandiri.
             </p>
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
               <button onClick={() => router.push("/solo")} className="btn btn-lg" style={{
@@ -469,9 +469,9 @@ export default function HomePage() {
       <section style={{ background: "var(--surface-2)", padding: "5rem 1.5rem" }}>
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
-            <p className="t-label mb-2">Pilihan Topik</p>
-            <h2 className="t-h1" style={{ color: "var(--text)" }}>13 Kategori Pengetahuan</h2>
-            <p style={{ color: "var(--text-dim)", marginTop: "0.5rem", fontSize: "0.95rem" }}>Dari sains hingga psikologi — tersedia lengkap untuk semua minat</p>
+            <p className="t-label mb-2">Pilihan Topik • SD • SMP • SMA/SMK • Kuliah • Umum</p>
+            <h2 className="t-h1" style={{ color: "var(--text)" }}>13 Kategori • 40+ Kuis Pilihan</h2>
+            <p style={{ color: "var(--text-dim)", marginTop: "0.5rem", fontSize: "0.95rem" }}>40+ kuis dalam 13 kategori — dari Matematika SD hingga Algoritma Kuliah, lengkap untuk SD, SMP, SMA/SMK, Kuliah & Umum. Alternatif Kahoot & Quizizz terlengkap di Indonesia.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(120px, 45%), 1fr))", gap: "0.75rem" }}>
             {CATEGORIES.map((c, i) => (
@@ -489,11 +489,74 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+          <p style={{ textAlign: "center", color: "var(--text-dim)", fontSize: "0.85rem", marginTop: "1.5rem", lineHeight: 1.6 }}>
+            Jelajahi{" "}
+            <button onClick={() => router.push("/quizzes")} style={{ background: "none", border: "none", color: "var(--accent)", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: "0.85rem", textDecoration: "underline" }}>kuis SD</button>
+            {" · "}
+            <button onClick={() => router.push("/quizzes")} style={{ background: "none", border: "none", color: "var(--accent)", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: "0.85rem", textDecoration: "underline" }}>kuis SMP</button>
+            {" · "}
+            <button onClick={() => router.push("/quizzes")} style={{ background: "none", border: "none", color: "var(--accent)", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: "0.85rem", textDecoration: "underline" }}>kuis SMA/SMK</button>
+            {" · "}
+            <button onClick={() => router.push("/quizzes")} style={{ background: "none", border: "none", color: "var(--accent)", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: "0.85rem", textDecoration: "underline" }}>kuis Kuliah</button>
+            {" · "}
+            <button onClick={() => router.push("/quizzes")} style={{ background: "none", border: "none", color: "var(--accent)", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: "0.85rem", textDecoration: "underline" }}>tes IQ gratis</button>
+            {" — alternatif Kahoot & Quizizz terlengkap di Indonesia."}
+          </p>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════════
-          BOTTOM CTA
+           FAQ — SEO #1
+       ══════════════════════════════════════════════════════════════════════════ */}
+      <section style={{ background: "var(--bg)", padding: "4rem 1.5rem" }}>
+        <div style={{ maxWidth: 800, margin: "0 auto" }}>
+          <h2 style={{ color: "var(--text)", fontSize: "clamp(1.5rem,4vw,2rem)", fontWeight: 900, textAlign: "center", marginBottom: "0.5rem" }}>Pertanyaan Umum</h2>
+          <p style={{ color: "var(--text-dim)", textAlign: "center", marginBottom: "2rem", fontSize: "0.9rem" }}>Jawaban cepat seputar SiKuis — platform kuis online interaktif No.1 Indonesia</p>
+          {[
+            { q: "Apa itu SiKuis?", a: "SiKuis adalah platform kuis online interaktif Indonesia — alternatif Kahoot & Quizizz gratis. Buat kuis multiplayer real-time, solo, flashcards, dan tes IQ tanpa daftar. Cocok untuk SD, SMP, SMA/SMK, Kuliah & Umum." },
+            { q: "Apakah SiKuis gratis?", a: "Ya, 100% gratis selamanya. Tanpa biaya, tanpa batas pemain. Buat kuis, host game dengan PIN 6-digit, dan undang ratusan pemain — langsung main dalam 5 detik." },
+            { q: "Bagaimana cara membuat kuis di SiKuis?", a: "Klik 'Buat Kuis' di beranda, pilih 7 tipe soal (pilihan ganda, benar/salah, urutkan, isian, dll), tambahkan gambar/video, lalu host. Atau gunakan AI Generator gratis untuk buat soal otomatis dari topik." },
+            { q: "Apa bedanya SiKuis dengan Kahoot & Quizizz?", a: "SiKuis menggabungkan kelebihan keduanya: multiplayer real-time ala Kahoot + mode solo & flashcards ala Quizizz, plus 5000+ soal acak per kategori, 40+ kategori SD–Kuliah, dan AI gratis — semua tanpa daftar." },
+            { q: "Apakah soal SiKuis cocok untuk SD, SMP, SMA & Kuliah?", a: "Ya. Tersedia kuis khusus jenjang SD (Matematika SD, IPA SD), SMP (IPS, IPA SMP), SMA/SMK (Fisika, Kimia, Biologi, Informatika) & Kuliah (Akuntansi, Manajemen, Hukum, Statistika, Anatomi). Soal diacak 5000+ per kategori." },
+            { q: "Bisa untuk belajar Bahasa Inggris?", a: "Bisa. Ada track Bahasa Inggris lengkap: Grammar, Vocabulary, Reading & Writing/Speaking — dari SMP hingga SMA, dengan ribuan variasi soal." },
+          ].map(({ q, a }) => (
+            <details key={q} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "1rem 1.25rem", marginBottom: "0.75rem" }}>
+              <summary style={{ fontWeight: 700, color: "var(--text)", cursor: "pointer", fontSize: "0.95rem" }}>{q}</summary>
+              <p style={{ color: "var(--text-dim)", fontSize: "0.9rem", lineHeight: 1.7, marginTop: "0.6rem" }}>{a}</p>
+            </details>
+          ))}
+        </div>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "Apa itu SiKuis?", acceptedAnswer: { "@type": "Answer", text: "SiKuis adalah platform kuis online interaktif Indonesia — alternatif Kahoot & Quizizz gratis." } },
+                { "@type": "Question", name: "Apakah SiKuis gratis?", acceptedAnswer: { "@type": "Answer", text: "Ya, 100% gratis selamanya tanpa batas pemain." } },
+                { "@type": "Question", name: "Bagaimana cara membuat kuis di SiKuis?", acceptedAnswer: { "@type": "Answer", text: "Klik Buat Kuis, pilih 7 tipe soal, tambahkan gambar/video, lalu host dengan PIN." } },
+              ],
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "SiKuis",
+              url: "https://sikuis.com",
+              logo: "https://sikuis.com/favicon.svg",
+              sameAs: [],
+            }),
+          }}
+        />
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════════
+           BOTTOM CTA
       ══════════════════════════════════════════════════════════════════════════ */}
       <section style={{
         background: "linear-gradient(180deg, #0A0F2E 0%, #05082A 100%)",
