@@ -497,13 +497,16 @@ export default function SoloPage() {
 
         {/* Question */}
         <div style={{ padding: "0 0.875rem 0.75rem" }}>
-          <div className={`card center ${phase === "playing" ? "a-slideright" : ""}`} style={{ padding: "1rem 1.25rem", textAlign: "center", maxWidth: 560, margin: "0 auto", position: "relative" }}>
-            <button title="Dengarkan soal" onClick={() => speak(currentQ.question)} style={{
-              position: "absolute", top: 8, right: 8,
-              width: 28, height: 28, borderRadius: "50%",
-              background: "var(--surface-2)", border: "1px solid var(--border-hi)",
-              cursor: "pointer", fontSize: "0.78rem",
-            }}>Dengar</button>
+          <div className={`card center ${phase === "playing" ? "a-slideright" : ""}`} style={{ padding: "1rem 3rem 1rem 1.25rem", textAlign: "center", maxWidth: 560, margin: "0 auto", position: "relative" }}>
+            <button title="Dengarkan soal" aria-label="Dengarkan soal" onClick={() => speak(currentQ.question)} style={{
+              position: "absolute", top: 10, right: 10,
+              width: 36, height: 36, borderRadius: "50%",
+              background: "var(--surface)", border: "1px solid var(--border-hi)",
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.06)", flexShrink: 0,
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.08"/></svg>
+            </button>
             <p className="t-h3" style={{ lineHeight: 1.4, fontSize: "clamp(0.95rem,3.5vw,1.1rem)" }}>{currentQ.question}</p>
           </div>
           {currentQ.image && (

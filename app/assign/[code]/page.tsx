@@ -198,10 +198,13 @@ export default function AssignPage({ params }: { params: Promise<{ code: string 
             <section style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "1.4rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", alignItems: "flex-start" }}>
                 <h2 style={{ color: "var(--text)", fontWeight: 800, fontSize: "1rem", lineHeight: 1.45, marginBottom: "0.9rem" }}>{q.question}</h2>
-                <button title="Dengarkan soal" onClick={() => speak(q.question)} style={{
-                  flexShrink: 0, background: "var(--surface-3)", border: "1px solid var(--border-hi)",
-                  borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: "0.85rem",
-                }}>Dengar</button>
+                <button title="Dengarkan soal" aria-label="Dengarkan soal" onClick={() => speak(q.question)} style={{
+                  flexShrink: 0, background: "var(--surface)", border: "1px solid var(--border-hi)",
+                  borderRadius: "50%", width: 36, height: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.08"/></svg>
+                </button>
               </div>
 
               {q.image && (
