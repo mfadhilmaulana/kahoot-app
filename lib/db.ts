@@ -92,6 +92,14 @@ export function addAssignmentResult(code: string, result: AssignmentResult): boo
   scheduleSave();
   return true;
 }
+export function deleteAssignment(code: string): boolean {
+  const db = load();
+  const key = code?.toUpperCase();
+  if (!key || !db.assignments[key]) return false;
+  delete db.assignments[key];
+  scheduleSave();
+  return true;
+}
 
 // ── Laporan ───────────────────────────────────────────────────────────────────
 export function saveReport(r: GameReport): void {

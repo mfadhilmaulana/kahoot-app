@@ -82,7 +82,22 @@ export default function AssignmentsPage() {
   }, []);
 
   function refreshList() {
-    socketRef.current?.emit("assignment:list", {}, (list: AssignmentRow[]) => setRows(list));
+    socketRef.current?.emit("assignment:list", { ownerKey: getOwnerKey() }, (list: AssignmentRow[]) => setRows(list));
+  }
+
+  // Auto-refresh setiap menit agar tugas kedaluwarsa hilang otomatis
+  useEffect(() => {
+    const id = setInterval(refreshList, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  function handleDelete(code: string) {
+    if (!confirm(`Hapus tugas ${code}? Link akan tidak berlaku.`)) return;
+    socketRef.current?.emit("assignment:delete", { code, ownerKey: getOwnerKey() }, (res: { ok?: boolean; error?: string }) => {
+      if (res.error) { setError(res.error); return; }
+      setRows((prev) => prev.filter((r) => r.code !== code));
+      setExpanded((prev) => (prev === code ? null : prev));
+    });
   }
 
   function handleCreate() {
@@ -138,6 +153,15 @@ export default function AssignmentsPage() {
       </div>
 
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "1.5rem 1.25rem 4rem" }}>
+        {/* Privasi notice */}
+        <div style={{ background: "rgba(37,99,235,0.06)", border: "1px solid rgba(37,99,235,0.15)", borderRadius: 12, padding: "0.75rem 1rem", marginBottom: "1rem", display: "flex", gap: "0.6rem", alignItems: "flex-start" }}>
+          <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>🔒</span>
+          <div>
+            <p style={{ fontWeight: 700, color: "var(--text)", fontSize: "0.82rem", marginBottom: "0.15rem" }}>Bersifat rahasia</p>
+            <p style={{ color: "var(--text-dim)", fontSize: "0.75rem", lineHeight: 1.5 }}>Hanya Anda yang melihat daftar ini di perangkat ini. Jangan bagikan kode/link kecuali ke siswa yang dituju. Tugas otomatis hilang 12 jam setelah tenggat.</p>
+          </div>
+        </div>
+
         {/* Buat tugas */}
         <section style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "1.25rem", marginBottom: "1.5rem" }}>
           <h2 style={{ fontWeight: 800, color: "var(--text)", fontSize: "1rem", marginBottom: "0.9rem" }}>Buat Tugas Baru</h2>
@@ -177,15 +201,20 @@ export default function AssignmentsPage() {
         </section>
 
         {/* Daftar tugas */}
-        <h2 style={{ fontWeight: 800, color: "var(--text)", fontSize: "1rem", marginBottom: "0.75rem" }}>
-          Tugas Aktif {rows.length > 0 && <span style={{ color: "var(--text-muted)", fontWeight: 600 }}>({rows.length})</span>}
-        </h2>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+          <h2 style={{ fontWeight: 800, color: "var(--text)", fontSize: "1rem" }}>
+            Tugas Aktif {rows.length > 0 && <span style={{ color: "var(--text-muted)", fontWeight: 600 }}>({rows.length})</span>}
+          </h2>
+          <button onClick={refreshList} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, padding: "0.3rem 0.7rem", fontSize: "0.72rem", fontWeight: 600, color: "var(--text-dim)", cursor: "pointer" }}>
+            Segarkan
+          </button>
+        </div>
         {loading ? (
           <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Memuat...</p>
         ) : rows.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "2.5rem 0", color: "var(--text-dim)" }}>
-            <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem" }}></div>
-            <p style={{ fontWeight: 600, fontSize: "0.85rem" }}>Belum ada tugas. Buat yang pertama di atas!</p>
+          <div style={{ textAlign: "center", padding: "2.5rem 1rem", color: "var(--text-dim)", background: "var(--surface)", border: "1.5px dashed var(--border)", borderRadius: 14 }}>
+            <p style={{ fontWeight: 700, fontSize: "0.9rem", color: "var(--text)", marginBottom: "0.35rem" }}>Belum ada tugas di perangkat ini</p>
+            <p style={{ fontWeight: 500, fontSize: "0.78rem", lineHeight: 1.5 }}>Tugas yang Anda buat hanya terlihat di sini dan otomatis hilang 12 jam setelah tenggat. Buat yang pertama di atas untuk dibagikan ke siswa.</p>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
@@ -193,22 +222,30 @@ export default function AssignmentsPage() {
               const dl = deadlineInfo(row.deadlineMs);
               const isOpen = expanded === row.code;
               return (
-                <div key={row.id} style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 14, overflow: "hidden" }}>
-                  <button onClick={() => toggleResults(row.code)} style={{
-                    width: "100%", display: "flex", alignItems: "center", gap: "0.75rem",
-                    padding: "0.9rem 1rem", background: "transparent", border: "none", cursor: "pointer", textAlign: "left",
-                  }}>
-                    <span style={{ fontFamily: "monospace", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.08em", color: "var(--accent)", background: "rgba(37,99,235,0.1)", padding: "0.25rem 0.55rem", borderRadius: 8 }}>
-                      {row.code}
-                    </span>
-                    <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: "block", fontWeight: 800, color: "var(--text)", fontSize: "0.85rem" }}>{row.title}</span>
-                      <span style={{ display: "block", color: dl.expired ? "#DC2626" : "var(--text-muted)", fontSize: "0.68rem", marginTop: "0.15rem" }}>
-                        {dl.text} · {row.resultCount} jawaban masuk
+                <div key={row.id} style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 14, overflow: "hidden", opacity: dl.expired ? 0.7 : 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.9rem 1rem" }}>
+                    <button onClick={() => toggleResults(row.code)} style={{
+                      flex: 1, display: "flex", alignItems: "center", gap: "0.75rem",
+                      background: "transparent", border: "none", cursor: "pointer", textAlign: "left", minWidth: 0,
+                    }}>
+                      <span style={{ fontFamily: "monospace", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.08em", color: dl.expired ? "var(--text-muted)" : "var(--accent)", background: dl.expired ? "var(--surface-3)" : "rgba(37,99,235,0.1)", padding: "0.25rem 0.55rem", borderRadius: 8 }}>
+                        {row.code}
                       </span>
-                    </span>
-                    <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{isOpen ? "▲" : "▼"}</span>
-                  </button>
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ display: "block", fontWeight: 800, color: "var(--text)", fontSize: "0.85rem" }}>{row.title}</span>
+                        <span style={{ display: "block", color: dl.expired ? "#DC2626" : "var(--text-muted)", fontSize: "0.68rem", marginTop: "0.15rem" }}>
+                          {dl.text} · {row.resultCount} jawaban masuk
+                        </span>
+                      </span>
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{isOpen ? "▲" : "▼"}</span>
+                    </button>
+                    <button onClick={() => handleDelete(row.code)} title="Hapus tugas" style={{
+                      background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.15)", color: "#DC2626",
+                      borderRadius: 8, padding: "0.35rem 0.6rem", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer", flexShrink: 0,
+                    }}>
+                      Hapus
+                    </button>
+                  </div>
                   {isOpen && (
                     <div style={{ borderTop: "1px solid var(--border)", padding: "0.9rem 1rem" }}>
                       {!results[row.code] ? (

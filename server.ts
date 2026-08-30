@@ -9,7 +9,7 @@ import { PDFParse } from "pdf-parse";
 import type { Quiz, Question, Player, LBEntry, QuestionType, Assignment, AssignmentResult, GameReport, ReportQuestionStat } from "./lib/types";
 import {
   getCustomQuizzes, saveCustomQuiz,
-  saveAssignment, getAssignment, listAssignments, addAssignmentResult,
+  saveAssignment, getAssignment, listAssignments, addAssignmentResult, deleteAssignment,
   saveReport, getReport, listReports,
   getAiQuestions, addAiQuestions,
 } from "./lib/db";
@@ -1280,8 +1280,9 @@ app.prepare().then(() => {
     );
 
     socket.on("assignment:list", ({ ownerKey }: { ownerKey?: string }, cb: (r: object[]) => void) => {
-      // punya key → lihat milik sendiri + lama tanpa pemilik; tanpa key → hanya tanpa pemilik
-      const mine = listAssignments().filter((a) => ownerKey ? (!a.ownerKey || a.ownerKey === ownerKey) : !a.ownerKey);
+      // Hanya tugas milik guru ini yang terlihat — rahasia, tidak terlihat oleh guru lain
+      // Tanpa ownerKey (legacy/anon) → tidak ada yang ditampilkan
+      const mine = ownerKey ? listAssignments().filter((a) => a.ownerKey === ownerKey) : [];
       cb(mine.map((a) => ({
         id: a.id, code: a.code, title: a.title, createdAt: a.createdAt,
         deadlineMs: a.deadlineMs, resultCount: a.results.length, questionCount: a.questions.length,
@@ -1355,6 +1356,14 @@ app.prepare().then(() => {
         ok: true, code: a.code, title: a.title, createdAt: a.createdAt,
         deadlineMs: a.deadlineMs, results: [...a.results].sort((x, y) => y.score - x.score),
       });
+    });
+
+    socket.on("assignment:delete", ({ code, ownerKey }: { code: string; ownerKey?: string }, cb: (r: object) => void) => {
+      const a = getAssignment(code);
+      if (!a) return cb({ error: "Tugas tidak ditemukan." });
+      if (!ownerKey || a.ownerKey !== ownerKey) return cb({ error: "Tidak berwenang menghapus tugas ini." });
+      deleteAssignment(code);
+      cb({ ok: true });
     });
 
     // ── Laporan game live ─────────────────────────────────────────────────────
