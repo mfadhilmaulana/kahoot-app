@@ -4,7 +4,7 @@ import { mc, tf, quiz } from "./extra-sd1";
 export const bingGrammar = quiz("bing-grammar", "Bahasa Inggris: Grammar", "Umum", "abc", "#3B82F6", "Mudah", "Bahasa Inggris",
   "Tenses, to-be, article, dan agreement - ribuan soal acak grammar",
   [
-    mc("She ___ to school every day.", ["go", "goes", "going", "gone"], 1, 15, "Bahasa Inggris", "Subjek she + simple present → goes."),
+    mc("She ___ English every morning.", ["go", "goes", "going", "gone"], 1, 15, "Bahasa Inggris", "Subjek she + simple present → goes."),
     mc("I ___ my homework last night.", ["do", "does", "did", "done"], 2, 15, "Bahasa Inggris", "Last night → past tense: did."),
     mc("They ___ watching TV now.", ["is", "am", "are", "be"], 2, 15, "Bahasa Inggris", "They + are + verb-ing."),
     mc("___ apple a day keeps the doctor away.", ["A", "An", "The", "-"], 1, 15, "Bahasa Inggris", "Apple diawali bunyi vokal → an."),
