@@ -693,6 +693,25 @@ for (const [id, custom] of Object.entries(getCustomQuizzes())) {
   quizzes.set(id, custom);
 }
 
+// Muat bank soal statik hasil panen AI (lib/ai-seed.json, ikut repo)
+try {
+  const seedPath = join(process.cwd(), "lib", "ai-seed.json");
+  if (existsSync(seedPath)) {
+    const seedBank = JSON.parse(readFileSync(seedPath, "utf8")) as Record<string, Question[]>;
+    let total = 0;
+    for (const [qid, qs] of Object.entries(seedBank)) {
+      if (!quizzes.has(qid) || !Array.isArray(qs)) continue;
+      const existing = getAiQuestions(qid);
+      const have = new Set(existing.map((x) => x.question.trim().toLowerCase()));
+      const add = qs.filter((x) => x?.question && !have.has(x.question.trim().toLowerCase()));
+      if (add.length) { addAiQuestions(qid, add); total += add.length; }
+    }
+    if (total) console.log(`  📚  Bank soal statik dimuat: +${total} soal AI`);
+  }
+} catch (e) {
+  console.error("[seed] gagal memuat lib/ai-seed.json:", e);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -743,15 +762,21 @@ const SESSION_SIZE = 10;
 function buildSessionQuestions(quiz: Quiz): Question[] {
   const bank: Question[] = [...quiz.questions, ...getAiQuestions(quiz.id)];
   const gen = PROC_GEN[quiz.id];
+  let result: Question[];
   if (gen) {
-    // prosedural murni: 10 soal acak langsung dari generator
     const out: Question[] = [];
     for (let i = 0; i < SESSION_SIZE; i++) out.push(gen());
-    return out;
+    result = out;
+  } else if (quiz.category === "Kustom" || quiz.id.startsWith("custom-")) {
+    // kuis kustom: pertahankan apa adanya, acak urutannya
+    const shuffled = [...bank];
+    for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+    result = shuffled.slice(0, Math.min(SESSION_SIZE, shuffled.length));
+  } else {
+    result = factVariations(quiz, bank, Math.min(SESSION_SIZE, bank.length));
   }
-  // kuis fakta: SATU variasi per soal inti per sesi (tanpa pengulangan teks),
-  // pool variasi mencakup soal inti + bank AI
-  return factVariations(quiz, bank, SESSION_SIZE);
+  if (quiz.title === "Mini") console.log(`[debug] Mini pool=${bank.length} result=${result.length} types=${result.map((x) => x.type).join(",")}`);
+  return result;
 }
 
 // ── Penanam bank soal AI di latar belakang (gratis, anonim) ───────────────────
@@ -906,7 +931,7 @@ async function ollamaGenerateQuestions(topic: string, count: number): Promise<{ 
         format: "json",
         options: { temperature: 0.7 },
       }),
-      signal: AbortSignal.timeout(180_000),
+      signal: AbortSignal.timeout(75_000),
     });
     const data = (await res.json()) as { message?: { content?: string } };
     const drafts = draftsFromContent(data.message?.content);
@@ -949,7 +974,7 @@ async function aiChainFromPrompt(prompt: string, count: number): Promise<{ draft
         method: "POST",
         headers: zenHeaders(),
         body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }], temperature: 0.7 }),
-        signal: AbortSignal.timeout(180_000),
+        signal: AbortSignal.timeout(75_000),
       });
       if (!res.ok) {
         console.error(`[ai] Zen ${model} HTTP ${res.status} — coba model lain…`);
@@ -970,7 +995,7 @@ async function aiChainFromPrompt(prompt: string, count: number): Promise<{ draft
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ model: om, messages: [{ role: "user", content: prompt }], stream: false, format: "json" }),
-        signal: AbortSignal.timeout(180_000),
+        signal: AbortSignal.timeout(75_000),
       });
       const data = (await res.json()) as { message?: { content?: string } };
       const drafts = draftsFromContent(data.message?.content);
@@ -1573,6 +1598,8 @@ app.prepare().then(() => {
   httpServer.listen(PORT, () => {
     console.log(`\n  🎯  SiKuis — http://localhost:${PORT}\n`);
     // tanam bank soal AI di latar belakang (tidak menahan startup)
-    setTimeout(() => { seedAiBanks().catch(() => {}); }, 5000);
+    if (process.env.DISABLE_SEEDER !== "1") {
+      setTimeout(() => { seedAiBanks().catch(() => {}); }, 5000);
+    }
   });
 });
